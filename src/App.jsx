@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { HEROES, WP, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD } from './data';
+import { HEROES, WP, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
@@ -49,6 +49,7 @@ function cs(hero,bl){
     if(b.str){s.str+=b.str;_s.str.push(it.name+": "+fmtB(b.str));}
     if(b.mag){s.mag+=b.mag;_s.mag.push(it.name+": "+fmtB(b.mag));}
     if(b.crit){s.crit+=b.crit;_s.crit.push(it.name+": +"+fmtPct(b.crit));}
+    if(b.crt){s.crit+=b.crt;_s.crit.push(it.name+": "+fmtB(b.crt));}
     if(b.phv){s.phv+=b.phv;_s.phv.push(it.name+": "+fmtB(b.phv));}
     if(b.mav){s.mav+=b.mav;_s.mav.push(it.name+": "+fmtB(b.mav));}
     if(b.dodge){s.dodge+=b.dodge;_s.dodge.push(it.name+": +"+fmtPct(b.dodge));}
@@ -111,15 +112,19 @@ function ItemInfo(props){
   var it=props.item;if(!it)return null;var rc=(RA[it.rarity]||{}).c||"#888";
   var parts=[];var b=it.bon||{};
   if(b.str)parts.push("STR "+fmtB(b.str));if(b.mag)parts.push("MAG "+fmtB(b.mag));
-  if(b.crit)parts.push("CRT +"+fmtPct(b.crit));if(b.hp)parts.push("PV +"+b.hp);if(b.mp)parts.push("PM +"+b.mp);
+  if(b.crt)parts.push("CRT "+fmtB(b.crt));if(b.crit)parts.push("CRT +"+fmtPct(b.crit));
+  if(b.hp)parts.push("PV +"+b.hp);if(b.mp)parts.push("PM +"+b.mp);
   if(b.phv)parts.push("PHV "+fmtB(b.phv));if(b.mav)parts.push("MAV "+fmtB(b.mav));
   if(b.dodge)parts.push("ESQ +"+fmtPct(b.dodge));if(b.rgHp)parts.push("RPV +"+fmtPct(b.rgHp));
   if(b.rgMp)parts.push("RPM +"+fmtPct(b.rgMp));if(b.eco)parts.push("EPM +"+fmtPct(b.eco));
   if(b.er)for(var ek in b.er)parts.push("Vuln "+ek+" "+fmtEV(1+b.er[ek]));
   var line1=it.name;
   if(it.dmg!=null){line1+=" ("+it.dmg+" "+(it.wt==="magical"?"MAG":"PHY");if(it.el&&it.el!=="Neutre")line1+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line1+=")";}
-  return(<div><div style={{fontWeight:600,fontSize:props.fs||14,color:rc}}>{line1}</div>
-    {parts.length>0&&<div style={{fontSize:(props.fs||14)-2,color:"#4ade80",marginTop:1}}>{parts.join(", ")}</div>}</div>);
+  return(<div style={{position:"relative"}}>
+    {it.rank&&<span style={{position:"absolute",top:-2,right:0,fontSize:18,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>Rg{it.rank}</span>}
+    <div style={{fontWeight:600,fontSize:props.fs||14,color:rc,paddingRight:it.rank?50:0}}>{line1}</div>
+    {parts.length>0&&<div style={{fontSize:(props.fs||14)-2,color:"#4ade80",marginTop:1}}>{parts.join(", ")}</div>}
+  </div>);
 }
 
 function StatRow(props){
@@ -278,7 +283,7 @@ export default function Game(){
       if(t.every(function(h){return h.hp<=0;})){setLogs(function(l){return l.concat([{t:"💀 Défaite..."}]);});return Object.assign({},d,{team:t,en:en,rG:rG,rX:rX,ph:"result",tI:tI});}
       if(en.every(function(e){return e.hp<=0;})){
         var bon=Math.floor(15*DG[d.ti].rw);setLogs(function(l){return l.concat([{t:"✨ Victoire! +"+bon+"g"}]);});
-        var eq=[].concat(rE);if(Math.random()<.2){var dr=Object.assign({},pick(ALL_EQ),{uid:uid()});eq.push(dr);setLogs(function(l){return l.concat([{t:"  🎁 "+dr.name+"!"}]);});}
+        var eq=[].concat(rE);var dr=rollWeaponDrop(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  🎁 "+dr.name+" (Rg"+dr.rank+" "+(RA[dr.rarity]||{}).s+") !"}]);});}
         return Object.assign({},d,{team:t,en:en,rG:rG+bon,rX:rX,rE:eq,ph:"victory",tI:tI});}
       return Object.assign({},d,{team:t,en:en,tI:tI,rG:rG,rX:rX,rE:rE});
     });
