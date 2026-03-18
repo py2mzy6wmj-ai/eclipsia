@@ -370,8 +370,8 @@ export default function Game(){
         </div>);
       }
 
-      return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"16px 12px",maxWidth:540,margin:"0 auto"}}><style>{css}</style>
-        <div style={{animation:"fi .3s ease"}}>
+      return(<div onClick={function(e){if(e.target===e.currentTarget){setSheet(null);setSlv(false);}}} style={{minHeight:"100vh",background:"rgba(0,0,0,0.5)",padding:"16px 12px",maxWidth:540,margin:"0 auto"}}><style>{css}</style>
+        <div style={{animation:"fi .3s ease"}} onClick={function(e){e.stopPropagation();}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{fontSize:13}}>← Retour</button>
             <div style={{display:"flex",gap:6}}><button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{fontSize:15,padding:"6px 14px"}}>◀</button><button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{fontSize:15,padding:"6px 14px"}}>▶</button></div>
@@ -388,6 +388,7 @@ export default function Game(){
             <div style={{height:7,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"#a855f7",transition:"width .3s"}}/></div>
             <div style={{display:"flex",gap:6}}>
               <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:14,fontWeight:canLv?800:600}}>⬆ Monter de niveau</button>
+              <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>
             </div>
           </div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
