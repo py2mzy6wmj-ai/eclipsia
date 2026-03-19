@@ -166,7 +166,7 @@ function StatRow(props){
 }
 
 
-var INIT={gold:STARTING_GOLD,floors:0,roster:[],team:[null,null,null,null],inv:[],bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
+var INIT={gold:STARTING_GOLD,scrolls:3,floors:0,roster:[],team:[null,null,null,null],inv:[],bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
 
 export default function Game(){
   var _g=useState(function(){try{var x=localStorage.getItem("ecl8");return x?JSON.parse(x):INIT;}catch(e){return INIT;}});var g=_g[0],setG=_g[1];
@@ -193,9 +193,9 @@ export default function Game(){
   var team=useMemo(function(){return g.team.map(function(u){return u?g.roster.find(function(h){return h.uid===u;}):null;}).filter(Boolean);},[g.team,g.roster]);
   var sR=useMemo(function(){return[].concat(g.roster).sort(function(a,b){return b.rarity-a.rarity||b.level-a.level;});},[g.roster]);
 
-  var gc=Math.max(20,Math.floor(150*(1-(g.bl.taverne||0)*.02)));
+  var sc=g.scrolls||0;
   function doInvoc(n){
-    if(g.gold<gc*n)return;setGa(true);setGr(null);
+    if(sc<n)return;setGa(true);setGr(null);
     setTimeout(function(){
       var res=[],ros=[].concat(g.roster);
       for(var i=0;i<n;i++){
@@ -209,8 +209,7 @@ export default function Game(){
         else{var wp=generateWeapon(1,1,t.wt||"physical");wp.uid=uid();
           ros.push({id:t.id,uid:uid(),name:t.name,icon:t.icon,rarity:t.rarity,level:1,xp:0,equipment:{weapon:wp,armor:null,accessory:null,talisman:null}});res.push({h:t,dup:false});}
       }
-      var dupGold=res.reduce(function(a,r){return a+(r.dup?50:0);},0);
-      setG(function(p){return Object.assign({},p,{gold:p.gold-gc*n+dupGold,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
+      setG(function(p){return Object.assign({},p,{scrolls:(p.scrolls||0)-n,gold:p.gold+dupGold,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
     },n>1?1800:1000);
   }
 
@@ -231,6 +230,7 @@ export default function Game(){
     setDrag(null);
   }
   function doEquip(hu,iu){setG(function(p){var it=p.inv.find(function(i){return i.uid===iu;});var h=p.roster.find(function(r){return r.uid===hu;});if(!it||!h)return p;var inv=p.inv.filter(function(i){return i.uid!==iu;});var eq=Object.assign({},h.equipment);if(eq[it.slot])inv.push(eq[it.slot]);eq[it.slot]=it;return Object.assign({},p,{inv:inv,roster:p.roster.map(function(r){return r.uid===hu?Object.assign({},r,{equipment:eq}):r;})});});}
+  function doSell(iu){setG(function(p){var it=p.inv.find(function(i){return i.uid===iu;});if(!it)return p;var price=Math.max(1,(it.dmg||10)*(it.rank||1)*(it.rarity||1));return Object.assign({},p,{gold:p.gold+price,inv:p.inv.filter(function(i){return i.uid!==iu;})});});}
   function doUneq(hu,sl){setG(function(p){var h=p.roster.find(function(r){return r.uid===hu;});if(!h||!h.equipment[sl])return p;var nEq=Object.assign({},h.equipment);var old=nEq[sl];nEq[sl]=null;return Object.assign({},p,{inv:[].concat(p.inv,[old]),roster:p.roster.map(function(r){return r.uid!==hu?r:Object.assign({},r,{equipment:nEq});})});});}
   function doUpg(id){var u=BUP.find(function(b){return b.id===id;});var lv=g.bl[id]||0;if(!u||lv>=u.mx)return;var c=Math.floor(u.c0*Math.pow(u.cm,lv));if(g.gold<c)return;setG(function(p){var bl=Object.assign({},p.bl);bl[id]=lv+1;return Object.assign({},p,{gold:p.gold-c,bl:bl});});}
   function navSheet(dir){if(!sheet||sR.length<=1)return;var idx=sR.findIndex(function(h){return h.uid===sheet;});setSheet(sR[(idx+dir+sR.length)%sR.length].uid);setSlv(false);}
@@ -451,54 +451,95 @@ export default function Game(){
               })()}
             </div>
           </div>
-          <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-            <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Caractéristiques</div>
-            <StatRow icon="❤️" label="PV Max (PVM)" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
-            <div style={{height:6}}/>
-            <StatRow icon="⚔️" label="Force (STR)" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="💥" label="Critique (CRT)" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
-            <div style={{height:6}}/>
-            <StatRow icon="🛡️" label="Vulnérabilité Physique (PHV)" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="🔰" label="Vulnérabilité Magique (MAV)" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="💨" label="Esquive (ESQ)" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
-            <div style={{height:6}}/>
-            <StatRow icon="♻️" label="Récupération (RPV)" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
-          </div>
-          {SKILLS[hero.id]&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-            <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Compétence</div>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-              <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#c0392b,#8b1a1a)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>
-              <div>
-                <div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{SKILLS[hero.id].name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {SKILLS[hero.id].lvl}</span></div>
-                <div style={{fontSize:12,color:"var(--td)"}}>{SKILLS[hero.id].desc}</div>
+          {(function(){
+            var _cp=useState({carac:true,elem:false,degats:false,equip:false,skill:false});var cp=_cp[0],setCp=_cp[1];
+            function togP(k){setCp(function(p){var o=Object.assign({},p);o[k]=!o[k];return o;});}
+            function PH(props){return <div onClick={function(){togP(props.k);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:props.open?8:0}}>
+              <div style={{fontWeight:700,fontSize:15,color:"var(--acc)"}}>{props.label}</div>
+              <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:props.open?"rotate(180deg)":"rotate(0)"}}>▼</span>
+            </div>;}
+            var ww=gw(hero);var isMag=ww.wt==="magical";var mainStat=isMag?st.mag:st.str;
+            var dmgMin=Math.round(ww.dmg*Math.max(0.1,mainStat)*0.8);var dmgMax=Math.round(ww.dmg*Math.max(0.1,mainStat)*1.2);
+            var dmgCrit=Math.round(dmgMax*3);
+            var sk=SKILLS[hero.id];var skDmgMin=sk?Math.round(dmgMin*sk.mult):0;var skDmgMax=sk?Math.round(dmgMax*sk.mult):0;
+            return <div>
+              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+                <PH k="carac" label="Caractéristiques" open={cp.carac}/>
+                {cp.carac&&<div>
+                  <StatRow icon="❤️" label="PV Max" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
+                  <div style={{height:6}}/>
+                  <StatRow icon="⚔️" label="Force (STR)" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="💥" label="Critique (CRT)" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
+                  <div style={{height:6}}/>
+                  <StatRow icon="🛡️" label="Vulnérabilité Physique" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🔰" label="Vulnérabilité Magique" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="💨" label="Esquive" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
+                  <div style={{height:6}}/>
+                  <StatRow icon="♻️" label="Récupération" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
+                </div>}
               </div>
-            </div>
-            <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
-          </div>}
-          <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-            <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Sensibilités Élémentaires</div>
-            <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🗡️ Attaque</div>
-            <div style={{padding:"5px 0",fontSize:14,borderBottom:"1px solid #ffffff08",marginBottom:8}}>
-              Élément : {atkEl?<span style={{color:(EM[atkEl]||{}).c,fontWeight:700}}>{(EM[atkEl]||{}).i} {atkEl}</span>:<span style={{color:"#666"}}>Neutre</span>}
-              <span style={{fontSize:12,color:"#666",marginLeft:6}}>({w.name})</span>
-            </div>
-            <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🛡️ Vulnérabilités</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 16px"}}>
-              {EL.map(function(el){var v=st.er[el]!=null?st.er[el]:1;var c=erc(v);
-                return <div key={el} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:14}}>
-                  <span style={{color:"#8888bb"}}>{(EM[el]||{}).i} {el}</span>
-                  <span style={{fontFamily:"monospace",fontWeight:600,color:c}}>{fmtEV(v)}</span>
-                </div>;
-              })}
-            </div>
-          </div>
-          <div style={{background:"var(--card)",borderRadius:12,padding:14,border:"1px solid var(--brd)"}}>
-            <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Équipement</div>
-            {["weapon","armor","accessory","talisman"].map(function(sl){var it=hero.equipment?hero.equipment[sl]:null;var lb=sl==="weapon"?"🗡️ Arme":sl==="armor"?"🛡️ Armure":sl==="accessory"?"💍 Accessoire":"🔮 Talisman";
-              return <div key={sl} style={{padding:"5px 0",borderBottom:"1px solid #ffffff08"}}><span style={{fontSize:14,color:"#8888bb"}}>{lb}: </span>{it?<ItemInfo item={it} fs={14}/>:<span style={{fontSize:14,color:"#444"}}>— vide —</span>}</div>;
-            })}
-          </div>
+              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+                <PH k="elem" label="Sensibilités Élémentaires" open={cp.elem}/>
+                {cp.elem&&<div>
+                  <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🗡️ Attaque</div>
+                  <div style={{padding:"5px 0",fontSize:14,borderBottom:"1px solid #ffffff08",marginBottom:8}}>
+                    Élément : {atkEl?<span style={{color:(EM[atkEl]||{}).c,fontWeight:700}}>{(EM[atkEl]||{}).i} {atkEl}</span>:<span style={{color:"#666"}}>Neutre</span>}
+                    <span style={{fontSize:12,color:"#666",marginLeft:6}}>({ww.name})</span>
+                  </div>
+                  <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🛡️ Vulnérabilités</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 16px"}}>
+                    {EL.map(function(el){var v=st.er[el]!=null?st.er[el]:1;var c=erc(v);
+                      return <div key={el} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:14}}>
+                        <span style={{color:"#8888bb"}}>{(EM[el]||{}).i} {el}</span>
+                        <span style={{fontFamily:"monospace",fontWeight:600,color:c}}>{fmtEV(v)}</span>
+                      </div>;
+                    })}
+                  </div>
+                </div>}
+              </div>
+              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+                <PH k="degats" label="Dégâts" open={cp.degats}/>
+                {cp.degats&&<div>
+                  <div style={{fontSize:13,marginBottom:6}}>
+                    <span style={{color:"#8888bb"}}>Arme :</span> <span style={{fontWeight:600}}>{ww.name}</span> <span style={{color:"var(--td)"}}>({ww.dmg} {isMag?"MAG":"PHY"})</span>
+                  </div>
+                  <div style={{fontSize:13,marginBottom:4}}>
+                    <span style={{color:"#8888bb"}}>{isMag?"MAG":"STR"} :</span> <span style={{fontWeight:600,color:isMag?"#60a5fa":"#ef8855"}}>{fmtPM(mainStat)}</span>
+                  </div>
+                  <div style={{fontSize:13,marginBottom:4}}>
+                    <span style={{color:"#8888bb"}}>Formule :</span> <span style={{color:"var(--td)"}}>Arme × {isMag?"MAG":"STR"} × variance(0.8-1.2)</span>
+                  </div>
+                  <div style={{background:"#ffffff06",borderRadius:8,padding:10,marginTop:6}}>
+                    <div style={{fontSize:14,fontWeight:700}}>Attaque normale : <span style={{color:"#4ade80"}}>{dmgMin} — {dmgMax}</span></div>
+                    <div style={{fontSize:14,fontWeight:700,marginTop:4}}>Coup critique (×3) : <span style={{color:"#fbbf24"}}>{dmgCrit}</span></div>
+                    {sk&&<div style={{fontSize:14,fontWeight:700,marginTop:4}}>Compétence ({sk.name}) : <span style={{color:"#c0392b"}}>{skDmgMin} — {skDmgMax}</span></div>}
+                  </div>
+                </div>}
+              </div>
+              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+                <PH k="equip" label="Équipement" open={cp.equip}/>
+                {cp.equip&&<div>
+                  {["weapon","armor","accessory","talisman"].map(function(sl){var it=hero.equipment?hero.equipment[sl]:null;var lb=sl==="weapon"?"🗡️ Arme":sl==="armor"?"🛡️ Armure":sl==="accessory"?"💍 Accessoire":"🔮 Talisman";
+                    return <div key={sl} style={{padding:"5px 0",borderBottom:"1px solid #ffffff08"}}><span style={{fontSize:14,color:"#8888bb"}}>{lb}: </span>{it?<ItemInfo item={it} fs={14}/>:<span style={{fontSize:14,color:"#444"}}>— vide —</span>}</div>;
+                  })}
+                </div>}
+              </div>
+              {sk&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+                <PH k="skill" label="Compétence" open={cp.skill}/>
+                {cp.skill&&<div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                    <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#c0392b,#8b1a1a)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{sk.name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {sk.lvl}</span></div>
+                      <div style={{fontSize:12,color:"var(--td)"}}>{sk.desc}</div>
+                    </div>
+                  </div>
+                  <StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
+                </div>}
+              </div>}
+            </div>;
+          })()}
         </div>
       </div>);
     }
@@ -509,7 +550,7 @@ export default function Game(){
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
       <h1 style={{fontFamily:"Cinzel",fontSize:20,fontWeight:900,color:"var(--acc)",textShadow:"0 0 12px #c0392b30"}}>⚔️ ECLIPSIA</h1>
-      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600}}><span>💰 {g.gold.toLocaleString()}</span><span style={{fontSize:12,color:"var(--td)"}}>🏔️ {g.floors}</span></div>
+      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span style={{display:"flex",alignItems:"center",gap:4}}>📜 {g.scrolls||0}{g.gold>=1000&&<button onClick={function(){setG(function(p){return Object.assign({},p,{gold:p.gold-1000,scrolls:(p.scrolls||0)+1});});}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"var(--card)",color:"var(--t)",cursor:"pointer",fontWeight:700}}>+1 (1000g)</button>}</span><span style={{fontSize:12,color:"var(--td)"}}>🏔️ {g.floors}</span></div>
     </div>
     <div style={{display:"flex",gap:4,marginBottom:10}}>{Object.keys(TM).map(function(k){return <button key={k} className={"b "+(tab===k?"ton":"")} onClick={function(){if(!inD||k==="donjon")setTab(k);}} style={{fontSize:13,flex:1,opacity:inD&&k!=="donjon"?.3:1}}>{TM[k]}</button>;})}
       <button className="b" onClick={reset} style={{fontSize:10,color:"var(--red)",minWidth:40}}>🔄</button>
@@ -548,7 +589,7 @@ export default function Game(){
               </div>
               <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
                 <div>❤️ {hst.hp}</div>
-                {hst.str>=hst.mag?<div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)}</div>:<div style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</div>}
+                {(function(){var ww=gw(h);var isMag=ww.wt==="magical";var mult=isMag?hst.mag:hst.str;var avgDmg=Math.round(ww.dmg*Math.max(0.1,mult));return <div style={{color:isMag?"#60a5fa":"#ef8855"}}>⚔ Dégâts ({isMag?"MAG":"PHY"}) : ~{avgDmg}</div>;})()}
               </div>
             </div>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:120,color:"#444",fontSize:14}}>Emplacement vide</div>}
           </div>;
@@ -589,7 +630,7 @@ export default function Game(){
             </div>
             <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
               <div>❤️ {hst.hp}</div>
-              {hst.str>=hst.mag?<div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)}</div>:<div style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</div>}
+              {(function(){var ww=gw(h);var isMag=ww.wt==="magical";var mult=isMag?hst.mag:hst.str;var avgDmg=Math.round(ww.dmg*Math.max(0.1,mult));return <div style={{color:isMag?"#60a5fa":"#ef8855"}}>⚔ Dégâts ({isMag?"MAG":"PHY"}) : ~{avgDmg}</div>;})()}
             </div>
           </div>;
         })}
@@ -619,7 +660,8 @@ export default function Game(){
       <h3 style={{fontSize:14,color:"var(--td)",marginBottom:6}}>Inventaire ({g.inv.length})</h3>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:6}}>
         {g.inv.sort(function(a,b){var so={weapon:0,armor:1,accessory:2,talisman:3};var sa=so[a.slot]||0,sb=so[b.slot]||0;return sa-sb||b.rarity-a.rarity;}).map(function(it){
-          return <div key={it.uid} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,display:"flex",flexDirection:"column"}}>
+          return <div key={it.uid} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,display:"flex",flexDirection:"column",position:"relative"}}>
+            <button onClick={function(){doSell(it.uid);}} style={{position:"absolute",top:4,right:4,fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer",fontWeight:700}} title="Vendre">💰</button>
             <div style={{flex:1}}><ItemInfo item={it} fs={13}/></div>
             {sel&&<button className="b bgr" style={{fontSize:11,width:"100%",marginTop:8}} onClick={function(){doEquip(sel,it.uid);}}>Équiper</button>}</div>;
         })}
@@ -712,11 +754,11 @@ export default function Game(){
     </div>}
 
     {tab==="invocation"&&<div style={{animation:"fi .3s ease",textAlign:"center"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:4}}>🎲 Invocation</h2>
-      <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Coût: {gc}g · Oracle Nv.{g.bl.oracle||0}</div>
+      <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Coût: 1 📜 par invocation · Stock: {sc} parchemins</div>
       <div style={{width:140,height:140,margin:"0 auto 16px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:50,background:"radial-gradient(circle,#c0392b12,transparent)",border:"2px solid var(--acc)",animation:ga?"sp .5s linear infinite":"gw 3s infinite"}}>{ga?"✨":"🎲"}</div>
       <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:14}}>
-        <button className="b bg" disabled={g.gold<gc||ga} onClick={function(){doInvoc(1);}} style={{padding:"8px 20px",fontSize:14}}>×1 ({gc}g)</button>
-        <button className="b bg" disabled={g.gold<gc*10||ga} onClick={function(){doInvoc(10);}} style={{padding:"8px 20px",fontSize:14}}>×10 ({(gc*10).toLocaleString()}g)</button>
+        <button className="b bg" disabled={sc<1||ga} onClick={function(){doInvoc(1);}} style={{padding:"8px 20px",fontSize:14}}>×1 (1📜)</button>
+        <button className="b bg" disabled={sc<10||ga} onClick={function(){doInvoc(10);}} style={{padding:"8px 20px",fontSize:14}}>×10 (10📜)</button>
       </div>
       {gr&&!ga&&<div style={{background:"var(--card)",borderRadius:14,padding:14,maxWidth:440,margin:"0 auto",border:"1px solid var(--acc)",animation:"fi .4s ease"}}>
         {Array.isArray(gr)?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(85px,1fr))",gap:4}}>
@@ -733,7 +775,7 @@ export default function Game(){
           {!gr.dup&&<div style={{fontSize:14,color:"#4ade80",marginTop:6,fontWeight:700}}>✨ NOUVEAU !</div>}
         </div>}
       </div>}
-      <div style={{marginTop:14,fontSize:12,color:"var(--td)"}}>{Object.keys(RA).map(function(r){return <span key={r} style={{marginRight:10,color:RA[r].c}}>{RA[r].n}: {Math.round(RA[r].r*100)}%</span>;})}</div>
+      <div style={{marginTop:14,fontSize:12,color:"var(--td)"}}>{Object.keys(RA).map(function(r){var pct=RA[r].r*100;var txt=pct>=1?Math.round(pct)+"%":pct+"%";return <span key={r} style={{marginRight:10,color:RA[r].c}}>{RA[r].n}: {txt}</span>;})}</div>
     </div>}
   </div>);
 }
