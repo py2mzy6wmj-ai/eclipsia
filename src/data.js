@@ -22,7 +22,7 @@ export var PORTRAIT_BASE = "./portraits/";
 // Chaque compétence a un niveau (lvl), les effets peuvent scale avec le niveau plus tard.
 
 export var SKILLS = {
-  syrio:   { name: "Coup fulgurant",    type: "pAtk", mult: 3,   cd: 8, desc: "Attaque physique ×3", lvl: 1 },
+  syrio:   { name: "Coup fulgurant",    type: "pAtk", mult: 3,   cd: 8, desc: "Coup puissant qui inflige 300% de dégats de base", lvl: 1 },
   kael:    { name: "Frappe sanglante",   type: "pAtk", mult: 2.5, cd: 7, desc: "Attaque physique ×2.5", lvl: 1 },
   lyra:    { name: "Tir perçant",        type: "pAtk", mult: 2,   cd: 6, desc: "Attaque physique ×2", lvl: 1 },
   mira:    { name: "Nova ardente",       type: "mAtk", mult: 3,   cd: 8, desc: "Attaque magique ×3", lvl: 1 },
