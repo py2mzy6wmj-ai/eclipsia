@@ -255,7 +255,7 @@ export default function Game(){
       if(ev.tp==="heal"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25))});});detail="L'équipe récupère 25% de PV.";}
       if(ev.tp==="mpFull"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{cd:0});});detail="Toutes les compétences sont rechargées !";}
       if(ev.tp==="trap"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.max(1,h.hp-Math.floor(h.hpMax*.12))});});detail="L'équipe perd 12% de PV !";}
-      if(ev.tp==="buff"){t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.03})});});detail="Force de l'équipe augmentée !";}
+      if(ev.tp==="buff"){t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.05})});});detail="Force de l'équipe augmentée (+5%) !";ex.buffs=(dun.buffs||0)+1;}
       if(ev.tp==="gold"){var gv=15+Math.floor(Math.random()*35);ex.rG=(dun.rG||0)+gv;detail="L'équipe trouve "+gv+" pièces d'or !";}
       if(ev.tp==="xp"){ex.bX=(dun.bX||0)+12;detail="L'équipe gagne 12 XP bonus !";}
       setDun(function(d){return Object.assign({},d,ex,{fl:nf,ph:"event",team:t,evtText:ev.t,evtDetail:detail});});setLogs(function(l){return l.concat([{t:ev.t}]);});return;
@@ -645,8 +645,11 @@ export default function Game(){
       </div>}
       {dun&&<div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX}</div></div>
-          <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🚪 Fuir</button>
+          <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            {au&&<span style={{fontSize:16,animation:"sp 1s linear infinite",display:"inline-block"}}>⚙️</span>}
+            <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🚪 Fuir</button>
+          </div>
         </div>
         <div style={{background:"var(--bg2)",borderRadius:12,padding:10,marginBottom:6,border:"1px solid var(--brd)",minHeight:280,display:"flex",alignItems:"center",justifyContent:"center"}}>
           {dun.ph==="combat"&&<div style={{width:"100%"}}>
@@ -654,7 +657,7 @@ export default function Game(){
             <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginTop:8}}>{dun.team.map(function(h){return <Unit key={h.uid} u={h} act={dun.tO[dun.tI%dun.tO.length]===h.uid}/>;})}</div>
           </div>}
-          {dun.ph==="result"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)"}}>💀 Défaite</div><button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:12}}>Retour</button></div>}
+          {dun.ph==="result"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)",marginBottom:8}}>💀 Défaite</div><div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {(dun.rE||[]).length} objets récupérés</div><button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:4}}>Retour</button></div>}
           {dun.ph==="event"&&<div style={{textAlign:"center"}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center"}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
