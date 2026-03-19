@@ -10,8 +10,8 @@ export var EM = { Feu: { i: "🔥", c: "#ef4444" }, Terre: { i: "🪨", c: "#a3a
 export var defER = function () { return { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1, Ténèbres: 1 }; };
 export var RA = { 1: { n: "Commun", s: "★", c: "#8899aa", r: 0.75 }, 2: { n: "Rare", s: "★★", c: "#5dade2", r: 0.20 }, 3: { n: "Épique", s: "★★★", c: "#a855f7", r: 0.03 }, 4: { n: "Légendaire", s: "★★★★", c: "#f59e0b", r: 0.015 }, 5: { n: "Mythique", s: "★★★★★", c: "#ef4444", r: 0.005 } };
 
-// ↓↓↓ URL DES PORTRAITS (Supabase Storage) ↓↓↓
-export var PORTRAIT_BASE = "https://bigxhzfotfwfdwdpecyj.supabase.co/storage/v1/object/public/portraits/";
+// ↓↓↓ URL DES PORTRAITS (dossier public/portraits/ du repo) ↓↓↓
+export var PORTRAIT_BASE = "./portraits/";
 
 // ═══════════════════════════════════════════════════════════════
 //  COMPÉTENCES
