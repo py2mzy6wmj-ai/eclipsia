@@ -241,7 +241,7 @@ export default function Game(){
     if(!team.length)return;
     var t=team.map(function(h){var s=cs(h,g.bl);return Object.assign({},h,{hp:s.hp,stats:{str:s.str,mag:s.mag,crit:s.crit,phv:s.phv,dodge:s.dodge,mav:s.mav},hpMax:s.hp,isHero:true,er:s.er,rgHp:s.rgHp,rel:s.rel,cd:0});});
     setDun({ti:ti,fl:-1,ph:"explore",team:t,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[]});
-    setLogs([{t:"🏰 "+DG[ti].name}]);setTab("donjon");setAu(false);setTgt(null);
+    setLogs([{t:"--- "+DG[ti].name+" ---",tp:"info"}]);setTab("donjon");setAu(false);setTgt(null);
   }
   function nxtFl(){
     if(!dun)return;var nf=dun.fl+1;
@@ -258,14 +258,14 @@ export default function Game(){
       if(ev.tp==="buff"){t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.05})});});detail="Force de l'équipe augmentée (+5%) !";ex.buffs=(dun.buffs||0)+1;}
       if(ev.tp==="gold"){var gv=15+Math.floor(Math.random()*35);ex.rG=(dun.rG||0)+gv;detail="L'équipe trouve "+gv+" pièces d'or !";}
       if(ev.tp==="xp"){ex.bX=(dun.bX||0)+12;detail="L'équipe gagne 12 XP bonus !";}
-      setDun(function(d){return Object.assign({},d,ex,{fl:nf,ph:"event",team:t,evtText:ev.t,evtDetail:detail});});setLogs(function(l){return l.concat([{t:ev.t}]);});return;
+      setDun(function(d){return Object.assign({},d,ex,{fl:nf,ph:"event",team:t,evtText:ev.t,evtDetail:detail});});setLogs(function(l){return l.concat([{t:"───────────────"},{t:ev.t,tp:"event"}]);});return;
     }
     var isBoss=stepType==="boss";
     var cnt=step.count||null;
     var en=spawn(nf,dun.ti,isBoss,cnt);
     var ord=[].concat(t.filter(function(h){return h.hp>0;}).map(function(h){return h.uid;}),en.map(function(e){return e.uid;})).sort(function(){return Math.random()-.5;});
     setDun(function(d){return Object.assign({},d,{fl:nf,ph:"combat",team:t,en:en,tO:ord,tI:0});});setTgt(null);
-    setLogs(function(l){return l.concat([{t:"⚔️ Étage "+(nf+1)+" — "+en.map(function(e){return e.icon+e.name+(e.boss?" (BOSS)":"");}).join(", ")}]);});
+    setLogs(function(l){return l.concat([{t:"───────────────"},{t:"Étage "+(nf+1)+" — "+en.map(function(e){return e.name+(e.boss?" (BOSS)":"");}).join(", "),tp:"info"}]);});
   }
 
   function doTurn(){
@@ -281,7 +281,7 @@ export default function Game(){
       }
       if(!unit)return d;
       // Regen HP when it's a hero's turn
-      if(isH&&unit.rgHp){var rh=Math.floor(unit.hpMax*(unit.rgHp||0));if(rh>0&&unit.hp<unit.hpMax){unit.hp=Math.min(unit.hpMax,unit.hp+rh);t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{hp:unit.hp}):h;});setLogs(function(l){return l.concat([{t:"  ♻️ "+unit.name+" récupère "+rh+" PV"}]);});}}
+      if(isH&&unit.rgHp){var rh=Math.floor(unit.hpMax*(unit.rgHp||0));if(rh>0&&unit.hp<unit.hpMax){unit.hp=Math.min(unit.hpMax,unit.hp+rh);t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{hp:unit.hp}):h;});setLogs(function(l){return l.concat([{t:"  "+unit.name+" récupère "+rh+" PV",tp:"info"}]);});}}
       if(isH){
         var ae=en.filter(function(e){return e.hp>0;});if(!ae.length)return d;
         var target=ae.find(function(e){return e.uid===tgt&&e.hp>0;})||pick(ae);
@@ -291,30 +291,32 @@ export default function Game(){
         var baseDmg=useSkill?w.dmg*sk.mult:w.dmg;
         var skWt=useSkill&&sk.type==="mAtk"?"magical":w.wt;
         var res=skWt==="magical"?mDmg(unit,target,baseDmg,w.el):pDmg(unit,target,baseDmg,w.el);
-        var ln=useSkill?("  ⚡ "+unit.icon+unit.name+" — "+sk.name+" → "+target.icon+target.name):("  "+unit.icon+unit.name+" → "+target.icon+target.name);
-        if(res.hit){target.hp-=res.dmg;en=en.map(function(e){return e.uid===target.uid?Object.assign({},e,{hp:target.hp}):e;});ln+=" : -"+res.dmg+"PV";if(res.msg)ln+=" ("+res.msg+")";
+        var ln=useSkill?("  "+unit.name+" — "+sk.name+" → "+target.name):("  "+unit.name+" → "+target.name);
+        var logTp=useSkill?"skill":"heroAtk";
+        if(res.hit){target.hp-=res.dmg;en=en.map(function(e){return e.uid===target.uid?Object.assign({},e,{hp:target.hp}):e;});ln+=" : -"+res.dmg+"PV";if(res.msg)ln+=" ("+res.msg+")";if(res.st.cr)logTp="skill";
           setFloats(function(f){return f.concat([{uid:target.uid,val:"-"+res.dmg,color:res.st.cr?"#fbbf24":useSkill?"#c0392b":"#ffffff",id:uid()}]);});}
-        else{ln+=" : "+res.msg;}
-        setLogs(function(l){return l.concat([{t:ln,st:res.st}]);});
+        else{ln+=" : "+res.msg;logTp="miss";}
+        setLogs(function(l){return l.concat([{t:ln,st:res.st,tp:logTp}]);});
         // Cooldown management
         if(useSkill){t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{cd:unit.rel||8}):h;});}
         else{t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{cd:Math.max(0,(h.cd||0)-1)}):h;});}
-        if(target.hp<=0){setLogs(function(l){return l.concat([{t:"  💥 "+target.name+" vaincu! +"+target.xp+"xp +"+target.gold+"g"}]);});rX+=target.xp;rG+=target.gold;}
+        if(target.hp<=0){setLogs(function(l){return l.concat([{t:"  "+target.name+" vaincu! +"+target.xp+"xp +"+target.gold+"g",tp:"kill"}]);});rX+=target.xp;rG+=target.gold;}
       }else{
         var ah=t.filter(function(h){return h.hp>0;});if(!ah.length)return d;
         var target=pick(ah);
         var res=unit.at==="magical"?mDmg({stats:unit.stats},target,unit.dmg,"Neutre"):pDmg({stats:unit.stats},target,unit.dmg,"Neutre");
-        var ln="  "+unit.icon+unit.name+" → "+target.icon+target.name;
+        var ln="  "+unit.name+" → "+target.name;
+        var logTp2="enemyAtk";
         if(res.hit){target.hp-=res.dmg;t=t.map(function(h){return h.uid===target.uid?Object.assign({},h,{hp:target.hp}):h;});ln+=" : -"+res.dmg+"PV";if(res.msg)ln+=" ("+res.msg+")";
           setFloats(function(f){return f.concat([{uid:target.uid,val:"-"+res.dmg,color:"#ffffff",id:uid()}]);});}
-        else{ln+=" : "+res.msg;}
-        setLogs(function(l){return l.concat([{t:ln,st:res.st}]);});
-        if(target.hp<=0)setLogs(function(l){return l.concat([{t:"  ☠️ "+target.name+" tombe!"}]);});
+        else{ln+=" : "+res.msg;logTp2="miss";}
+        setLogs(function(l){return l.concat([{t:ln,st:res.st,tp:logTp2}]);});
+        if(target.hp<=0)setLogs(function(l){return l.concat([{t:"  "+target.name+" tombe!",tp:"heroDeath"}]);});
       }
-      if(t.every(function(h){return h.hp<=0;})){setLogs(function(l){return l.concat([{t:"💀 Défaite..."}]);});return Object.assign({},d,{team:t,en:en,rG:rG,rX:rX,ph:"result",tI:tI});}
+      if(t.every(function(h){return h.hp<=0;})){setLogs(function(l){return l.concat([{t:"Défaite...",tp:"heroDeath"}]);});return Object.assign({},d,{team:t,en:en,rG:rG,rX:rX,ph:"result",tI:tI});}
       if(en.every(function(e){return e.hp<=0;})){
-        var bon=Math.floor(15*DG[d.ti].rw);setLogs(function(l){return l.concat([{t:"✨ Victoire! +"+bon+"g"}]);});
-        var eq=[].concat(rE);var dr=rollWeaponDrop(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  🎁 "+dr.name+" (Rg"+dr.rank+" "+(RA[dr.rarity]||{}).s+") !"}]);});}
+        var bon=Math.floor(15*DG[d.ti].rw);setLogs(function(l){return l.concat([{t:"Victoire! +"+bon+"g",tp:"kill"}]);});
+        var eq=[].concat(rE);var dr=rollWeaponDrop(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  Loot: "+dr.name+" (Rg"+dr.rank+" "+(RA[dr.rarity]||{}).s+") !",tp:"info"}]);});}
         return Object.assign({},d,{team:t,en:en,rG:rG+bon,rX:rX,rE:eq,ph:"victory",tI:tI});}
       return Object.assign({},d,{team:t,en:en,tI:tI,rG:rG,rX:rX,rE:rE});
     });
@@ -331,7 +333,7 @@ export default function Game(){
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
       var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0))*xm);
       setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
-      setLogs(function(l){return l.concat([{t:"─────────────"},{t:"🎉 DONJON TERMINÉ !"},{t:"💰 +"+tg+" or · ⭐ +"+tx+" XP · 🎁 "+rE.length+" objets"}]);});
+      setLogs(function(l){return l.concat([{t:"─────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"💰 +"+tg+" or · ⭐ +"+tx+" XP · 🎁 "+rE.length+" objets"}]);});
       return;
     }
     // Actually claim rewards and close
@@ -340,7 +342,7 @@ export default function Game(){
     var tx2=won?dun.rX:Math.floor((dun.rX+(dun.bX||0))*xm2);
     var fl=dun.fl+1;
     setG(function(p){return Object.assign({},p,{gold:p.gold+tg2,floors:p.floors+fl,roster:p.roster.map(function(h){return p.team.indexOf(h.uid)>=0?Object.assign({},h,{xp:h.xp+tx2}):h;}),inv:[].concat(p.inv,dun.rE||[])});});
-    if(!won)setLogs(function(l){return l.concat([{t:"─────────────"},{t:"💀 Fin"},{t:"Or:+"+tg2+" XP:+"+tx2+" Étapes:"+fl}]);});
+    if(!won)setLogs(function(l){return l.concat([{t:"─────────────"},{t:"Fin",tp:"heroDeath"},{t:"Or:+"+tg2+" XP:+"+tx2+" Étapes:"+fl}]);});
     setDun(null);setAu(false);
   }
   useEffect(function(){
@@ -719,38 +721,42 @@ export default function Game(){
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
         {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&!au&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
-        <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",overflowX:"visible",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative",zIndex:50}}>
-          {logs.map(function(l,i){var txt=l.t||"";
+        <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
+          {logs.map(function(l,i){var txt=l.t||"";var tp=l.tp||"";
             var col;
-            if(txt.indexOf("CRIT")>=0)col="#fbbf24"; // crit = yellow/gold
-            else if(txt.indexOf("RATÉ")>=0||txt.indexOf("ESQUIVÉ")>=0||txt.indexOf("IMMUN")>=0||txt.indexOf(": -0")>=0)col="#ef4444"; // miss/dodge/0 = red
-            else if(txt.indexOf("💥")>=0||txt.indexOf("☠️")>=0)col="#ff8888"; // kills
-            else if(txt.indexOf("✨")>=0||txt.indexOf("🎉")>=0||txt.indexOf("🏕️")>=0||txt.indexOf("⛲")>=0||txt.indexOf("🔮")>=0||txt.indexOf("💰")>=0||txt.indexOf("📚")>=0||txt.indexOf("🎁")>=0)col="#4ade80"; // events = green
-            else if(txt.indexOf("⚠️")>=0||txt.indexOf("💀")>=0)col="#ef4444"; // trap/defeat = red
-            else col="#ddddf4"; // normal attacks = white (large)
+            if(tp==="heroAtk")col="#90ee90"; // hero attack = light green
+            else if(tp==="enemyAtk")col="#ff8888"; // enemy attack = light red
+            else if(tp==="kill")col="#22ff22"; // enemy killed = flash green
+            else if(tp==="heroDeath")col="#ef2020"; // hero killed = intense red
+            else if(tp==="skill")col="#fbbf24"; // crit/skill = yellow
+            else if(tp==="miss")col="#ff8888"; // miss/dodge = light red
+            else if(tp==="event")col="#60a5fa"; // events = blue
+            else if(tp==="info")col="#ddddf4"; // info = white
+            else if(txt.indexOf("───")>=0)col="#444"; // separator
+            else col="#ddddf4";
             return <div key={i} style={{color:col,position:"relative",cursor:l.st?"help":"default",padding:"1px 0"}}
               onMouseEnter={function(){if(l.st)setHl(i);}} onMouseLeave={function(){setHl(null);}}>
               {txt}
-              {hl===i&&l.st&&<div style={{position:"fixed",zIndex:300,background:"#1a1818f8",border:"1px solid #c0392b60",borderRadius:10,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",width:340,maxWidth:"90vw",pointerEvents:"none",bottom:220,left:16,whiteSpace:"pre-line",boxShadow:"0 4px 20px rgba(0,0,0,0.8)"}}>
-                <div style={{fontWeight:700,color:"#c0392b",marginBottom:6,fontSize:13}}>Détail du calcul</div>
-                {l.st.res==="miss"&&"Précision "+Math.round((l.st.prec||.95)*100)+"% → Raté !"}
-                {l.st.res==="dodged"&&"Esquive "+Math.round((l.st.dg||0)*100)+"% → Esquivé !"}
-                {l.st.res==="hit"&&<div>
-                  {"Dégâts "+(l.st.wt==="magical"?"du sort":"de l'arme")+" : "+l.st.bd+" ("+(l.st.wt==="magical"?"magique":"physique")+")\n"}
-                  {l.st.strB!=null&&"STR attaquant : "+fmtPM(l.st.strB+1)+"\n"}
-                  {l.st.magB!=null&&"MAG attaquant : "+fmtPM(l.st.magB+1)+"\n"}
-                  {l.st.phvB!=null&&"PHV cible : "+fmtPM(l.st.phvB+1)+"\n"}
-                  {l.st.mavB!=null&&"MAV cible : "+fmtPM(l.st.mavB+1)+"\n"}
-                  {"Multiplicateur combiné : "+fmtPM(l.st.mult)+"\n"}
-                  {l.st.v!=null&&"Variance : "+Math.round(l.st.v*100)+"%\n"}
-                  {l.st.cr&&"Critique : ×3\n"}
-                  {l.st.eRes!=null&&l.st.eRes!==1&&("Vuln. élém. ("+l.st.el+") : "+fmtEV(l.st.eRes)+"\n")}
-                  {"= "+l.st.dmg+" dégâts"}
-                </div>}
-              </div>}
             </div>;
           })}
         </div>
+        {hl!=null&&logs[hl]&&logs[hl].st&&<div style={{background:"#1a1818f8",border:"1px solid #c0392b60",borderRadius:10,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",whiteSpace:"pre-line",boxShadow:"0 4px 20px rgba(0,0,0,0.8)",marginTop:4}}>
+          <div style={{fontWeight:700,color:"#c0392b",marginBottom:6,fontSize:13}}>Détail du calcul</div>
+          {logs[hl].st.res==="miss"&&"Précision "+Math.round((logs[hl].st.prec||.95)*100)+"% → Raté !"}
+          {logs[hl].st.res==="dodged"&&"Esquive "+Math.round((logs[hl].st.dg||0)*100)+"% → Esquivé !"}
+          {logs[hl].st.res==="hit"&&<div>
+            {"Dégâts "+(logs[hl].st.wt==="magical"?"du sort":"de l'arme")+" : "+logs[hl].st.bd+" ("+(logs[hl].st.wt==="magical"?"magique":"physique")+")\n"}
+            {logs[hl].st.strB!=null&&"STR attaquant : "+fmtPM(logs[hl].st.strB+1)+"\n"}
+            {logs[hl].st.magB!=null&&"MAG attaquant : "+fmtPM(logs[hl].st.magB+1)+"\n"}
+            {logs[hl].st.phvB!=null&&"PHV cible : "+fmtPM(logs[hl].st.phvB+1)+"\n"}
+            {logs[hl].st.mavB!=null&&"MAV cible : "+fmtPM(logs[hl].st.mavB+1)+"\n"}
+            {"Multiplicateur combiné : "+fmtPM(logs[hl].st.mult)+"\n"}
+            {logs[hl].st.v!=null&&"Variance : "+Math.round(logs[hl].st.v*100)+"%\n"}
+            {logs[hl].st.cr&&"Critique : ×3\n"}
+            {logs[hl].st.eRes!=null&&logs[hl].st.eRes!==1&&("Vuln. élém. ("+logs[hl].st.el+") : "+fmtEV(logs[hl].st.eRes)+"\n")}
+            {"= "+logs[hl].st.dmg+" dégâts"}
+          </div>}
+        </div>}
       </div>}
     </div>}
 
