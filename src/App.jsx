@@ -209,6 +209,7 @@ export default function Game(){
         else{var wp=generateWeapon(1,1,t.wt||"physical");wp.uid=uid();
           ros.push({id:t.id,uid:uid(),name:t.name,icon:t.icon,rarity:t.rarity,level:1,xp:0,equipment:{weapon:wp,armor:null,accessory:null,talisman:null}});res.push({h:t,dup:false});}
       }
+      var dupGold=res.reduce(function(a,r){return a+(r.dup?50:0);},0);
       setG(function(p){return Object.assign({},p,{scrolls:(p.scrolls||0)-n,gold:p.gold+dupGold,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
     },n>1?1800:1000);
   }
