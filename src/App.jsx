@@ -99,7 +99,7 @@ function mDmg(a,d,bd,el){
   var msgs=[];if(cr)msgs.push("CRIT");if(eRes>1.01)msgs.push("FAIBLE");if(eRes<.99&&eRes>0)msgs.push("RÉSIST");if(eRes===0)msgs.push("IMMUN");
   return{dmg:dmg,msg:msgs.join(", "),hit:true,st:{bd:bd,wt:"magical",el:el,res:"hit",magB:magB,mavB:mavB,mult:mult,v:v,cr:cr,eRes:eRes,dmg:dmg}};
 }
-function spawn(fl,ti,isBoss){
+function spawn(fl,ti,isBoss,cnt){
   var d=DG[ti],m=d.m*(1+fl*0.08);
   var pool;
   if(isBoss){
@@ -109,7 +109,7 @@ function spawn(fl,ti,isBoss){
     pool=(d.enemies||[]).map(function(id){return ENM.find(function(e){return e.id===id;});}).filter(Boolean);
     if(!pool.length)pool=ENM;
   }
-  var n=isBoss?1:1+Math.floor(Math.random()*2);
+  var n=isBoss?1:(cnt?cnt[0]+Math.floor(Math.random()*(cnt[1]-cnt[0]+1)):1+Math.floor(Math.random()*2));
   var out=[];for(var i=0;i<n;i++){var t=pick(pool);var hpM=Math.floor(t.hp*m);
     out.push({name:t.name,icon:t.icon,uid:uid(),hpMax:hpM,hp:hpM,dmg:Math.floor(t.dmg*m),at:t.at,xp:Math.floor(t.xp*m),gold:Math.floor(t.gold*m),boss:t.boss||false,stats:{str:t.str,mag:t.mag,crit:t.crit,phv:t.phv,dodge:t.dodge,mav:t.mav},er:Object.assign({},t.er)});}
   return out;
@@ -249,18 +249,20 @@ export default function Game(){
     if(nf>=dgDef.structure.length){endDun(true);return;}
     var t=dun.team.map(function(h){if(h.hp<=0)return h;return Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*(h.rgHp||0)))});});
     var step=dgDef.structure[nf];
-    if(step==="event"){
-      var ev=pick(EVT);var ex={};
-      if(ev.tp==="heal")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25))});});
-      if(ev.tp==="mpFull")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{cd:0});});
-      if(ev.tp==="trap")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.max(1,h.hp-Math.floor(h.hpMax*.12))});});
-      if(ev.tp==="buff")t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.03})});});
-      if(ev.tp==="gold")ex.rG=(dun.rG||0)+15+Math.floor(Math.random()*35);
-      if(ev.tp==="xp")ex.bX=(dun.bX||0)+12;
-      setDun(function(d){return Object.assign({},d,ex,{fl:nf,ph:"event",team:t});});setLogs(function(l){return l.concat([{t:ev.t}]);});return;
+    var stepType=step.type||step;
+    if(stepType==="event"){
+      var ev=pick(EVT);var ex={};var detail="";
+      if(ev.tp==="heal"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25))});});detail="L'équipe récupère 25% de PV.";}
+      if(ev.tp==="mpFull"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{cd:0});});detail="Toutes les compétences sont rechargées !";}
+      if(ev.tp==="trap"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.max(1,h.hp-Math.floor(h.hpMax*.12))});});detail="L'équipe perd 12% de PV !";}
+      if(ev.tp==="buff"){t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.03})});});detail="Force de l'équipe augmentée !";}
+      if(ev.tp==="gold"){var gv=15+Math.floor(Math.random()*35);ex.rG=(dun.rG||0)+gv;detail="L'équipe trouve "+gv+" pièces d'or !";}
+      if(ev.tp==="xp"){ex.bX=(dun.bX||0)+12;detail="L'équipe gagne 12 XP bonus !";}
+      setDun(function(d){return Object.assign({},d,ex,{fl:nf,ph:"event",team:t,evtText:ev.t,evtDetail:detail});});setLogs(function(l){return l.concat([{t:ev.t}]);});return;
     }
-    var isBoss=step==="boss";
-    var en=spawn(nf,dun.ti,isBoss);
+    var isBoss=stepType==="boss";
+    var cnt=step.count||null;
+    var en=spawn(nf,dun.ti,isBoss,cnt);
     var ord=[].concat(t.filter(function(h){return h.hp>0;}).map(function(h){return h.uid;}),en.map(function(e){return e.uid;})).sort(function(){return Math.random()-.5;});
     setDun(function(d){return Object.assign({},d,{fl:nf,ph:"combat",team:t,en:en,tO:ord,tI:0});});setTgt(null);
     setLogs(function(l){return l.concat([{t:"⚔️ Étage "+(nf+1)+" — "+en.map(function(e){return e.icon+e.name+(e.boss?" (BOSS)":"");}).join(", ")}]);});
@@ -391,7 +393,7 @@ export default function Game(){
       var xn=xpN(hero.level,hero.rarity);var canLv=hero.xp>=xn;
       var inTeam=g.team.indexOf(hero.uid)>=0;
       var atkEl=w.el&&w.el!=="Neutre"?w.el:null;
-      function mkTip(key){var arr=st._s[key];if(!arr||!arr.length)return null;var total=key==="hp"||key==="mp"?st[key]:fmtPM(st[key]);return arr.join("\n")+"\n= "+total;}
+      function mkTip(key){var arr=st._s[key];if(!arr||!arr.length)return null;var total=key==="hp"||key==="rel"?st[key]:key==="rgHp"?fmtPct(st[key]):fmtPM(st[key]);return arr.join("\n")+"\n= "+total;}
 
       if(slv&&canLv){
         var sN=cs(Object.assign({},hero,{level:hero.level+1}),g.bl);
@@ -401,14 +403,23 @@ export default function Game(){
             <div style={{fontFamily:"Cinzel",fontSize:22,fontWeight:800,color:"#c0392b"}}>Niveau {hero.level} → {hero.level+1}</div>
             <div style={{fontSize:15,color:"#8888bb",marginTop:4,marginBottom:16}}>{hero.name}</div>
             <div style={{textAlign:"left",maxWidth:360,margin:"0 auto"}}>
-              <StatRow icon="❤️" label="PV Max (PVM)" val={st.hp} nv={sN.hp} type="flat"/>
-              <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours"/>
-              <StatRow icon="⚔️" label="Force (STR)" val={st.str} nv={sN.str} type="pm"/>
-              <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} nv={sN.mag} type="pm"/>
-              <StatRow icon="💥" label="Critique (CRT)" val={st.crit} nv={sN.crit} type="pct"/>
-              <StatRow icon="🛡️" label="Vuln. Physique (PHV)" val={st.phv} nv={sN.phv} type="pmInv"/>
-              <StatRow icon="🔰" label="Vuln. Magique (MAV)" val={st.mav} nv={sN.mav} type="pmInv"/>
-              <StatRow icon="💨" label="Esquive (ESQ)" val={st.dodge} nv={sN.dodge} type="pct"/>
+              {(function(){var rows=[];
+                function addIf(icon,label,v,nv,type){
+                  var dA,dB;
+                  if(type==="flat"){dA=String(Math.floor(v));dB=String(Math.floor(nv));if(dA===dB)return;}
+                  else if(type==="pm"||type==="pmInv"){dA=fmtPM(v);dB=fmtPM(nv);if(dA===dB)return;}
+                  else{dA=fmtPct(v);dB=fmtPct(nv);if(dA===dB)return;}
+                  rows.push({icon:icon,label:label,val:v,nv:nv,type:type});
+                }
+                addIf("❤️","PV Max",st.hp,sN.hp,"flat");
+                addIf("⚔️","Force (STR)",st.str,sN.str,"pm");
+                addIf("🔮","Magie (MAG)",st.mag,sN.mag,"pm");
+                addIf("💥","Critique (CRT)",st.crit,sN.crit,"pct");
+                addIf("🛡️","Vulnérabilité Physique",st.phv,sN.phv,"pmInv");
+                addIf("🔰","Vulnérabilité Magique",st.mav,sN.mav,"pmInv");
+                addIf("💨","Esquive",st.dodge,sN.dodge,"pct");
+                return rows.map(function(r,i){return <StatRow key={i} icon={r.icon} label={r.label} val={r.val} nv={r.nv} type={r.type}/>;});
+              })()}
             </div>
             <div style={{display:"flex",gap:8,marginTop:16,justifyContent:"center"}}>
               <button className="b bgr glow" onClick={function(){doLvUp(hero.uid);setSlv(false);}} style={{padding:"10px 28px",fontSize:15}}>✓ Confirmer</button>
@@ -442,7 +453,6 @@ export default function Game(){
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Caractéristiques</div>
             <StatRow icon="❤️" label="PV Max (PVM)" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
             <div style={{height:6}}/>
             <StatRow icon="⚔️" label="Force (STR)" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
             <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
@@ -452,18 +462,18 @@ export default function Game(){
             <StatRow icon="🔰" label="Vulnérabilité Magique (MAV)" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
             <StatRow icon="💨" label="Esquive (ESQ)" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
             <div style={{height:6}}/>
-            <StatRow icon="♻️" label="Régénération PV (RPV)" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
+            <StatRow icon="♻️" label="Récupération (RPV)" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
           </div>
           {SKILLS[hero.id]&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Compétence</div>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
               <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#c0392b,#8b1a1a)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>
               <div>
                 <div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{SKILLS[hero.id].name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {SKILLS[hero.id].lvl}</span></div>
                 <div style={{fontSize:12,color:"var(--td)"}}>{SKILLS[hero.id].desc}</div>
-                <div style={{fontSize:12,color:"#c0392b",fontWeight:600}}>Recharge : {st.rel} tours</div>
               </div>
             </div>
+            <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
           </div>}
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Sensibilités Élémentaires</div>
@@ -536,8 +546,8 @@ export default function Game(){
                 <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:12,color:(RA[h.rarity]||{}).c,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
               </div>
               <div style={{fontSize:12,lineHeight:1.5}}>
-                <div>❤️ {hst.hp} &nbsp; ⏳ {hst.rel} tours</div>
-                <div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)} &nbsp; <span style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</span></div>
+                <div>❤️ {hst.hp}</div>
+                {hst.str>=hst.mag?<div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)}</div>:<div style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</div>}
               </div>
             </div>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:120,color:"#444",fontSize:14}}>Emplacement vide</div>}
           </div>;
@@ -578,8 +588,8 @@ export default function Game(){
               <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:11,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
             </div>
             <div style={{fontSize:11,lineHeight:1.4}}>
-              <span>❤️{hst.hp} ⏳{hst.rel}</span>
-              <span style={{marginLeft:8,color:scPM(hst.str,false)}}>STR {fmtPM(hst.str)}</span>
+              <span>❤️{hst.hp}</span>
+              {hst.str>=hst.mag?<span style={{marginLeft:8,color:scPM(hst.str,false)}}>STR {fmtPM(hst.str)}</span>:<span style={{marginLeft:8,color:scPM(hst.mag,false)}}>MAG {fmtPM(hst.mag)}</span>}
             </div>
           </div>;
         })}
@@ -645,7 +655,7 @@ export default function Game(){
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginTop:8}}>{dun.team.map(function(h){return <Unit key={h.uid} u={h} act={dun.tO[dun.tI%dun.tO.length]===h.uid}/>;})}</div>
           </div>}
           {dun.ph==="result"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)"}}>💀 Défaite</div><button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:12}}>Retour</button></div>}
-          {dun.ph==="event"&&<div style={{textAlign:"center"}}><div style={{fontSize:15}}>Événement !</div></div>}
+          {dun.ph==="event"&&<div style={{textAlign:"center"}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center"}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
           {dun.ph==="done"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>🎉 Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div><button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
@@ -653,7 +663,7 @@ export default function Game(){
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>
           {(function(){var cur=dun.tO[dun.tI%dun.tO.length];var ch=dun.team.find(function(h){return h.uid===cur&&h.hp>0&&h.isHero;});var sk=ch?SKILLS[ch.id]:null;var ready=sk&&ch&&ch.cd<=0;
             if(ready)return <button className="b" onClick={doTurn} style={{flex:1,fontSize:15,fontWeight:900,background:"linear-gradient(135deg,#c0392b,#8b1a1a)",color:"#fff",border:"2px solid #fbbf24",animation:"gw 1.5s infinite",textShadow:"0 0 8px #fbbf2480"}}>⚡ {sk.name}</button>;
-            return <button className="b bg" onClick={doTurn} style={{flex:1,fontSize:14}}>⚔️ Attaque{ch&&ch.cd>0?" ("+ch.cd+" ⏳)":""}</button>;
+            return <button className="b bg" onClick={doTurn} style={{flex:1,fontSize:14}}>⚔️ Attaque</button>;
           })()}
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
