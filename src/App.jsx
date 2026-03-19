@@ -183,6 +183,7 @@ export default function Game(){
   var _hl=useState(null);var hl=_hl[0],setHl=_hl[1];
   var _slv=useState(false);var slv=_slv[0],setSlv=_slv[1];
   var _hs=useState(null);var hs=_hs[0],setHs=_hs[1];
+  var _cp=useState({carac:true,elem:false,degats:false,equip:false,skill:false});var cp=_cp[0],setCp=_cp[1];
   var _drag=useState(null);var drag=_drag[0],setDrag=_drag[1];
   var _floats=useState([]);var floats=_floats[0],setFloats=_floats[1];
   var lr=useRef(null);
@@ -453,7 +454,6 @@ export default function Game(){
             </div>
           </div>
           {(function(){
-            var _cp=useState({carac:true,elem:false,degats:false,equip:false,skill:false});var cp=_cp[0],setCp=_cp[1];
             function togP(k){setCp(function(p){var o=Object.assign({},p);o[k]=!o[k];return o;});}
             function PH(props){return <div onClick={function(){togP(props.k);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:props.open?8:0}}>
               <div style={{fontWeight:700,fontSize:15,color:"var(--acc)"}}>{props.label}</div>
@@ -551,7 +551,7 @@ export default function Game(){
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
       <h1 style={{fontFamily:"Cinzel",fontSize:20,fontWeight:900,color:"var(--acc)",textShadow:"0 0 12px #c0392b30"}}>⚔️ ECLIPSIA</h1>
-      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span style={{display:"flex",alignItems:"center",gap:4}}>📜 {g.scrolls||0}{g.gold>=1000&&<button onClick={function(){setG(function(p){return Object.assign({},p,{gold:p.gold-1000,scrolls:(p.scrolls||0)+1});});}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"var(--card)",color:"var(--t)",cursor:"pointer",fontWeight:700}}>+1 (1000g)</button>}</span><span style={{fontSize:12,color:"var(--td)"}}>🏔️ {g.floors}</span></div>
+      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span style={{display:"flex",alignItems:"center",gap:4}}>📜 {g.scrolls||0}<button onClick={function(){if(g.gold>=1000)setG(function(p){return Object.assign({},p,{gold:p.gold-1000,scrolls:(p.scrolls||0)+1});});}} disabled={g.gold<1000} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:g.gold>=1000?"var(--card)":"#111",color:g.gold>=1000?"var(--t)":"#555",cursor:g.gold>=1000?"pointer":"not-allowed",fontWeight:700,opacity:g.gold>=1000?1:0.4}}>+1 (1000g)</button></span><span style={{fontSize:12,color:"var(--td)"}}>🏔️ {g.floors}</span></div>
     </div>
     <div style={{display:"flex",gap:4,marginBottom:10}}>{Object.keys(TM).map(function(k){return <button key={k} className={"b "+(tab===k?"ton":"")} onClick={function(){if(!inD||k==="donjon")setTab(k);}} style={{fontSize:13,flex:1,opacity:inD&&k!=="donjon"?.3:1}}>{TM[k]}</button>;})}
       <button className="b" onClick={reset} style={{fontSize:10,color:"var(--red)",minWidth:40}}>🔄</button>
