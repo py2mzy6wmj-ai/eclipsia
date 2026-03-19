@@ -95,10 +95,18 @@ function mDmg(a,d,bd,el){
   var msgs=[];if(eRes>1.01)msgs.push("FAIBLE");if(eRes<.99&&eRes>0)msgs.push("RÉSIST");if(eRes===0)msgs.push("IMMUN");
   return{dmg:dmg,msg:msgs.join(", "),hit:true,st:{bd:bd,wt:"magical",el:el,res:"hit",magB:magB,mavB:mavB,mult:mult,eRes:eRes,dmg:dmg}};
 }
-function spawn(fl,ti){
-  var d=DG[ti],m=d.m*(1+fl*.08),boss=(fl+1)%5===0;
-  var src=boss?BSS:ENM,n=boss?1:1+Math.floor(Math.random()*2);
-  var out=[];for(var i=0;i<n;i++){var t=pick(src);var hpM=Math.floor(t.hp*m);
+function spawn(fl,ti,isBoss){
+  var d=DG[ti],m=d.m*(1+fl*0.08);
+  var pool;
+  if(isBoss){
+    pool=(d.bosses||[]).map(function(id){return BSS.find(function(b){return b.id===id;});}).filter(Boolean);
+    if(!pool.length)pool=BSS;
+  }else{
+    pool=(d.enemies||[]).map(function(id){return ENM.find(function(e){return e.id===id;});}).filter(Boolean);
+    if(!pool.length)pool=ENM;
+  }
+  var n=isBoss?1:1+Math.floor(Math.random()*2);
+  var out=[];for(var i=0;i<n;i++){var t=pick(pool);var hpM=Math.floor(t.hp*m);
     out.push({name:t.name,icon:t.icon,uid:uid(),hpMax:hpM,hp:hpM,dmg:Math.floor(t.dmg*m),at:t.at,xp:Math.floor(t.xp*m),gold:Math.floor(t.gold*m),boss:t.boss||false,stats:{str:t.str,mag:t.mag,crit:t.crit,phv:t.phv,dodge:t.dodge,mav:t.mav},er:Object.assign({},t.er)});}
   return out;
 }
@@ -168,6 +176,7 @@ export default function Game(){
   var _sel=useState(null);var sel=_sel[0],setSel=_sel[1];
   var _sheet=useState(null);var sheet=_sheet[0],setSheet=_sheet[1];
   var _au=useState(false);var au=_au[0],setAu=_au[1];
+  var _dExp=useState(null);var dExp=_dExp[0],setDExp=_dExp[1];
   var _tgt=useState(null);var tgt=_tgt[0],setTgt=_tgt[1];
   var _hl=useState(null);var hl=_hl[0],setHl=_hl[1];
   var _slv=useState(false);var slv=_slv[0],setSlv=_slv[1];
@@ -195,7 +204,7 @@ export default function Game(){
         if(!pool.length)pool=HEROES;
         var t=pick(pool);var ex=ros.find(function(h){return h.id===t.id;});
         if(ex){var xpg=t.rarity*15;ros=ros.map(function(h){return h.uid===ex.uid?Object.assign({},h,{xp:h.xp+xpg}):h;});res.push({h:t,dup:true,xp:xpg});}
-        else{var wp=generateWeapon(1,1);wp.uid=uid();
+        else{var wp=generateWeapon(1,1,t.wt||"physical");wp.uid=uid();
           ros.push({id:t.id,uid:uid(),name:t.name,icon:t.icon,rarity:t.rarity,level:1,xp:0,equipment:{weapon:wp,armor:null,accessory:null,talisman:null}});res.push({h:t,dup:false});}
       }
       setG(function(p){return Object.assign({},p,{gold:p.gold-gc*n,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
@@ -231,9 +240,11 @@ export default function Game(){
   }
   function nxtFl(){
     if(!dun)return;var nf=dun.fl+1;
-    if(nf>=DG[dun.ti].fl){endDun(true);return;}
+    var dgDef=DG[dun.ti];
+    if(nf>=dgDef.structure.length){endDun(true);return;}
     var t=dun.team.map(function(h){if(h.hp<=0)return h;return Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*(h.rgHp||0))),mp:Math.min(h.mpMax||0,h.mp+Math.floor((h.mpMax||0)*(h.rgMp||0)))});});
-    if(nf>0&&Math.random()<.25){
+    var step=dgDef.structure[nf];
+    if(step==="event"){
       var ev=pick(EVT);var ex={};
       if(ev.tp==="heal")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25)),mp:Math.min(h.mpMax||0,h.mp+Math.floor((h.mpMax||0)*.15))});});
       if(ev.tp==="mpFull")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{mp:h.mpMax||0});});
@@ -243,7 +254,8 @@ export default function Game(){
       if(ev.tp==="xp")ex.bX=(dun.bX||0)+12;
       setDun(function(d){return Object.assign({},d,ex,{fl:nf,ph:"event",team:t});});setLogs(function(l){return l.concat([{t:ev.t}]);});return;
     }
-    var en=spawn(nf,dun.ti);
+    var isBoss=step==="boss";
+    var en=spawn(nf,dun.ti,isBoss);
     var ord=[].concat(t.filter(function(h){return h.hp>0;}).map(function(h){return h.uid;}),en.map(function(e){return e.uid;})).sort(function(){return Math.random()-.5;});
     setDun(function(d){return Object.assign({},d,{fl:nf,ph:"combat",team:t,en:en,tO:ord,tI:0});});setTgt(null);
     setLogs(function(l){return l.concat([{t:"⚔️ Étage "+(nf+1)+" — "+en.map(function(e){return e.icon+e.name+(e.boss?" (BOSS)":"");}).join(", ")}]);});
@@ -295,10 +307,27 @@ export default function Game(){
     });
   }
   function endDun(won){
-    if(!dun)return;var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
-    var tg=Math.floor(dun.rG*mm),tx=Math.floor((dun.rX+(dun.bX||0))*xm),fl=dun.fl+1;
-    setG(function(p){return Object.assign({},p,{gold:p.gold+tg,floors:p.floors+fl,roster:p.roster.map(function(h){return p.team.indexOf(h.uid)>=0?Object.assign({},h,{xp:h.xp+tx}):h;}),inv:[].concat(p.inv,dun.rE||[])});});
-    setLogs(function(l){return l.concat([{t:"─────────────"},{t:won?"🎉 TERMINÉ":"💀 Fin"},{t:"Or:+"+tg+" XP:+"+tx+" Ét:"+fl}]);});
+    if(!dun)return;
+    if(won&&dun.ph!=="done"){
+      // Add guaranteed drop if dungeon has it
+      var rE=[].concat(dun.rE||[]);
+      var dgDef=DG[dun.ti];
+      if(dgDef.reward&&dgDef.reward.guaranteedDrop){
+        var gDrop=generateWeapon(dgDef.loot.ranks[0],1);gDrop.uid=uid();rE.push(gDrop);
+      }
+      var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
+      var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0))*xm);
+      setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
+      setLogs(function(l){return l.concat([{t:"─────────────"},{t:"🎉 DONJON TERMINÉ !"},{t:"💰 +"+tg+" or · ⭐ +"+tx+" XP · 🎁 "+rE.length+" objets"}]);});
+      return;
+    }
+    // Actually claim rewards and close
+    var mm2=1+(g.bl.mine||0)*.03,xm2=1+(g.bl.ecole||0)*.03;
+    var tg2=won?dun.rG:Math.floor(dun.rG*mm2);
+    var tx2=won?dun.rX:Math.floor((dun.rX+(dun.bX||0))*xm2);
+    var fl=dun.fl+1;
+    setG(function(p){return Object.assign({},p,{gold:p.gold+tg2,floors:p.floors+fl,roster:p.roster.map(function(h){return p.team.indexOf(h.uid)>=0?Object.assign({},h,{xp:h.xp+tx2}):h;}),inv:[].concat(p.inv,dun.rE||[])});});
+    if(!won)setLogs(function(l){return l.concat([{t:"─────────────"},{t:"💀 Fin"},{t:"Or:+"+tg2+" XP:+"+tx2+" Étapes:"+fl}]);});
     setDun(null);setAu(false);
   }
   useEffect(function(){
@@ -308,7 +337,7 @@ export default function Game(){
     var isEnemy=dun.en.find(function(e){return e.uid===nextId&&e.hp>0;});
     if(isEnemy){var t=setTimeout(doTurn,350);return function(){clearTimeout(t);};}
   },[au,dun&&dun.ph,dun&&dun.tI,dun&&dun.fl]);
-  useEffect(function(){if(!dun)return;if((dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&au){var t=setTimeout(nxtFl,700);return function(){clearTimeout(t);};};},[au,dun&&dun.ph,dun&&dun.fl]);
+  useEffect(function(){if(!dun||!au)return;if(dun.ph==="result"||dun.ph==="done"){setAu(false);return;}if(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore"){var t=setTimeout(nxtFl,3000);return function(){clearTimeout(t);};};},[au,dun&&dun.ph,dun&&dun.fl]);
   // Clean floating damage numbers after 1s
   useEffect(function(){if(!floats.length)return;var t=setTimeout(function(){setFloats([]);},400);return function(){clearTimeout(t);};},[floats.length]);
   function reset(){localStorage.removeItem("ecl8");setG(INIT);setDun(null);setLogs([]);setTab("base");setAu(false);setSheet(null);setFloats([]);}
@@ -442,7 +471,7 @@ export default function Game(){
     }
   }
 
-  var TM={base:"🏰 Base",roster:"👥 Héros",equip:"⚙️ Équip.",donjon:"⚔️ Donjon",invocation:"🎲 Invoc."};
+  var TM={base:"🏰 Base",roster:"👥 Héros",equip:"⚙️ Équipement",donjon:"⚔️ Donjon",invocation:"🎲 Invocation"};
 
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
@@ -487,7 +516,6 @@ export default function Game(){
               <div style={{fontSize:12,lineHeight:1.5}}>
                 <div>❤️ {hst.hp} &nbsp; 💧 {hst.mp}</div>
                 <div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)} &nbsp; <span style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</span></div>
-                <div style={{color:scPM(hst.phv,true)}}>🛡️ PHV {fmtPM(hst.phv)} &nbsp; <span style={{color:scPM(hst.mav,true)}}>🔰 MAV {fmtPM(hst.mav)}</span></div>
               </div>
             </div>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:120,color:"#444",fontSize:14}}>Emplacement vide</div>}
           </div>;
@@ -530,7 +558,6 @@ export default function Game(){
             <div style={{fontSize:11,lineHeight:1.4}}>
               <span>❤️{hst.hp} 💧{hst.mp}</span>
               <span style={{marginLeft:8,color:scPM(hst.str,false)}}>STR {fmtPM(hst.str)}</span>
-              <span style={{marginLeft:6,color:scPM(hst.phv,true)}}>PHV {fmtPM(hst.phv)}</span>
             </div>
           </div>;
         })}
@@ -546,7 +573,7 @@ export default function Game(){
           <div style={{fontWeight:700,fontSize:14}}>{selH.icon} {selH.name}</div>
           <button className="b" onClick={function(){setSheet(selH.uid);}} style={{fontSize:11,padding:"4px 10px"}}>📋 Profil</button>
         </div>
-        {["weapon","armor","accessory","talisman"].map(function(sl){var it=selH.equipment?selH.equipment[sl]:null;var lb=sl==="weapon"?"🗡️ Arme":sl==="armor"?"🛡️ Armure":sl==="accessory"?"💍 Acc.":"🔮 Talis.";
+        {["weapon","armor","accessory","talisman"].map(function(sl){var it=selH.equipment?selH.equipment[sl]:null;var lb=sl==="weapon"?"🗡️ Arme":sl==="armor"?"🛡️ Armure":sl==="accessory"?"💍 Accessoire":"🔮 Talisman";
           return <div key={sl} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 8px",background:"#ffffff06",borderRadius:8,marginBottom:4}}>
             <div style={{flex:1}}><span style={{color:"var(--td)",fontSize:13}}>{lb}: </span>{it?<ItemInfo item={it} fs={13}/>:<span style={{color:"#444",fontSize:13}}>vide</span>}</div>
             {it&&<button className="b" style={{fontSize:10,padding:"3px 6px",marginLeft:8}} onClick={function(){doUneq(selH.uid,sl);}}>×</button>}</div>;
@@ -554,11 +581,9 @@ export default function Game(){
       </div>}
       <h3 style={{fontSize:14,color:"var(--td)",marginBottom:6}}>Inventaire ({g.inv.length})</h3>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:6}}>
-        {g.inv.sort(function(a,b){var so={weapon:0,armor:1,accessory:2,talisman:3};var sa=so[a.slot]||0,sb=so[b.slot]||0;return sa-sb||b.rarity-a.rarity;}).map(function(it){var slN=it.slot==="weapon"?"Arme":it.slot==="armor"?"Armure":it.slot==="accessory"?"Accessoire":"Talisman";
+        {g.inv.sort(function(a,b){var so={weapon:0,armor:1,accessory:2,talisman:3};var sa=so[a.slot]||0,sb=so[b.slot]||0;return sa-sb||b.rarity-a.rarity;}).map(function(it){
           return <div key={it.uid} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,display:"flex",flexDirection:"column"}}>
-            <div style={{flex:1}}>
-              <div style={{fontSize:11,color:"var(--td)",marginBottom:2}}>{slN} · {(RA[it.rarity]||{}).s}</div><ItemInfo item={it} fs={13}/>
-            </div>
+            <div style={{flex:1}}><ItemInfo item={it} fs={13}/></div>
             {sel&&<button className="b bgr" style={{fontSize:11,width:"100%",marginTop:8}} onClick={function(){doEquip(sel,it.uid);}}>Équiper</button>}</div>;
         })}
       </div>
@@ -567,31 +592,47 @@ export default function Game(){
 
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
       {!dun&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:4}}>⚔️ Donjons</h2><div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe: {team.length}/4</div>
-        {DG.map(function(d,i){var lk=g.floors<d.ul;return <div key={i} style={{background:lk?"#08080e":"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:12,marginBottom:6,opacity:lk?.3:1}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontWeight:700,fontSize:15}}>{d.name}</div><div style={{fontSize:11,color:"var(--td)"}}>{d.fl} ét. · ×{d.m} · ×{d.rw} réc</div></div>
-            <button className="b br" disabled={lk||!team.length} onClick={function(){startDun(i);}} style={{fontSize:13}}>{lk?"🔒 "+d.ul:"Explorer"}</button></div></div>;})}
+        {DG.map(function(d,i){var lk=g.floors<d.ul;var isOpen=dExp===i;
+          var enmPool=(d.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);
+          var bssPool=(d.bosses||[]).map(function(bid){return BSS.find(function(b){return b.id===bid;});}).filter(Boolean);
+          var lootInfo=d.loot?("Rang "+d.loot.ranks[0]+"-"+d.loot.ranks[1]+", "+Object.keys(d.loot.rarW).map(function(r){return (RA[parseInt(r)]||{}).n+" "+Math.round(d.loot.rarW[r]*100)+"%";}).join(", ")):"";
+          return <div key={i} style={{background:lk?"#08080e":"var(--card)",border:"1px solid var(--brd)",borderRadius:12,marginBottom:6,opacity:lk?.3:1,overflow:"hidden"}}>
+          <div onClick={function(){if(!lk)setDExp(isOpen?null:i);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:lk?"default":"pointer"}}>
+            <div><div style={{fontWeight:700,fontSize:15}}>{d.name}</div><div style={{fontSize:11,color:"var(--td)"}}>{d.structure.length} étapes · Difficulté ×{d.m}</div></div>
+            <span style={{fontSize:18,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>{lk?"🔒":"▼"}</span>
+          </div>
+          {isOpen&&!lk&&<div style={{padding:"0 12px 12px",borderTop:"1px solid var(--brd)"}}>
+            {d.desc&&<div style={{fontSize:12,color:"var(--td)",fontStyle:"italic",marginTop:8,marginBottom:8}}>{d.desc}</div>}
+            <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Monstres :</span> {enmPool.map(function(e){return e.icon+" "+e.name;}).join(", ")}</div>
+            <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Boss :</span> {bssPool.map(function(b){return b.icon+" "+b.name;}).join(", ")}</div>
+            <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Loot :</span> {lootInfo}</div>
+            {d.reward&&<div style={{fontSize:12,marginBottom:8}}><span style={{color:"var(--td)"}}>Récompense :</span> 💰 {d.reward.gold} or{d.reward.guaranteedDrop?" + 1 équipement garanti":""}</div>}
+            <button className="b bg" disabled={!team.length} onClick={function(){startDun(i);}} style={{fontSize:14,width:"100%",padding:"10px 0"}}>⚔️ Explorer</button>
+          </div>}
+        </div>;})}
       </div>}
       {dun&&<div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Ét.{dun.fl+1}/{DG[dun.ti].fl} · 💰{dun.rG} · ⭐{dun.rX}</div></div>
+          <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX}</div></div>
           <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🚪 Fuir</button>
         </div>
-        <div style={{background:"var(--bg2)",borderRadius:12,padding:10,marginBottom:6,border:"1px solid var(--brd)",minHeight:200}}>
-          {dun.ph==="combat"&&<div>
+        <div style={{background:"var(--bg2)",borderRadius:12,padding:10,marginBottom:6,border:"1px solid var(--brd)",minHeight:280,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          {dun.ph==="combat"&&<div style={{width:"100%"}}>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>{dun.en.map(function(e){return <Unit key={e.uid} u={e} isE act={dun.tO[dun.tI%dun.tO.length]===e.uid} sel={tgt===e.uid} onClick={e.hp>0?function(){setTgt(e.uid);}:undefined}/>;})}</div>
-            <div style={{textAlign:"center",fontSize:14,color:"#333",margin:"2px 0"}}>— VS —</div>
+            <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginTop:8}}>{dun.team.map(function(h){return <Unit key={h.uid} u={h} act={dun.tO[dun.tI%dun.tO.length]===h.uid}/>;})}</div>
           </div>}
-          {dun.ph==="result"&&<div style={{textAlign:"center",padding:20}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)"}}>💀 Défaite</div><button className="b bg" onClick={function(){endDun(false);}} style={{marginTop:8}}>Retour</button></div>}
-          {dun.ph==="event"&&<div style={{textAlign:"center",padding:20}}><div style={{fontSize:15}}>Événement !</div></div>}
-          {dun.ph==="victory"&&<div style={{textAlign:"center",padding:20}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
-          {dun.ph==="explore"&&<div style={{textAlign:"center",padding:20}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
+          {dun.ph==="result"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)"}}>💀 Défaite</div><button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:12}}>Retour</button></div>}
+          {dun.ph==="event"&&<div style={{textAlign:"center"}}><div style={{fontSize:15}}>Événement !</div></div>}
+          {dun.ph==="victory"&&<div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
+          {dun.ph==="explore"&&<div style={{textAlign:"center"}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
+          {dun.ph==="done"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>🎉 Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div><button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
         </div>
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>
           <button className="b bg" onClick={doTurn} style={{flex:1,fontSize:14}}>⚔️ Attaque</button>
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
-        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
+        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&!au&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
         <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
           {logs.map(function(l,i){var txt=l.t||"";
             var col;
