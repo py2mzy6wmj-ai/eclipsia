@@ -99,7 +99,10 @@ var RANK_BASE = {
 
 function lerpRank(stat, rank) {
   var b = RANK_BASE[stat];
-  return b.r1 + (b.r15 - b.r1) * ((rank - 1) / 14);
+  // Courbe exponentielle: progression douce en bas, forte en haut
+  var t = (rank - 1) / 14;
+  var curve = t * t; // quadratique: rang 2 = (1/14)² ≈ 0.5% au lieu de 7%
+  return b.r1 + (b.r15 - b.r1) * curve;
 }
 
 function randBetween(min, max) {
@@ -153,6 +156,7 @@ export function generateWeapon(rank, rarity) {
   } else {
     name = WP_NAMES[Math.floor(Math.random() * WP_NAMES.length)];
   }
+  if (wt === "magical") name = name + " magique";
   if (el !== "Neutre") {
     name = name + " " + (EL_SUFFIXES[el] || el);
   }

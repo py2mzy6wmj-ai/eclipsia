@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { HEROES, WP, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop } from './data';
+import { HEROES, WP, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop, generateWeapon } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
@@ -118,12 +118,18 @@ function ItemInfo(props){
   if(b.dodge)parts.push("ESQ +"+fmtPct(b.dodge));if(b.rgHp)parts.push("RPV +"+fmtPct(b.rgHp));
   if(b.rgMp)parts.push("RPM +"+fmtPct(b.rgMp));if(b.eco)parts.push("EPM +"+fmtPct(b.eco));
   if(b.er)for(var ek in b.er)parts.push("Vuln "+ek+" "+fmtEV(1+b.er[ek]));
-  var line1=it.name;
-  if(it.dmg!=null){line1+=" ("+it.dmg+" "+(it.wt==="magical"?"MAG":"PHY");if(it.el&&it.el!=="Neutre")line1+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line1+=")";}
-  return(<div style={{position:"relative"}}>
-    {it.rank&&<span style={{position:"absolute",top:-2,right:0,fontSize:18,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>Rg{it.rank}</span>}
-    <div style={{fontWeight:600,fontSize:props.fs||14,color:rc,paddingRight:it.rank?50:0}}>{line1}</div>
-    {parts.length>0&&<div style={{fontSize:(props.fs||14)-2,color:"#4ade80",marginTop:1}}>{parts.join(", ")}</div>}
+  // Header line: slot · Rang X · ★★
+  var slotName=it.slot==="weapon"?"Arme":it.slot==="armor"?"Armure":it.slot==="accessory"?"Accessoire":"Talisman";
+  var header=slotName;
+  if(it.rank)header+=" · Rang "+it.rank;
+  // Name line with damage
+  var line2=it.name;
+  if(it.dmg!=null){line2+=" ("+it.dmg+" "+(it.wt==="magical"?"MAG":"PHY");if(it.el&&it.el!=="Neutre")line2+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line2+=")";}
+  var fs=props.fs||14;
+  return(<div>
+    <div style={{fontSize:fs-2,color:"var(--td)"}}>{header} · <span style={{color:rc,fontWeight:700}}>{(RA[it.rarity]||{}).s}</span></div>
+    <div style={{fontWeight:600,fontSize:fs,color:rc}}>{line2}</div>
+    {parts.length>0&&<div style={{fontSize:fs-2,color:"#4ade80",marginTop:1}}>{parts.join(", ")}</div>}
   </div>);
 }
 
@@ -189,7 +195,7 @@ export default function Game(){
         if(!pool.length)pool=HEROES;
         var t=pick(pool);var ex=ros.find(function(h){return h.id===t.id;});
         if(ex){var xpg=t.rarity*15;ros=ros.map(function(h){return h.uid===ex.uid?Object.assign({},h,{xp:h.xp+xpg}):h;});res.push({h:t,dup:true,xp:xpg});}
-        else{var sw=WP.find(function(w){return w.id===t.sw;});var wp=sw?Object.assign({},sw,{uid:uid()}):null;
+        else{var wp=generateWeapon(1,1);wp.uid=uid();
           ros.push({id:t.id,uid:uid(),name:t.name,icon:t.icon,rarity:t.rarity,level:1,xp:0,equipment:{weapon:wp,armor:null,accessory:null,talisman:null}});res.push({h:t,dup:false});}
       }
       setG(function(p){return Object.assign({},p,{gold:p.gold-gc*n,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
@@ -304,7 +310,7 @@ export default function Game(){
   },[au,dun&&dun.ph,dun&&dun.tI,dun&&dun.fl]);
   useEffect(function(){if(!dun)return;if((dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&au){var t=setTimeout(nxtFl,700);return function(){clearTimeout(t);};};},[au,dun&&dun.ph,dun&&dun.fl]);
   // Clean floating damage numbers after 1s
-  useEffect(function(){if(!floats.length)return;var t=setTimeout(function(){setFloats(function(f){return f.slice(1);});},500);return function(){clearTimeout(t);};},[floats.length]);
+  useEffect(function(){if(!floats.length)return;var t=setTimeout(function(){setFloats([]);},400);return function(){clearTimeout(t);};},[floats.length]);
   function reset(){localStorage.removeItem("ecl8");setG(INIT);setDun(null);setLogs([]);setTab("base");setAu(false);setSheet(null);setFloats([]);}
 
   var css='@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#0e0d0d;--bg2:#141313;--card:#1c1a1a;--brd:#3a2828;--t:#e0d8d0;--td:#8a7e76;--acc:#c0392b;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);background-image:url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'60\' height=\'60\' fill=\'%230e0d0d\'/%3E%3Crect x=\'0\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'12\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'36\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3C/svg%3E");color:var(--t);font-family:"DM Sans",sans-serif;font-size:14px}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes gw{0%,100%{box-shadow:0 0 6px #c0392b20}50%{box-shadow:0 0 18px #c0392b50}}@keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes glw{0%,100%{box-shadow:0 0 4px #22c55e40}50%{box-shadow:0 0 16px #22c55e90}}@keyframes arr{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}.b{padding:8px 16px;border:1px solid var(--brd);border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;transition:all .15s;background:var(--card);color:var(--t)}.b:hover{background:#2a2222;transform:translateY(-1px)}.b:active{transform:translateY(0)}.b:disabled{opacity:.3;cursor:not-allowed;transform:none}.bg{background:linear-gradient(135deg,#c0392b,#962d22);color:#fff;border:none;font-weight:700}.bg:hover{background:linear-gradient(135deg,#d44637,#b03426)}.br{background:linear-gradient(135deg,#8b1a1a,#6b1414);color:#fff;border:none}.bgr{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none}.ton{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}.glow{animation:glw 1.5s infinite}@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}';
@@ -370,8 +376,8 @@ export default function Game(){
         </div>);
       }
 
-      return(<div onClick={function(e){if(e.target===e.currentTarget){setSheet(null);setSlv(false);}}} style={{minHeight:"100vh",background:"rgba(0,0,0,0.5)",padding:"16px 12px",maxWidth:540,margin:"0 auto"}}><style>{css}</style>
-        <div style={{animation:"fi .3s ease"}} onClick={function(e){e.stopPropagation();}}>
+      return(<div onClick={function(e){if(e.target===e.currentTarget){setSheet(null);setSlv(false);}}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:100,overflowY:"auto",padding:"16px 12px"}}><style>{css}</style>
+        <div style={{maxWidth:540,margin:"0 auto",animation:"fi .3s ease"}} onClick={function(e){e.stopPropagation();}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{fontSize:13}}>← Retour</button>
             <div style={{display:"flex",gap:6}}><button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{fontSize:15,padding:"6px 14px"}}>◀</button><button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{fontSize:15,padding:"6px 14px"}}>▶</button></div>
