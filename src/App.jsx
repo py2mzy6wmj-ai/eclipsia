@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { HEROES, WP, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop, generateWeapon } from './data';
+import { HEROES, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop, generateWeapon } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
