@@ -3,12 +3,12 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ↓↓↓ OR DE DÉPART ↓↓↓
-export var STARTING_GOLD = 1500;
+export var STARTING_GOLD = 300;
 
 export var EL = ["Feu", "Terre", "Foudre", "Eau", "Sacré", "Ténèbres"];
 export var EM = { Feu: { i: "🔥", c: "#ef4444" }, Terre: { i: "🪨", c: "#a3a042" }, Foudre: { i: "⚡", c: "#facc15" }, Eau: { i: "💧", c: "#60a5fa" }, Sacré: { i: "☀️", c: "#fde68a" }, Ténèbres: { i: "🌑", c: "#a78bfa" } };
 export var defER = function () { return { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1, Ténèbres: 1 }; };
-export var RA = { 1: { n: "Commun", s: "★", c: "#8899aa", r: 0.75 }, 2: { n: "Rare", s: "★★", c: "#5dade2", r: 0.20 }, 3: { n: "Épique", s: "★★★", c: "#a855f7", r: 0.03 }, 4: { n: "Légendaire", s: "★★★★", c: "#f59e0b", r: 0.015 }, 5: { n: "Mythique", s: "★★★★★", c: "#ef4444", r: 0.005 } };
+export var RA = { 1: { n: "Commun", s: "★", c: "#888888", r: 0.80 }, 2: { n: "Inhabituel", s: "★★", c: "#2ecc71", r: 0.17 }, 3: { n: "Rare", s: "★★★", c: "#2980f0", r: 0.02 }, 4: { n: "Épique", s: "★★★★", c: "#9b59b6", r: 0.009 }, 5: { n: "Légendaire", s: "★★★★★", c: "#e67e22", r: 0.001 } };
 
 // ↓↓↓ URL DES PORTRAITS (dossier public/portraits/ du repo) ↓↓↓
 export var PORTRAIT_BASE = "./portraits/";
@@ -255,7 +255,7 @@ export var DG = [
     ],
     enemies: ["e_loup", "e_bandit"],
     bosses: ["b_ogre"],
-    loot: { ranks: [1, 2], rarW: { 1: 0.80, 2: 0.20 }, dropRate: 0.15 },
+    loot: { ranks: [1, 1], rarW: { 1: 0.80, 2: 0.20 }, dropRate: 0.15 },
     reward: { gold: 100, guaranteedDrop: true },
     desc: "Loups et bandits rôdent. L'Ogre règne en maître.",
   },

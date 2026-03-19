@@ -205,11 +205,12 @@ export default function Game(){
         if(!pool.length)pool=HEROES.filter(function(h){return h.rarity<=rr;});
         if(!pool.length)pool=HEROES;
         var t=pick(pool);var ex=ros.find(function(h){return h.id===t.id;});
-        if(ex){var xpg=t.rarity*15;ros=ros.map(function(h){return h.uid===ex.uid?Object.assign({},h,{xp:h.xp+xpg}):h;});res.push({h:t,dup:true,xp:xpg});}
+        if(ex){ros=ros;res.push({h:t,dup:true,gold:50});}
         else{var wp=generateWeapon(1,1,t.wt||"physical");wp.uid=uid();
           ros.push({id:t.id,uid:uid(),name:t.name,icon:t.icon,rarity:t.rarity,level:1,xp:0,equipment:{weapon:wp,armor:null,accessory:null,talisman:null}});res.push({h:t,dup:false});}
       }
-      setG(function(p){return Object.assign({},p,{gold:p.gold-gc*n,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
+      var dupGold=res.reduce(function(a,r){return a+(r.dup?50:0);},0);
+      setG(function(p){return Object.assign({},p,{gold:p.gold-gc*n+dupGold,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
     },n>1?1800:1000);
   }
 
@@ -359,9 +360,9 @@ export default function Game(){
   function Unit(props){var u=props.u,isE=props.isE,act=props.act,isSel=props.sel,onClick=props.onClick;var hp=u.hp||0,hm=u.hpMax||1;var tp=turnPos(u.uid);
     var myFloats=floats.filter(function(f){return f.uid===u.uid;});
     var pSrc=!isE?portrait(u.id):null;
-    return(<div onClick={onClick} style={{padding:10,borderRadius:12,minWidth:95,textAlign:"center",cursor:onClick?"pointer":"default",background:isSel?"#ffffff18":act?"#ffffff0c":"#ffffff05",border:isSel?"2px solid #fbbf24":act?"2px solid #c0392b60":"1px solid #ffffff0a",opacity:hp<=0?.2:1,transition:"all .2s",position:"relative"}}>{tp&&hp>0&&<div style={{position:"absolute",top:-6,right:-6,background:act?"#c0392b":"#444",color:act?"#fff":"#ddd",borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800}}>{tp}</div>}
+    return(<div onClick={onClick} style={{padding:12,borderRadius:12,minWidth:110,textAlign:"center",cursor:onClick?"pointer":"default",background:isSel?"#ffffff18":act?"#ffffff0c":"#ffffff05",border:isSel?"2px solid #fbbf24":act?"2px solid #c0392b60":"1px solid #ffffff0a",opacity:hp<=0?.2:1,transition:"all .2s",position:"relative"}}>{tp&&hp>0&&<div style={{position:"absolute",top:-6,right:-6,background:act?"#c0392b":"#444",color:act?"#fff":"#ddd",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800}}>{tp}</div>}
       {myFloats.map(function(f){return <div key={f.id} style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",color:f.color,fontSize:18,fontWeight:900,textShadow:"0 2px 4px #000",animation:"floatUp .7s forwards",pointerEvents:"none",zIndex:20}}>{f.val}</div>;})}
-      <div style={{width:36,height:36,borderRadius:8,margin:"0 auto",position:"relative",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,background:"#111"}}>
+      <div style={{width:44,height:44,borderRadius:10,margin:"0 auto",position:"relative",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,background:"#111"}}>
         <span style={{position:"absolute",zIndex:1}}>{u.icon}</span>
         {pSrc&&<img src={pSrc} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",zIndex:2}} alt="" onError={function(e){e.target.style.display="none";}}/>}
       </div>
@@ -444,7 +445,10 @@ export default function Game(){
             <div style={{height:7,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"#a855f7",transition:"width .3s"}}/></div>
             <div style={{display:"flex",gap:6}}>
               <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:14,fontWeight:canLv?800:600}}>⬆ Monter de niveau</button>
-              <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>
+              {(function(){var teamFull=g.team.indexOf(null)<0&&!inTeam;
+                if(teamFull)return <button className="b" disabled style={{flex:1,fontSize:14,fontWeight:700,opacity:0.3}}>Équipe complète</button>;
+                return <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>;
+              })()}
             </div>
           </div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
@@ -538,11 +542,11 @@ export default function Game(){
             style={{minHeight:140,borderRadius:14,padding:10,background:h?(RA[h.rarity]||{}).c+"12":"#ffffff04",border:h?"2px solid "+(RA[h.rarity]||{}).c+"50":"2px dashed var(--brd)",cursor:h?"pointer":"default",transition:"all .2s"}}>
             {h&&hst?<div style={{position:"relative"}}>
               <div style={{position:"absolute",top:0,right:0,fontSize:26,fontWeight:900,color:(RA[h.rarity]||{}).c+"80",fontFamily:"Cinzel"}}>{h.level}</div>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
                 <Portrait id={h.id} size={48} fs={24} icon={h.icon} canLv={canL}/>
                 <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:12,color:(RA[h.rarity]||{}).c,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
               </div>
-              <div style={{fontSize:12,lineHeight:1.5}}>
+              <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
                 <div>❤️ {hst.hp}</div>
                 {hst.str>=hst.mag?<div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)}</div>:<div style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</div>}
               </div>
@@ -560,11 +564,10 @@ export default function Game(){
           return <div key={h.uid} draggable
             onDragStart={function(){setDrag(h.uid);}}
             onClick={function(){setSheet(h.uid);}}
-            style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:8,cursor:"grab"}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <span style={{fontSize:canL?16:22,animation:canL?"arr 1s infinite, glw 1.5s infinite":undefined}}>{canL?"⬆️":h.icon}</span>
-              <div><div style={{fontWeight:700,fontSize:12}}>{h.name} <span style={{fontSize:10,color:"var(--td)"}}>Lv.{h.level}</span></div><div style={{fontSize:10,color:rc}}>{(RA[h.rarity]||{}).s}</div></div>
-            </div>
+            style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:8,cursor:"grab",position:"relative"}}>
+            {canL&&<div style={{position:"absolute",top:4,left:4,fontSize:14,animation:"arr 1s infinite, glw 1.5s infinite"}}>⬆️</div>}
+            <div style={{position:"absolute",top:4,right:8,fontSize:20,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>{h.level}</div>
+            <div style={{paddingRight:30}}><div style={{fontWeight:700,fontSize:12}}>{h.name}</div><div style={{fontSize:10,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
           </div>;
         })}
       </div>
@@ -572,34 +575,39 @@ export default function Game(){
     </div>}
 
     {tab==="equip"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:8}}>⚙️ Équipement</h2>
-      {/* Team heroes as big cards */}
+      {/* Team heroes — same as roster */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:8,marginBottom:10}}>
         {[0,1,2,3].map(function(i){
           var h=g.team[i]?g.roster.find(function(r){return r.uid===g.team[i];}):null;
-          if(!h)return <div key={i} style={{minHeight:60,borderRadius:12,border:"2px dashed var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",color:"#444",fontSize:12}}>Vide</div>;
+          if(!h)return <div key={i} style={{minHeight:140,borderRadius:14,border:"2px dashed var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",color:"#444",fontSize:12}}>Vide</div>;
           var hst=cs(h,g.bl);var rc=(RA[h.rarity]||{}).c;var isSel=sel===h.uid;
-          return <div key={i} onClick={function(){setSel(sel===h.uid?null:h.uid);}} style={{borderRadius:14,padding:10,background:isSel?rc+"25":rc+"12",border:isSel?"2px solid "+rc:"2px solid "+rc+"50",cursor:"pointer",position:"relative"}}>
-            <div style={{position:"absolute",top:6,right:10,fontSize:24,fontWeight:900,color:rc+"90",fontFamily:"Cinzel"}}>{h.level}</div>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
-              <Portrait id={h.id} size={42} fs={22} icon={h.icon}/>
-              <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:11,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
+          return <div key={i} onClick={function(){setSel(sel===h.uid?null:h.uid);}} style={{minHeight:140,borderRadius:14,padding:10,background:isSel?rc+"25":rc+"12",border:isSel?"2px solid "+rc:"2px solid "+rc+"50",cursor:"pointer",position:"relative"}}>
+            <div style={{position:"absolute",top:0,right:8,fontSize:26,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>{h.level}</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <Portrait id={h.id} size={48} fs={24} icon={h.icon}/>
+              <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:12,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
             </div>
-            <div style={{fontSize:11,lineHeight:1.4}}>
-              <span>❤️{hst.hp}</span>
-              {hst.str>=hst.mag?<span style={{marginLeft:8,color:scPM(hst.str,false)}}>STR {fmtPM(hst.str)}</span>:<span style={{marginLeft:8,color:scPM(hst.mag,false)}}>MAG {fmtPM(hst.mag)}</span>}
+            <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
+              <div>❤️ {hst.hp}</div>
+              {hst.str>=hst.mag?<div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)}</div>:<div style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</div>}
             </div>
           </div>;
         })}
       </div>
-      {/* Reserve heroes as small buttons */}
-      <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>
+      {/* Reserve heroes — same format as roster reserve */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:6,marginBottom:10}}>
         {sR.filter(function(h){return g.team.indexOf(h.uid)<0;}).map(function(h){
-          return <button key={h.uid} className={"b "+(sel===h.uid?"ton":"")} onClick={function(){setSel(sel===h.uid?null:h.uid);}} style={{fontSize:11}}>{h.icon} {h.name}</button>;
+          var rc=(RA[h.rarity]||{}).c;var isSel=sel===h.uid;
+          return <div key={h.uid} onClick={function(){setSel(sel===h.uid?null:h.uid);}}
+            style={{background:isSel?rc+"20":"var(--card)",border:isSel?"2px solid "+rc:"1px solid var(--brd)",borderRadius:10,padding:8,cursor:"pointer",position:"relative"}}>
+            <div style={{position:"absolute",top:4,right:8,fontSize:20,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>{h.level}</div>
+            <div style={{paddingRight:30}}><div style={{fontWeight:700,fontSize:12}}>{h.name}</div><div style={{fontSize:10,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
+          </div>;
         })}
       </div>
       {selH&&<div style={{background:"var(--card)",borderRadius:12,padding:12,marginBottom:8,border:"1px solid var(--brd)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div style={{fontWeight:700,fontSize:14}}>{selH.icon} {selH.name}</div>
+          <div style={{fontWeight:700,fontSize:14}}>{selH.name}</div>
           <button className="b" onClick={function(){setSheet(selH.uid);}} style={{fontSize:11,padding:"4px 10px"}}>📋 Profil</button>
         </div>
         {["weapon","armor","accessory","talisman"].map(function(sl){var it=selH.equipment?selH.equipment[sl]:null;var lb=sl==="weapon"?"🗡️ Arme":sl==="armor"?"🛡️ Armure":sl==="accessory"?"💍 Accessoire":"🔮 Talisman";
@@ -644,11 +652,11 @@ export default function Game(){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-            {au&&<span style={{fontSize:16,animation:"sp 1s linear infinite",display:"inline-block"}}>⚙️</span>}
+            {au&&<div style={{padding:"6px 12px",borderRadius:10,background:"#c0392b",color:"#fff",fontSize:12,fontWeight:800,animation:"fi .5s ease infinite alternate"}}>AUTO</div>}
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🚪 Fuir</button>
           </div>
         </div>
-        <div style={{background:"var(--bg2)",borderRadius:12,padding:10,marginBottom:6,border:"1px solid var(--brd)",minHeight:280,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:360,display:"flex",alignItems:"center",justifyContent:"center"}}>
           {dun.ph==="combat"&&<div style={{width:"100%"}}>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>{dun.en.map(function(e){return <Unit key={e.uid} u={e} isE act={dun.tO[dun.tI%dun.tO.length]===e.uid} sel={tgt===e.uid} onClick={e.hp>0?function(){setTgt(e.uid);}:undefined}/>;})}</div>
             <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
@@ -668,7 +676,7 @@ export default function Game(){
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
         {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&!au&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
-        <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
+        <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",overflowX:"visible",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative",zIndex:50}}>
           {logs.map(function(l,i){var txt=l.t||"";
             var col;
             if(txt.indexOf("CRIT")>=0)col="#fbbf24"; // crit = yellow/gold
@@ -680,7 +688,7 @@ export default function Game(){
             return <div key={i} style={{color:col,position:"relative",cursor:l.st?"help":"default",padding:"1px 0"}}
               onMouseEnter={function(){if(l.st)setHl(i);}} onMouseLeave={function(){setHl(null);}}>
               {txt}
-              {hl===i&&l.st&&<div style={{position:"absolute",zIndex:100,background:"#1a1818f0",border:"1px solid #c0392b60",borderRadius:10,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",width:360,pointerEvents:"none",top:0,left:0,transform:"translateY(-100%)",whiteSpace:"pre-line"}}>
+              {hl===i&&l.st&&<div style={{position:"absolute",zIndex:300,background:"#1a1818f8",border:"1px solid #c0392b60",borderRadius:10,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",width:340,maxWidth:"90vw",pointerEvents:"none",bottom:"100%",left:0,marginBottom:4,whiteSpace:"pre-line",boxShadow:"0 4px 20px rgba(0,0,0,0.8)"}}>
                 <div style={{fontWeight:700,color:"#c0392b",marginBottom:6,fontSize:13}}>Détail du calcul</div>
                 {l.st.res==="miss"&&"Précision "+Math.round((l.st.prec||.95)*100)+"% → Raté !"}
                 {l.st.res==="dodged"&&"Esquive "+Math.round((l.st.dg||0)*100)+"% → Esquivé !"}
@@ -713,14 +721,16 @@ export default function Game(){
       {gr&&!ga&&<div style={{background:"var(--card)",borderRadius:14,padding:14,maxWidth:440,margin:"0 auto",border:"1px solid var(--acc)",animation:"fi .4s ease"}}>
         {Array.isArray(gr)?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(85px,1fr))",gap:4}}>
           {gr.map(function(r,i){return <div key={i} style={{padding:6,borderRadius:8,textAlign:"center",background:r.dup?"#ffffff05":(RA[r.h.rarity]||{}).c+"12",border:"1px solid "+(RA[r.h.rarity]||{}).c+"30"}}>
-            <div style={{fontSize:22}}>{r.h.icon}</div><div style={{fontSize:10,fontWeight:700}}>{r.h.name}</div><div style={{fontSize:9,color:(RA[r.h.rarity]||{}).c}}>{(RA[r.h.rarity]||{}).s}</div>
-            {r.dup&&<div style={{fontSize:9,color:"var(--td)"}}>+{r.xp}XP</div>}</div>;})}
+            <Portrait id={r.h.id} size={48} fs={20} icon={r.h.icon}/><div style={{fontSize:10,fontWeight:700,marginTop:2}}>{r.h.name}</div><div style={{fontSize:9,color:(RA[r.h.rarity]||{}).c}}>{(RA[r.h.rarity]||{}).s}</div>
+            {r.dup&&<div style={{fontSize:9,color:"#d4a017"}}>+50 or</div>}
+            {!r.dup&&<div style={{fontSize:9,color:"#4ade80",fontWeight:700}}>NOUVEAU</div>}</div>;})}
         </div>:<div>
-          <div style={{fontSize:40}}>{gr.h.icon}</div><div style={{fontSize:18,fontWeight:700,color:(RA[gr.h.rarity]||{}).c,marginTop:4}}>{gr.h.name}</div>
-          <div style={{fontSize:13,color:(RA[gr.h.rarity]||{}).c}}>{(RA[gr.h.rarity]||{}).s} {(RA[gr.h.rarity]||{}).n}</div>
+          <div style={{margin:"0 auto 8px",width:"fit-content"}}><Portrait id={gr.h.id} size={120} fs={60} icon={gr.h.icon}/></div>
+          <div style={{fontSize:20,fontWeight:700,color:(RA[gr.h.rarity]||{}).c,marginTop:4}}>{gr.h.name}</div>
+          <div style={{fontSize:14,color:(RA[gr.h.rarity]||{}).c}}>{(RA[gr.h.rarity]||{}).s} {(RA[gr.h.rarity]||{}).n}</div>
           <div style={{fontSize:12,color:"var(--td)",marginTop:2,fontStyle:"italic"}}>{gr.h.title}</div>
-          {gr.dup&&<div style={{fontSize:12,color:"var(--acc)",marginTop:4}}>Doublon → +{gr.xp}XP</div>}
-          {!gr.dup&&<div style={{fontSize:12,color:"#4ade80",marginTop:4}}>NOUVEAU !</div>}
+          {gr.dup&&<div style={{fontSize:13,color:"#d4a017",marginTop:6}}>Doublon → +50 or</div>}
+          {!gr.dup&&<div style={{fontSize:14,color:"#4ade80",marginTop:6,fontWeight:700}}>✨ NOUVEAU !</div>}
         </div>}
       </div>}
       <div style={{marginTop:14,fontSize:12,color:"var(--td)"}}>{Object.keys(RA).map(function(r){return <span key={r} style={{marginRight:10,color:RA[r].c}}>{RA[r].n}: {Math.round(RA[r].r*100)}%</span>;})}</div>
