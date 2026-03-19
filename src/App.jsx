@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { HEROES, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop, generateWeapon } from './data';
+import { HEROES, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop, generateWeapon, SKILLS } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
@@ -23,18 +23,18 @@ function portrait(id) {
 
 function cs(hero,bl){
   var t=HEROES.find(function(h){return h.id===hero.id;});
-  if(!t)return{hp:1,mp:1,str:1,mag:1,crit:0,phv:1,mav:1,dodge:0,rgHp:0,rgMp:0,eco:0,er:defER(),_s:{}};
+  if(!t)return{hp:1,rel:8,str:1,mag:1,crit:0,phv:1,mav:1,dodge:0,rgHp:0,relBonus:0,er:defER(),_s:{}};
   var lv=hero.level||1;
   var bHp=Math.floor(lerp100(t.lv1.hp,t.lv100.hp,lv));
-  var bMp=Math.floor(lerp100(t.lv1.mp,t.lv100.mp,lv));
+  var bRel=t.lv1.rel||8;
   var bStr=lerp100(t.lv1.str,t.lv100.str,lv);
   var bMag=lerp100(t.lv1.mag,t.lv100.mag,lv);
   var bCrit=lerp100(t.lv1.crit,t.lv100.crit,lv);
   var bPhv=lerp100(t.lv1.phv,t.lv100.phv,lv);
   var bMav=lerp100(t.lv1.mav,t.lv100.mav,lv);
   var bDodge=lerp100(t.lv1.dodge,t.lv100.dodge,lv);
-  var _s={hp:["Nv."+lv+": "+bHp],mp:["Nv."+lv+": "+bMp],str:["Nv."+lv+": "+fmtPM(bStr)],mag:["Nv."+lv+": "+fmtPM(bMag)],crit:["Nv."+lv+": "+fmtPct(bCrit)],phv:["Nv."+lv+": "+fmtPM(bPhv)],mav:["Nv."+lv+": "+fmtPM(bMav)],dodge:["Nv."+lv+": "+fmtPct(bDodge)],rgHp:[],rgMp:[],eco:[]};
-  var s={hp:bHp,mp:bMp,str:bStr,mag:bMag,crit:bCrit,phv:bPhv,mav:bMav,dodge:bDodge,rgHp:0,rgMp:0,eco:0,er:Object.assign({},t.er||defER()),_s:_s};
+  var _s={hp:["Nv."+lv+": "+bHp],rel:["Base: "+bRel+" tours"],str:["Nv."+lv+": "+fmtPM(bStr)],mag:["Nv."+lv+": "+fmtPM(bMag)],crit:["Nv."+lv+": "+fmtPct(bCrit)],phv:["Nv."+lv+": "+fmtPM(bPhv)],mav:["Nv."+lv+": "+fmtPM(bMav)],dodge:["Nv."+lv+": "+fmtPct(bDodge)],rgHp:[]};
+  var s={hp:bHp,rel:bRel,str:bStr,mag:bMag,crit:bCrit,phv:bPhv,mav:bMav,dodge:bDodge,rgHp:0,relBonus:0,er:Object.assign({},t.er||defER()),_s:_s};
   if(bl){
     if(bl.autel){var bv=Math.floor(s.hp*bl.autel*.02);s.hp+=bv;_s.hp.push("Autel Nv."+bl.autel+": +"+bv);}
     if(bl.forge){s.str+=bl.forge*.003;_s.str.push("Forge Nv."+bl.forge+": "+fmtB(bl.forge*.003));}
@@ -45,7 +45,6 @@ function cs(hero,bl){
   var slots=["weapon","armor","accessory","talisman"];
   for(var si=0;si<slots.length;si++){var it=eq[slots[si]];if(!it||!it.bon)continue;var b=it.bon;
     if(b.hp){s.hp+=b.hp;_s.hp.push(it.name+": +"+b.hp);}
-    if(b.mp){s.mp+=b.mp;_s.mp.push(it.name+": +"+b.mp);}
     if(b.str){s.str+=b.str;_s.str.push(it.name+": "+fmtB(b.str));}
     if(b.mag){s.mag+=b.mag;_s.mag.push(it.name+": "+fmtB(b.mag));}
     if(b.crit){s.crit+=b.crit;_s.crit.push(it.name+": +"+fmtPct(b.crit));}
@@ -54,11 +53,11 @@ function cs(hero,bl){
     if(b.mav){s.mav+=b.mav;_s.mav.push(it.name+": "+fmtB(b.mav));}
     if(b.dodge){s.dodge+=b.dodge;_s.dodge.push(it.name+": +"+fmtPct(b.dodge));}
     if(b.rgHp){s.rgHp+=b.rgHp;_s.rgHp.push(it.name+": +"+fmtPct(b.rgHp));}
-    if(b.rgMp){s.rgMp+=b.rgMp;_s.rgMp.push(it.name+": +"+fmtPct(b.rgMp));}
-    if(b.eco){s.eco+=b.eco;_s.eco.push(it.name+": +"+fmtPct(b.eco));}
+    if(b.rel){s.relBonus+=b.rel;_s.rel.push(it.name+": "+b.rel+" tours");}
     if(b.er)for(var ek in b.er)s.er[ek]=(s.er[ek]||1)+b.er[ek];
   }
-  s.crit=clamp(s.crit,0,.8);s.dodge=clamp(s.dodge,0,.5);s.eco=clamp(s.eco,0,.5);
+  s.rel=Math.max(1,s.rel+s.relBonus);
+  s.crit=clamp(s.crit,0,.8);s.dodge=clamp(s.dodge,0,.5);
   for(var ei=0;ei<EL.length;ei++){var ek2=EL[ei];s.er[ek2]=Math.max(0,s.er[ek2]||1);}
   return s;
 }
@@ -86,14 +85,19 @@ function pDmg(a,d,bd,el){
   return{dmg:dmg,msg:msgs.join(", "),hit:true,st:{bd:bd,wt:"physical",el:el,res:"hit",strB:strB,phvB:phvB,mult:mult,v:v,cr:cr,eRes:eRes,dmg:dmg}};
 }
 function mDmg(a,d,bd,el){
+  var prec=.95;
+  if(!roll(prec))return{dmg:0,msg:"RATÉ",hit:false,st:{bd:bd,wt:"magical",el:el,res:"miss",prec:prec}};
+  var dg=d.stats?d.stats.dodge:(d.dodge||0);
+  if(roll(dg))return{dmg:0,msg:"ESQUIVÉ",hit:false,st:{bd:bd,wt:"magical",el:el,res:"dodged",dg:dg}};
   var magB=(a.stats?a.stats.mag:1)-1;
   var mavB=(d.stats?d.stats.mav:(d.mav||1))-1;
   var mult=1+magB+mavB;
+  var v=variance(),cr=roll(a.stats?a.stats.crit:0);
   var eRes=d.er?(d.er[el]!=null?d.er[el]:1):1;
-  var raw=bd*mult*eRes;
+  var raw=bd*mult*v*(cr?3:1)*eRes;
   var dmg=Math.max(1,Math.round(raw));
-  var msgs=[];if(eRes>1.01)msgs.push("FAIBLE");if(eRes<.99&&eRes>0)msgs.push("RÉSIST");if(eRes===0)msgs.push("IMMUN");
-  return{dmg:dmg,msg:msgs.join(", "),hit:true,st:{bd:bd,wt:"magical",el:el,res:"hit",magB:magB,mavB:mavB,mult:mult,eRes:eRes,dmg:dmg}};
+  var msgs=[];if(cr)msgs.push("CRIT");if(eRes>1.01)msgs.push("FAIBLE");if(eRes<.99&&eRes>0)msgs.push("RÉSIST");if(eRes===0)msgs.push("IMMUN");
+  return{dmg:dmg,msg:msgs.join(", "),hit:true,st:{bd:bd,wt:"magical",el:el,res:"hit",magB:magB,mavB:mavB,mult:mult,v:v,cr:cr,eRes:eRes,dmg:dmg}};
 }
 function spawn(fl,ti,isBoss){
   var d=DG[ti],m=d.m*(1+fl*0.08);
@@ -121,10 +125,11 @@ function ItemInfo(props){
   var parts=[];var b=it.bon||{};
   if(b.str)parts.push("STR "+fmtB(b.str));if(b.mag)parts.push("MAG "+fmtB(b.mag));
   if(b.crt)parts.push("CRT "+fmtB(b.crt));if(b.crit)parts.push("CRT +"+fmtPct(b.crit));
-  if(b.hp)parts.push("PV +"+b.hp);if(b.mp)parts.push("PM +"+b.mp);
+  if(b.hp)parts.push("PV +"+b.hp);
+  if(b.rel)parts.push("Recharge "+b.rel+" tour"+(Math.abs(b.rel)>1?"s":""));
   if(b.phv)parts.push("PHV "+fmtB(b.phv));if(b.mav)parts.push("MAV "+fmtB(b.mav));
   if(b.dodge)parts.push("ESQ +"+fmtPct(b.dodge));if(b.rgHp)parts.push("RPV +"+fmtPct(b.rgHp));
-  if(b.rgMp)parts.push("RPM +"+fmtPct(b.rgMp));if(b.eco)parts.push("EPM +"+fmtPct(b.eco));
+  if(b.rgHp)parts.push("Régénération PV +"+fmtPct(b.rgHp));
   if(b.er)for(var ek in b.er)parts.push("Vuln "+ek+" "+fmtEV(1+b.er[ek]));
   // Header line: slot · Rang X · ★★
   var slotName=it.slot==="weapon"?"Arme":it.slot==="armor"?"Armure":it.slot==="accessory"?"Accessoire":"Talisman";
@@ -234,7 +239,7 @@ export default function Game(){
 
   function startDun(ti){
     if(!team.length)return;
-    var t=team.map(function(h){var s=cs(h,g.bl);return Object.assign({},h,{hp:s.hp,mp:s.mp,stats:{str:s.str,mag:s.mag,crit:s.crit,phv:s.phv,dodge:s.dodge,mav:s.mav},hpMax:s.hp,mpMax:s.mp,isHero:true,er:s.er,rgHp:s.rgHp,rgMp:s.rgMp});});
+    var t=team.map(function(h){var s=cs(h,g.bl);return Object.assign({},h,{hp:s.hp,stats:{str:s.str,mag:s.mag,crit:s.crit,phv:s.phv,dodge:s.dodge,mav:s.mav},hpMax:s.hp,isHero:true,er:s.er,rgHp:s.rgHp,rel:s.rel,cd:0});});
     setDun({ti:ti,fl:-1,ph:"explore",team:t,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[]});
     setLogs([{t:"🏰 "+DG[ti].name}]);setTab("donjon");setAu(false);setTgt(null);
   }
@@ -242,12 +247,12 @@ export default function Game(){
     if(!dun)return;var nf=dun.fl+1;
     var dgDef=DG[dun.ti];
     if(nf>=dgDef.structure.length){endDun(true);return;}
-    var t=dun.team.map(function(h){if(h.hp<=0)return h;return Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*(h.rgHp||0))),mp:Math.min(h.mpMax||0,h.mp+Math.floor((h.mpMax||0)*(h.rgMp||0)))});});
+    var t=dun.team.map(function(h){if(h.hp<=0)return h;return Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*(h.rgHp||0)))});});
     var step=dgDef.structure[nf];
     if(step==="event"){
       var ev=pick(EVT);var ex={};
-      if(ev.tp==="heal")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25)),mp:Math.min(h.mpMax||0,h.mp+Math.floor((h.mpMax||0)*.15))});});
-      if(ev.tp==="mpFull")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{mp:h.mpMax||0});});
+      if(ev.tp==="heal")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25))});});
+      if(ev.tp==="mpFull")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{cd:0});});
       if(ev.tp==="trap")t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.max(1,h.hp-Math.floor(h.hpMax*.12))});});
       if(ev.tp==="buff")t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.03})});});
       if(ev.tp==="gold")ex.rG=(dun.rG||0)+15+Math.floor(Math.random()*35);
@@ -273,19 +278,25 @@ export default function Game(){
         var em=en.find(function(e){return e.uid===id&&e.hp>0;});if(em){unit=em;isH=false;tI=(idx+1)%tO.length;break;}
       }
       if(!unit)return d;
-      // Regen HP/MP when it's a hero's turn
+      // Regen HP when it's a hero's turn
       if(isH&&unit.rgHp){var rh=Math.floor(unit.hpMax*(unit.rgHp||0));if(rh>0&&unit.hp<unit.hpMax){unit.hp=Math.min(unit.hpMax,unit.hp+rh);t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{hp:unit.hp}):h;});setLogs(function(l){return l.concat([{t:"  ♻️ "+unit.name+" récupère "+rh+" PV"}]);});}}
-      if(isH&&unit.rgMp){var rm=Math.floor((unit.mpMax||0)*(unit.rgMp||0));if(rm>0&&unit.mp<(unit.mpMax||0)){unit.mp=Math.min(unit.mpMax||0,unit.mp+rm);t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{mp:unit.mp}):h;});}}
       if(isH){
         var ae=en.filter(function(e){return e.hp>0;});if(!ae.length)return d;
         var target=ae.find(function(e){return e.uid===tgt&&e.hp>0;})||pick(ae);
         var w=gw(unit);
-        var res=w.wt==="magical"?mDmg(unit,target,w.dmg,w.el):pDmg(unit,target,w.dmg,w.el);
-        var ln="  "+unit.icon+unit.name+" → "+target.icon+target.name;
+        var sk=SKILLS[unit.id];
+        var useSkill=sk&&unit.cd<=0;
+        var baseDmg=useSkill?w.dmg*sk.mult:w.dmg;
+        var skWt=useSkill&&sk.type==="mAtk"?"magical":w.wt;
+        var res=skWt==="magical"?mDmg(unit,target,baseDmg,w.el):pDmg(unit,target,baseDmg,w.el);
+        var ln=useSkill?("  ⚡ "+unit.icon+unit.name+" — "+sk.name+" → "+target.icon+target.name):("  "+unit.icon+unit.name+" → "+target.icon+target.name);
         if(res.hit){target.hp-=res.dmg;en=en.map(function(e){return e.uid===target.uid?Object.assign({},e,{hp:target.hp}):e;});ln+=" : -"+res.dmg+"PV";if(res.msg)ln+=" ("+res.msg+")";
-          setFloats(function(f){return f.concat([{uid:target.uid,val:"-"+res.dmg,color:res.st.cr?"#fbbf24":"#ffffff",id:uid()}]);});}
+          setFloats(function(f){return f.concat([{uid:target.uid,val:"-"+res.dmg,color:res.st.cr?"#fbbf24":useSkill?"#c0392b":"#ffffff",id:uid()}]);});}
         else{ln+=" : "+res.msg;}
         setLogs(function(l){return l.concat([{t:ln,st:res.st}]);});
+        // Cooldown management
+        if(useSkill){t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{cd:unit.rel||8}):h;});}
+        else{t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{cd:Math.max(0,(h.cd||0)-1)}):h;});}
         if(target.hp<=0){setLogs(function(l){return l.concat([{t:"  💥 "+target.name+" vaincu! +"+target.xp+"xp +"+target.gold+"g"}]);});rX+=target.xp;rG+=target.gold;}
       }else{
         var ah=t.filter(function(h){return h.hp>0;});if(!ah.length)return d;
@@ -355,7 +366,9 @@ export default function Game(){
         <span style={{position:"absolute",zIndex:1}}>{u.icon}</span>
         {pSrc&&<img src={pSrc} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",zIndex:2}} alt="" onError={function(e){e.target.style.display="none";}}/>}
       </div>
-      <div style={{fontSize:13,fontWeight:700,color:isE?"#ff6b6b":"#6bffb8",marginTop:2}}>{u.name}</div>{u.boss&&<div style={{fontSize:10,color:"#c0392b",fontWeight:800}}>BOSS</div>}<div style={{marginTop:4}}><Bar cur={Math.max(0,hp)} max={hm} color={isE?"#ef4444":"#22c55e"} h={8}/></div></div>);}
+      <div style={{fontSize:13,fontWeight:700,color:isE?"#ff6b6b":"#6bffb8",marginTop:2}}>{u.name}</div>{u.boss&&<div style={{fontSize:10,color:"#c0392b",fontWeight:800}}>BOSS</div>}<div style={{marginTop:4}}><Bar cur={Math.max(0,hp)} max={hm} color={isE?"#ef4444":"#22c55e"} h={8}/></div>
+      {!isE&&u.isHero&&<div style={{fontSize:10,marginTop:2,color:u.cd<=0?"#fbbf24":"#666",fontWeight:u.cd<=0?800:400}}>{u.cd<=0?"⚡ PRÊT":"⏳ "+u.cd}</div>}
+      </div>);}
 
   var inD=!!dun;var selH=sel?g.roster.find(function(r){return r.uid===sel;}):null;
 
@@ -389,7 +402,7 @@ export default function Game(){
             <div style={{fontSize:15,color:"#8888bb",marginTop:4,marginBottom:16}}>{hero.name}</div>
             <div style={{textAlign:"left",maxWidth:360,margin:"0 auto"}}>
               <StatRow icon="❤️" label="PV Max (PVM)" val={st.hp} nv={sN.hp} type="flat"/>
-              <StatRow icon="💧" label="PM Max (PMM)" val={st.mp} nv={sN.mp} type="flat"/>
+              <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours"/>
               <StatRow icon="⚔️" label="Force (STR)" val={st.str} nv={sN.str} type="pm"/>
               <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} nv={sN.mag} type="pm"/>
               <StatRow icon="💥" label="Critique (CRT)" val={st.crit} nv={sN.crit} type="pct"/>
@@ -429,20 +442,29 @@ export default function Game(){
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Caractéristiques</div>
             <StatRow icon="❤️" label="PV Max (PVM)" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="💧" label="PM Max (PMM)" val={st.mp} type="flat" tip={mkTip("mp")} hov={hs==="mp"} onE={function(){setHs("mp");}} onL={function(){setHs(null);}}/>
+            <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
             <div style={{height:6}}/>
             <StatRow icon="⚔️" label="Force (STR)" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
             <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
             <StatRow icon="💥" label="Critique (CRT)" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
             <div style={{height:6}}/>
-            <StatRow icon="🛡️" label="Vuln. Physique (PHV)" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="🔰" label="Vuln. Magique (MAV)" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
+            <StatRow icon="🛡️" label="Vulnérabilité Physique (PHV)" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
+            <StatRow icon="🔰" label="Vulnérabilité Magique (MAV)" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
             <StatRow icon="💨" label="Esquive (ESQ)" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
             <div style={{height:6}}/>
-            <StatRow icon="♻️" label="Regen PV (RPV)" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="♻️" label="Regen PM (RPM)" val={st.rgMp} type="pct" suf="/tour" tip={mkTip("rgMp")} hov={hs==="rgMp"} onE={function(){setHs("rgMp");}} onL={function(){setHs(null);}}/>
-            <StatRow icon="📉" label="Économie PM (EPM)" val={st.eco} type="pct" tip={mkTip("eco")} hov={hs==="eco"} onE={function(){setHs("eco");}} onL={function(){setHs(null);}}/>
+            <StatRow icon="♻️" label="Régénération PV (RPV)" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
           </div>
+          {SKILLS[hero.id]&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Compétence</div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#c0392b,#8b1a1a)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{SKILLS[hero.id].name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {SKILLS[hero.id].lvl}</span></div>
+                <div style={{fontSize:12,color:"var(--td)"}}>{SKILLS[hero.id].desc}</div>
+                <div style={{fontSize:12,color:"#c0392b",fontWeight:600}}>Recharge : {st.rel} tours</div>
+              </div>
+            </div>
+          </div>}
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,marginBottom:8,color:"var(--acc)"}}>Sensibilités Élémentaires</div>
             <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🗡️ Attaque</div>
@@ -514,7 +536,7 @@ export default function Game(){
                 <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:12,color:(RA[h.rarity]||{}).c,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
               </div>
               <div style={{fontSize:12,lineHeight:1.5}}>
-                <div>❤️ {hst.hp} &nbsp; 💧 {hst.mp}</div>
+                <div>❤️ {hst.hp} &nbsp; ⏳ {hst.rel} tours</div>
                 <div style={{color:scPM(hst.str,false)}}>⚔️ STR {fmtPM(hst.str)} &nbsp; <span style={{color:scPM(hst.mag,false)}}>🔮 MAG {fmtPM(hst.mag)}</span></div>
               </div>
             </div>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:120,color:"#444",fontSize:14}}>Emplacement vide</div>}
@@ -556,7 +578,7 @@ export default function Game(){
               <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:11,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
             </div>
             <div style={{fontSize:11,lineHeight:1.4}}>
-              <span>❤️{hst.hp} 💧{hst.mp}</span>
+              <span>❤️{hst.hp} ⏳{hst.rel}</span>
               <span style={{marginLeft:8,color:scPM(hst.str,false)}}>STR {fmtPM(hst.str)}</span>
             </div>
           </div>;
@@ -629,7 +651,10 @@ export default function Game(){
           {dun.ph==="done"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>🎉 Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div><button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
         </div>
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>
-          <button className="b bg" onClick={doTurn} style={{flex:1,fontSize:14}}>⚔️ Attaque</button>
+          {(function(){var cur=dun.tO[dun.tI%dun.tO.length];var ch=dun.team.find(function(h){return h.uid===cur&&h.hp>0&&h.isHero;});var sk=ch?SKILLS[ch.id]:null;var ready=sk&&ch&&ch.cd<=0;
+            if(ready)return <button className="b" onClick={doTurn} style={{flex:1,fontSize:15,fontWeight:900,background:"linear-gradient(135deg,#c0392b,#8b1a1a)",color:"#fff",border:"2px solid #fbbf24",animation:"gw 1.5s infinite",textShadow:"0 0 8px #fbbf2480"}}>⚡ {sk.name}</button>;
+            return <button className="b bg" onClick={doTurn} style={{flex:1,fontSize:14}}>⚔️ Attaque{ch&&ch.cd>0?" ("+ch.cd+" ⏳)":""}</button>;
+          })()}
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
         {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&!au&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}

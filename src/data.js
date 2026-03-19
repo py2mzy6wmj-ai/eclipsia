@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ↓↓↓ OR DE DÉPART ↓↓↓
-export var STARTING_GOLD = 1500;
+export var STARTING_GOLD = 10000;
 
 export var EL = ["Feu", "Terre", "Foudre", "Eau", "Sacré", "Ténèbres"];
 export var EM = { Feu: { i: "🔥", c: "#ef4444" }, Terre: { i: "🪨", c: "#a3a042" }, Foudre: { i: "⚡", c: "#facc15" }, Eau: { i: "💧", c: "#60a5fa" }, Sacré: { i: "☀️", c: "#fde68a" }, Ténèbres: { i: "🌑", c: "#a78bfa" } };
@@ -14,45 +14,65 @@ export var RA = { 1: { n: "Commun", s: "★", c: "#8899aa", r: 0.75 }, 2: { n: "
 export var PORTRAIT_BASE = "https://bigxhzfotfwfdwdpecyj.supabase.co/storage/v1/object/public/portraits/";
 
 // ═══════════════════════════════════════════════════════════════
+//  COMPÉTENCES
+// ═══════════════════════════════════════════════════════════════
+// type: "pAtk" = attaque physique, "mAtk" = attaque magique, "heal", "buff", etc.
+// mult: multiplicateur de dégâts de base
+// cd: cooldown de base (en tours)
+// Chaque compétence a un niveau (lvl), les effets peuvent scale avec le niveau plus tard.
+
+export var SKILLS = {
+  syrio:   { name: "Coup fulgurant",    type: "pAtk", mult: 3,   cd: 8, desc: "Attaque physique ×3", lvl: 1 },
+  kael:    { name: "Frappe sanglante",   type: "pAtk", mult: 2.5, cd: 7, desc: "Attaque physique ×2.5", lvl: 1 },
+  lyra:    { name: "Tir perçant",        type: "pAtk", mult: 2,   cd: 6, desc: "Attaque physique ×2", lvl: 1 },
+  mira:    { name: "Nova ardente",       type: "mAtk", mult: 3,   cd: 8, desc: "Attaque magique ×3", lvl: 1 },
+  ragnar:  { name: "Tonnerre divin",     type: "pAtk", mult: 2.5, cd: 7, desc: "Attaque physique ×2.5", lvl: 1 },
+  aria:    { name: "Jugement céleste",   type: "mAtk", mult: 3,   cd: 9, desc: "Attaque magique ×3", lvl: 1 },
+  nihil:   { name: "Souffle du néant",   type: "pAtk", mult: 3.5, cd: 10, desc: "Attaque physique ×3.5", lvl: 1 },
+};
+
+// ═══════════════════════════════════════════════════════════════
 //  HÉROS
 // ═══════════════════════════════════════════════════════════════
-// wt: "physical" ou "magical" — détermine le type d'arme générée à l'invocation
+// wt: "physical"/"magical" — type d'arme de départ
+// rel: recharge de base de la compétence (en tours). Peut être réduit par équipement.
+// mp supprimé, remplacé par rel
 
 export var HEROES = [
   { id: "syrio", name: "Syrio", title: "Vétéran Déserteur", rarity: 2, icon: "⚔️", color: "#c0392b", wt: "physical",
     lore: "Après des années au service d'un roi tyran, sa lame sert désormais des causes plus justes.",
-    lv1: { hp: 75, mp: 12, str: 1.06, mag: 0.24, crit: 0.03, phv: 0.95, mav: 1.12, dodge: 0.04 },
-    lv100: { hp: 4500, mp: 180, str: 1.87, mag: 0.65, crit: 0.05, phv: 0.76, mav: 1.01, dodge: 0.04 },
+    lv1: { hp: 75, rel: 8, str: 1.06, mag: 0.24, crit: 0.03, phv: 0.95, mav: 1.12, dodge: 0.04 },
+    lv100: { hp: 4500, rel: 8, str: 1.87, mag: 0.65, crit: 0.05, phv: 0.76, mav: 1.01, dodge: 0.04 },
     er: { Feu: 0.9, Terre: 0.9, Foudre: 0.9, Eau: 0.9, Sacré: 1.1, Ténèbres: 1.1 } },
   { id: "kael", name: "Kael", title: "Lame Brisée", rarity: 1, icon: "🗡️", color: "#e74c3c", wt: "physical",
     lore: "Ancien mercenaire. Sa lame brisée est tout ce qui lui reste.",
-    lv1: { hp: 90, mp: 10, str: 1.08, mag: 0.30, crit: 0.05, phv: 0.93, mav: 1.08, dodge: 0.03 },
-    lv100: { hp: 5200, mp: 120, str: 1.95, mag: 0.60, crit: 0.08, phv: 0.72, mav: 0.98, dodge: 0.03 },
+    lv1: { hp: 90, rel: 7, str: 1.08, mag: 0.30, crit: 0.05, phv: 0.93, mav: 1.08, dodge: 0.03 },
+    lv100: { hp: 5200, rel: 7, str: 1.95, mag: 0.60, crit: 0.08, phv: 0.72, mav: 0.98, dodge: 0.03 },
     er: defER() },
   { id: "lyra", name: "Lyra", title: "Voix d'Argent", rarity: 1, icon: "🏹", color: "#3498db", wt: "physical",
     lore: "Chasseuse des steppes.",
-    lv1: { hp: 60, mp: 18, str: 1.04, mag: 0.40, crit: 0.12, phv: 0.97, mav: 1.05, dodge: 0.08 },
-    lv100: { hp: 3200, mp: 250, str: 1.70, mag: 0.80, crit: 0.18, phv: 0.80, mav: 0.95, dodge: 0.08 },
+    lv1: { hp: 60, rel: 6, str: 1.04, mag: 0.40, crit: 0.12, phv: 0.97, mav: 1.05, dodge: 0.08 },
+    lv100: { hp: 3200, rel: 6, str: 1.70, mag: 0.80, crit: 0.18, phv: 0.80, mav: 0.95, dodge: 0.08 },
     er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 0.80, Sacré: 1, Ténèbres: 1 } },
   { id: "mira", name: "Mira", title: "Flamme Errante", rarity: 2, icon: "🔥", color: "#e67e22", wt: "magical",
     lore: "Le feu est sa seule amie.",
-    lv1: { hp: 50, mp: 35, str: 0.30, mag: 1.12, crit: 0.02, phv: 1.02, mav: 0.92, dodge: 0.03 },
-    lv100: { hp: 2800, mp: 500, str: 0.55, mag: 2.10, crit: 0.04, phv: 0.88, mav: 0.70, dodge: 0.03 },
+    lv1: { hp: 50, rel: 8, str: 0.30, mag: 1.12, crit: 0.02, phv: 1.02, mav: 0.92, dodge: 0.03 },
+    lv100: { hp: 2800, rel: 8, str: 0.55, mag: 2.10, crit: 0.04, phv: 0.88, mav: 0.70, dodge: 0.03 },
     er: { Feu: 0, Terre: 1, Foudre: 1, Eau: 1.15, Sacré: 1, Ténèbres: 1 } },
   { id: "ragnar", name: "Ragnar", title: "Poing Tonnerre", rarity: 3, icon: "⚡", color: "#e84393", wt: "physical",
     lore: "Il canalise la tempête.",
-    lv1: { hp: 95, mp: 15, str: 1.15, mag: 0.35, crit: 0.10, phv: 0.94, mav: 1.06, dodge: 0.03 },
-    lv100: { hp: 5800, mp: 200, str: 2.20, mag: 0.70, crit: 0.16, phv: 0.70, mav: 0.95, dodge: 0.03 },
+    lv1: { hp: 95, rel: 7, str: 1.15, mag: 0.35, crit: 0.10, phv: 0.94, mav: 1.06, dodge: 0.03 },
+    lv100: { hp: 5800, rel: 7, str: 2.20, mag: 0.70, crit: 0.16, phv: 0.70, mav: 0.95, dodge: 0.03 },
     er: { Feu: 1, Terre: 1.10, Foudre: 0, Eau: 0.90, Sacré: 1, Ténèbres: 1 } },
   { id: "aria", name: "Aria", title: "Impératrice Céleste", rarity: 5, icon: "👑", color: "#ffeaa7", wt: "magical",
     lore: "Dernière héritière d'un empire déchu.",
-    lv1: { hp: 80, mp: 35, str: 1.08, mag: 1.15, crit: 0.08, phv: 0.92, mav: 0.90, dodge: 0.05 },
-    lv100: { hp: 5000, mp: 500, str: 2.00, mag: 2.20, crit: 0.14, phv: 0.68, mav: 0.65, dodge: 0.05 },
+    lv1: { hp: 80, rel: 9, str: 1.08, mag: 1.15, crit: 0.08, phv: 0.92, mav: 0.90, dodge: 0.05 },
+    lv100: { hp: 5000, rel: 9, str: 2.00, mag: 2.20, crit: 0.14, phv: 0.68, mav: 0.65, dodge: 0.05 },
     er: { Feu: 0.90, Terre: 0.90, Foudre: 0.90, Eau: 0.90, Sacré: 0, Ténèbres: 1.15 } },
   { id: "nihil", name: "Nihil", title: "Le Néant", rarity: 5, icon: "💀", color: "#dfe6e9", wt: "physical",
     lore: "Le Néant incarné — absolu.",
-    lv1: { hp: 55, mp: 25, str: 1.20, mag: 1.10, crit: 0.15, phv: 1.00, mav: 1.00, dodge: 0.12 },
-    lv100: { hp: 3000, mp: 350, str: 2.40, mag: 2.00, crit: 0.25, phv: 0.82, mav: 0.85, dodge: 0.12 },
+    lv1: { hp: 55, rel: 10, str: 1.20, mag: 1.10, crit: 0.15, phv: 1.00, mav: 1.00, dodge: 0.12 },
+    lv100: { hp: 3000, rel: 10, str: 2.40, mag: 2.00, crit: 0.25, phv: 0.82, mav: 0.85, dodge: 0.12 },
     er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.25, Ténèbres: 0 } },
 ];
 
@@ -71,11 +91,11 @@ export var AR = [
 ];
 export var AC = [
   { id: "x01", name: "Anneau Vigueur", slot: "accessory", rarity: 1, bon: { rgHp: 0.02 }, desc: "Régénération PV +2%/tour" },
-  { id: "x02", name: "Pendentif Arcane", slot: "accessory", rarity: 1, bon: { rgMp: 0.03 }, desc: "Régénération PM +3%/tour" },
-  { id: "x03", name: "Collier Mana", slot: "accessory", rarity: 2, bon: { rgMp: 0.04, eco: 0.04 }, desc: "Régénération PM & Économie PM +4%" },
-  { id: "x04", name: "Broche Sang", slot: "accessory", rarity: 2, bon: { rgHp: 0.03, rgMp: 0.02 }, desc: "Régénération PV +3%, PM +2%" },
-  { id: "x05", name: "Amulette Vitale", slot: "accessory", rarity: 3, bon: { rgHp: 0.04, rgMp: 0.03, eco: 0.05 }, desc: "Régénération & Économie" },
-  { id: "x06", name: "Couronne Éternité", slot: "accessory", rarity: 4, bon: { rgHp: 0.05, rgMp: 0.05, eco: 0.08 }, desc: "Légendaire" },
+  { id: "x02", name: "Pendentif Célérité", slot: "accessory", rarity: 1, bon: { rel: -1 }, desc: "Recharge -1 tour" },
+  { id: "x03", name: "Collier Vivacité", slot: "accessory", rarity: 2, bon: { rel: -1, rgHp: 0.02 }, desc: "Recharge -1, Régénération PV +2%" },
+  { id: "x04", name: "Broche Sang", slot: "accessory", rarity: 2, bon: { rgHp: 0.04 }, desc: "Régénération PV +4%" },
+  { id: "x05", name: "Amulette Vitale", slot: "accessory", rarity: 3, bon: { rgHp: 0.04, rel: -2 }, desc: "Régénération PV +4%, Recharge -2" },
+  { id: "x06", name: "Couronne Éternité", slot: "accessory", rarity: 4, bon: { rgHp: 0.05, rel: -2 }, desc: "Légendaire, Recharge -2" },
 ];
 export var TL = [
   { id: "t01", name: "Charme Anti-Feu", slot: "talisman", rarity: 1, bon: { er: { Feu: -0.10 } }, desc: "Vulnérabilité Feu -10%" },
@@ -270,7 +290,7 @@ export function rollWeaponDrop(dungeonIdx) {
 
 export var EVT = [
   { t: "🏕️ Campement — repos.", tp: "heal" },
-  { t: "⛲ Fontaine — PM restaurés.", tp: "mpFull" },
+  { t: "⛲ Fontaine — compétences rechargées.", tp: "mpFull" },
   { t: "⚠️ Piège !", tp: "trap" },
   { t: "🔮 Autel — Force accrue !", tp: "buff" },
   { t: "💰 Coffre !", tp: "gold" },
