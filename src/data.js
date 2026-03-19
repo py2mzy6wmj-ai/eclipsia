@@ -18,8 +18,6 @@ export var RA={1:{n:"Commun",s:"★",c:"#8899aa",r:.75},2:{n:"Rare",s:"★★",c
    Set to "" to use embedded fallback (SYRIO_IMG) or black placeholder */
 export var PORTRAIT_BASE = "https://bigxhzfotfwfdwdpecyj.supabase.co/storage/v1/object/public/portraits/";
 
-export // Portraits loaded from PORTRAIT_BASE URLs
-
 export var HEROES=[
   {id:"syrio",name:"Syrio",title:"Vétéran Déserteur",rarity:2,icon:"⚔️",color:"#c0392b",sw:"w01",lore:"Après des années au service d'un roi tyran, sa lame sert désormais des causes plus justes.",lv1:{hp:75,mp:12,str:1.06,mag:.24,crit:.03,phv:.95,mav:1.12,dodge:.04},lv100:{hp:4500,mp:180,str:1.87,mag:.65,crit:.05,phv:.76,mav:1.01,dodge:.04},er:{Feu:.9,Terre:.9,Foudre:.9,Eau:.9,Sacré:1.1,Ténèbres:1.1}},
   {id:"kael",name:"Kael",title:"Lame Brisée",rarity:1,icon:"🗡️",color:"#e74c3c",sw:"w01",lore:"Ancien mercenaire. Sa lame brisée est tout ce qui lui reste.",lv1:{hp:90,mp:10,str:1.08,mag:.3,crit:.05,phv:.93,mav:1.08,dodge:.03},lv100:{hp:5200,mp:120,str:1.95,mag:.6,crit:.08,phv:.72,mav:.98,dodge:.03},er:defER()},
