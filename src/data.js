@@ -51,7 +51,7 @@ export var TL=[
   {id:"t04",name:"Amulette Sacrée",slot:"talisman",rarity:3,bon:{er:{Sacré:-.15,Ténèbres:-.15}},desc:"Vuln Sacré/Ténèbres -15%"},
   {id:"t05",name:"Orbe Harmonie",slot:"talisman",rarity:4,bon:{er:{Feu:-.1,Terre:-.1,Foudre:-.1,Eau:-.1,Sacré:-.1,Ténèbres:-.1}},desc:"Vuln toutes -10%"},
 ];
-export var ALL_EQ=[].concat(WP,AR,AC,TL);
+export var ALL_EQ=[].concat(AR,AC,TL);
 
 // ═══════════════════════════════════════════════════════════════
 //  GÉNÉRATION ALÉATOIRE D'ARMES
