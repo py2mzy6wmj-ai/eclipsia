@@ -28,20 +28,6 @@ export var HEROES=[
   {id:"nihil",name:"Nihil",title:"Le Néant",rarity:5,icon:"💀",color:"#dfe6e9",sw:"w10",lore:"Le Néant incarné — absolu.",lv1:{hp:55,mp:25,str:1.2,mag:1.1,crit:.15,phv:1,mav:1,dodge:.12},lv100:{hp:3000,mp:350,str:2.4,mag:2,crit:.25,phv:.82,mav:.85,dodge:.12},er:{Feu:1,Terre:1,Foudre:1,Eau:1,Sacré:1.25,Ténèbres:0}},
 ];
 
-export var WP=[
-  {id:"w01",name:"Épée Rouillée",slot:"weapon",wt:"physical",rarity:1,dmg:15,el:"Neutre",bon:{},desc:"Lame fatiguée."},
-  {id:"w02",name:"Dague d'Ombre",slot:"weapon",wt:"physical",rarity:1,dmg:11,el:"Ténèbres",bon:{crit:.04},desc:"CRT +4%"},
-  {id:"w03",name:"Bâton d'Apprenti",slot:"weapon",wt:"magical",rarity:1,dmg:13,el:"Neutre",bon:{},desc:"Arme magique."},
-  {id:"w04",name:"Lame d'Acier",slot:"weapon",wt:"physical",rarity:2,dmg:24,el:"Neutre",bon:{str:.02},desc:"STR +2%"},
-  {id:"w05",name:"Arc Composite",slot:"weapon",wt:"physical",rarity:2,dmg:20,el:"Neutre",bon:{crit:.06},desc:"CRT +6%"},
-  {id:"w06",name:"Sceptre de Feu",slot:"weapon",wt:"magical",rarity:2,dmg:22,el:"Feu",bon:{mag:.04},desc:"MAG +4%, Feu"},
-  {id:"w07",name:"Grimoire d'Eau",slot:"weapon",wt:"magical",rarity:2,dmg:20,el:"Eau",bon:{},desc:"Trait Eau"},
-  {id:"w08",name:"Flamberge",slot:"weapon",wt:"physical",rarity:3,dmg:38,el:"Feu",bon:{str:.05,crit:.04},desc:"STR +5%, CRT +4%, Feu"},
-  {id:"w09",name:"Orbe du Néant",slot:"weapon",wt:"magical",rarity:3,dmg:34,el:"Ténèbres",bon:{mag:.08},desc:"MAG +8%"},
-  {id:"w10",name:"Faux Spectrale",slot:"weapon",wt:"physical",rarity:3,dmg:42,el:"Ténèbres",bon:{crit:.1},desc:"CRT +10%"},
-  {id:"w11",name:"Excalibur",slot:"weapon",wt:"physical",rarity:4,dmg:55,el:"Sacré",bon:{str:.08,crit:.06},desc:"Légendaire, Sacré"},
-  {id:"w12",name:"Codex Céleste",slot:"weapon",wt:"magical",rarity:4,dmg:50,el:"Sacré",bon:{mag:.12},desc:"Légendaire, Sacré"},
-];
 export var AR=[
   {id:"a01",name:"Cotte de Mailles",slot:"armor",rarity:1,bon:{hp:20,phv:-.02},desc:"PV +20, PHV -2%"},
   {id:"a02",name:"Robe de Tissu",slot:"armor",rarity:1,bon:{mp:12,mav:-.02},desc:"PM +12, MAV -2%"},
