@@ -730,7 +730,7 @@ export default function Game(){
             return <div key={i} style={{color:col,position:"relative",cursor:l.st?"help":"default",padding:"1px 0"}}
               onMouseEnter={function(){if(l.st)setHl(i);}} onMouseLeave={function(){setHl(null);}}>
               {txt}
-              {hl===i&&l.st&&<div style={{position:"absolute",zIndex:300,background:"#1a1818f8",border:"1px solid #c0392b60",borderRadius:10,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",width:340,maxWidth:"90vw",pointerEvents:"none",bottom:"100%",left:0,marginBottom:4,whiteSpace:"pre-line",boxShadow:"0 4px 20px rgba(0,0,0,0.8)"}}>
+              {hl===i&&l.st&&<div style={{position:"fixed",zIndex:300,background:"#1a1818f8",border:"1px solid #c0392b60",borderRadius:10,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",width:340,maxWidth:"90vw",pointerEvents:"none",bottom:220,left:16,whiteSpace:"pre-line",boxShadow:"0 4px 20px rgba(0,0,0,0.8)"}}>
                 <div style={{fontWeight:700,color:"#c0392b",marginBottom:6,fontSize:13}}>Détail du calcul</div>
                 {l.st.res==="miss"&&"Précision "+Math.round((l.st.prec||.95)*100)+"% → Raté !"}
                 {l.st.res==="dodged"&&"Esquive "+Math.round((l.st.dg||0)*100)+"% → Esquivé !"}
@@ -775,7 +775,7 @@ export default function Game(){
           {!gr.dup&&<div style={{fontSize:14,color:"#4ade80",marginTop:6,fontWeight:700}}>✨ NOUVEAU !</div>}
         </div>}
       </div>}
-      <div style={{marginTop:14,fontSize:12,color:"var(--td)"}}>{Object.keys(RA).map(function(r){var pct=RA[r].r*100;var txt=pct>=1?Math.round(pct)+"%":pct+"%";return <span key={r} style={{marginRight:10,color:RA[r].c}}>{RA[r].n}: {txt}</span>;})}</div>
+      <div style={{marginTop:14,fontSize:12,color:"var(--td)"}}>{Object.keys(RA).map(function(r){var pct=RA[r].r*100;return <span key={r} style={{marginRight:10,color:RA[r].c}}>{RA[r].n}: {pct%1===0?pct:pct.toFixed(1)}%</span>;})}</div>
     </div>}
   </div>);
 }
