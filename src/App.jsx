@@ -25,16 +25,14 @@ function cs(hero,bl){
   var t=HEROES.find(function(h){return h.id===hero.id;});
   if(!t)return{hp:1,rel:8,str:1,mag:1,crit:0,phv:1,mav:1,dodge:0,rgHp:0,relBonus:0,er:defER(),_s:{}};
   var lv=hero.level||1;
-  var bHp=Math.floor(lerp100(t.lv1.hp,t.lv100.hp,lv));
-  var bRel=t.lv1.rel||8;
-  var bStr=lerp100(t.lv1.str,t.lv100.str,lv);
-  var bMag=lerp100(t.lv1.mag,t.lv100.mag,lv);
-  var bCrit=lerp100(t.lv1.crit,t.lv100.crit,lv);
-  var bPhv=lerp100(t.lv1.phv,t.lv100.phv,lv);
-  var bMav=lerp100(t.lv1.mav,t.lv100.mav,lv);
-  var bDodge=lerp100(t.lv1.dodge,t.lv100.dodge,lv);
+  function L(k){var v1=t.lv1[k],v100=t.lv100[k];if(v1==null)return 0;if(v100==null)return v1;return lerp100(v1,v100,lv);}
+  var bHp=Math.floor(L("hp"));
+  var bRel=Math.round(L("rel"));
+  var bStr=L("str");var bMag=L("mag");var bCrit=L("crit");
+  var bPhv=L("phv");var bMav=L("mav");var bDodge=L("dodge");var bRgHp=L("rgHp");
   var _s={hp:["Nv."+lv+": "+bHp],rel:["Base: "+bRel+" tours"],str:["Nv."+lv+": "+fmtPM(bStr)],mag:["Nv."+lv+": "+fmtPM(bMag)],crit:["Nv."+lv+": "+fmtPct(bCrit)],phv:["Nv."+lv+": "+fmtPM(bPhv)],mav:["Nv."+lv+": "+fmtPM(bMav)],dodge:["Nv."+lv+": "+fmtPct(bDodge)],rgHp:[]};
-  var s={hp:bHp,rel:bRel,str:bStr,mag:bMag,crit:bCrit,phv:bPhv,mav:bMav,dodge:bDodge,rgHp:0,relBonus:0,er:Object.assign({},t.er||defER()),_s:_s};
+  var s={hp:bHp,rel:bRel,str:bStr,mag:bMag,crit:bCrit,phv:bPhv,mav:bMav,dodge:bDodge,rgHp:bRgHp,relBonus:0,er:Object.assign({},t.er||defER()),_s:_s};
+  if(bRgHp>0)_s.rgHp.push("Nv."+lv+": "+fmtPct(bRgHp));
   if(bl){
     if(bl.autel){var bv=Math.floor(s.hp*bl.autel*.02);s.hp+=bv;_s.hp.push("Autel Nv."+bl.autel+": +"+bv);}
     if(bl.forge){s.str+=bl.forge*.003;_s.str.push("Forge Nv."+bl.forge+": "+fmtB(bl.forge*.003));}
@@ -128,8 +126,7 @@ function ItemInfo(props){
   if(b.hp)parts.push("PV +"+b.hp);
   if(b.rel)parts.push("Recharge "+b.rel+" tour"+(Math.abs(b.rel)>1?"s":""));
   if(b.phv)parts.push("PHV "+fmtB(b.phv));if(b.mav)parts.push("MAV "+fmtB(b.mav));
-  if(b.dodge)parts.push("ESQ +"+fmtPct(b.dodge));if(b.rgHp)parts.push("RPV +"+fmtPct(b.rgHp));
-  if(b.rgHp)parts.push("Régénération PV +"+fmtPct(b.rgHp));
+  if(b.dodge)parts.push("ESQ +"+fmtPct(b.dodge));if(b.rgHp)parts.push("Récupération +"+fmtPct(b.rgHp));
   if(b.er)for(var ek in b.er)parts.push("Vuln "+ek+" "+fmtEV(1+b.er[ek]));
   // Header line: slot · Rang X · ★★
   var slotName=it.slot==="weapon"?"Arme":it.slot==="armor"?"Armure":it.slot==="accessory"?"Accessoire":"Talisman";
