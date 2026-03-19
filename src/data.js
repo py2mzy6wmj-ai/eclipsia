@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ↓↓↓ OR DE DÉPART — modifier cette valeur ↓↓↓
-export var STARTING_GOLD = 10000;
+export var STARTING_GOLD = 1500;
 
 export var EL=["Feu","Terre","Foudre","Eau","Sacré","Ténèbres"];
 export var EM={Feu:{i:"🔥",c:"#ef4444"},Terre:{i:"🪨",c:"#a3a042"},Foudre:{i:"⚡",c:"#facc15"},Eau:{i:"💧",c:"#60a5fa"},Sacré:{i:"☀️",c:"#fde68a"},Ténèbres:{i:"🌑",c:"#a78bfa"}};
