@@ -166,7 +166,7 @@ function StatRow(props){
 }
 
 
-var INIT={gold:STARTING_GOLD,scrolls:3,floors:0,roster:[],team:[null,null,null,null],inv:[],bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
+var INIT={gold:STARTING_GOLD,scrolls:3,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
 
 export default function Game(){
   var _g=useState(function(){try{var x=localStorage.getItem("ecl8");return x?JSON.parse(x):INIT;}catch(e){return INIT;}});var g=_g[0],setG=_g[1];
@@ -324,25 +324,33 @@ export default function Game(){
   function endDun(won){
     if(!dun)return;
     if(won&&dun.ph!=="done"){
-      // Add guaranteed drop if dungeon has it
       var rE=[].concat(dun.rE||[]);
       var dgDef=DG[dun.ti];
-      if(dgDef.reward&&dgDef.reward.guaranteedDrop){
-        var gDrop=generateWeapon(dgDef.loot.ranks[0],1);gDrop.uid=uid();rE.push(gDrop);
-      }
+      // Generate loot drops based on nbLoot
+      var nbL=dgDef.loot&&dgDef.loot.nbLoot?dgDef.loot.nbLoot:1;
+      for(var li=0;li<nbL;li++){var dr=rollWeaponDrop(dun.ti);if(dr){dr.uid=uid();rE.push(dr);}}
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
       var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0))*xm);
       setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
-      setLogs(function(l){return l.concat([{t:"─────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"💰 +"+tg+" or · ⭐ +"+tx+" XP · 🎁 "+rE.length+" objets"}]);});
+      setLogs(function(l){return l.concat([{t:"───────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"Or: +"+tg+" · XP: +"+tx+" · Loot: "+rE.length+" objets",tp:"info"}]);});
       return;
     }
-    // Actually claim rewards and close
     var mm2=1+(g.bl.mine||0)*.03,xm2=1+(g.bl.ecole||0)*.03;
     var tg2=won?dun.rG:Math.floor(dun.rG*mm2);
     var tx2=won?dun.rX:Math.floor((dun.rX+(dun.bX||0))*xm2);
     var fl=dun.fl+1;
-    setG(function(p){return Object.assign({},p,{gold:p.gold+tg2,floors:p.floors+fl,roster:p.roster.map(function(h){return p.team.indexOf(h.uid)>=0?Object.assign({},h,{xp:h.xp+tx2}):h;}),inv:[].concat(p.inv,dun.rE||[])});});
-    if(!won)setLogs(function(l){return l.concat([{t:"─────────────"},{t:"Fin",tp:"heroDeath"},{t:"Or:+"+tg2+" XP:+"+tx2+" Étapes:"+fl}]);});
+    var ti=dun.ti;
+    setG(function(p){
+      var bt=[].concat(p.beaten||[]);
+      var extraG=0,extraX=0,extraS=0;
+      if(won&&bt.indexOf(ti)<0){
+        bt.push(ti);
+        var fb=DG[ti].firstBonus;
+        if(fb){extraG=fb.gold||0;extraX=fb.xp||0;extraS=fb.scrolls||0;}
+      }
+      return Object.assign({},p,{gold:p.gold+tg2+extraG,scrolls:(p.scrolls||0)+extraS,beaten:bt,roster:p.roster.map(function(h){return p.team.indexOf(h.uid)>=0?Object.assign({},h,{xp:h.xp+tx2+extraX}):h;}),inv:[].concat(p.inv,dun.rE||[])});
+    });
+    if(!won)setLogs(function(l){return l.concat([{t:"───────────────"},{t:"Fin",tp:"heroDeath"},{t:"Or: +"+tg2+" · XP: +"+tx2+" · Étapes: "+fl,tp:"info"}]);});
     setDun(null);setAu(false);
   }
   useEffect(function(){
@@ -552,7 +560,7 @@ export default function Game(){
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
       <h1 style={{fontFamily:"Cinzel",fontSize:20,fontWeight:900,color:"var(--acc)",textShadow:"0 0 12px #c0392b30"}}>⚔️ ECLIPSIA</h1>
-      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span style={{display:"flex",alignItems:"center",gap:4}}>📜 {g.scrolls||0}<button onClick={function(){if(g.gold>=1000)setG(function(p){return Object.assign({},p,{gold:p.gold-1000,scrolls:(p.scrolls||0)+1});});}} disabled={g.gold<1000} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:g.gold>=1000?"var(--card)":"#111",color:g.gold>=1000?"var(--t)":"#555",cursor:g.gold>=1000?"pointer":"not-allowed",fontWeight:700,opacity:g.gold>=1000?1:0.4}}>+1 (1000g)</button></span><span style={{fontSize:12,color:"var(--td)"}}>🏔️ {g.floors}</span></div>
+      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span style={{display:"flex",alignItems:"center",gap:4}}>📜 {g.scrolls||0}<button onClick={function(){if(g.gold>=1000)setG(function(p){return Object.assign({},p,{gold:p.gold-1000,scrolls:(p.scrolls||0)+1});});}} disabled={g.gold<1000} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:g.gold>=1000?"var(--card)":"#111",color:g.gold>=1000?"var(--t)":"#555",cursor:g.gold>=1000?"pointer":"not-allowed",fontWeight:700,opacity:g.gold>=1000?1:0.4}}>+1 (1000g)</button></span><span style={{fontSize:12,color:"var(--td)"}}>⚔️ {(g.beaten||[]).length}/{DG.length}</span></div>
     </div>
     <div style={{display:"flex",gap:4,marginBottom:10}}>{Object.keys(TM).map(function(k){return <button key={k} className={"b "+(tab===k?"ton":"")} onClick={function(){if(!inD||k==="donjon")setTab(k);}} style={{fontSize:13,flex:1,opacity:inD&&k!=="donjon"?.3:1}}>{TM[k]}</button>;})}
       <button className="b" onClick={reset} style={{fontSize:10,color:"var(--red)",minWidth:40}}>🔄</button>
@@ -673,7 +681,7 @@ export default function Game(){
 
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
       {!dun&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:4}}>⚔️ Donjons</h2><div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe: {team.length}/4</div>
-        {DG.map(function(d,i){var lk=g.floors<d.ul;var isOpen=dExp===i;
+        {DG.map(function(d,i){var bt=g.beaten||[];var lk=d.ul>=0&&bt.indexOf(d.ul)<0;if(d.secret&&bt.indexOf(29)<0)lk=true;var isOpen=dExp===i;
           var enmPool=(d.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);
           var bssPool=(d.bosses||[]).map(function(bid){return BSS.find(function(b){return b.id===bid;});}).filter(Boolean);
           var lootInfo=d.loot?("Rang "+d.loot.ranks[0]+"-"+d.loot.ranks[1]+", "+Object.keys(d.loot.rarW).map(function(r){return (RA[parseInt(r)]||{}).n+" "+Math.round(d.loot.rarW[r]*100)+"%";}).join(", ")):"";
