@@ -60,7 +60,7 @@ function cs(hero,bl){
   return s;
 }
 function gw(h){var w=h.equipment&&h.equipment.weapon;return w||{name:"Poings",wt:"physical",dmg:5,el:"Neutre"};}
-function xpN(lv,r){return 80+lv*30+r*15;}
+function xpN(lv,r){var base=50+r*10;var mult=2+6*((lv-1)/98);return Math.floor(base*lv*mult);}
 
 
 // NEW DAMAGE FORMULA: dmg × (1 + strBonus + vulnBonus) then × variance × crit × elemRes
@@ -134,7 +134,7 @@ function ItemInfo(props){
   if(it.rank)header+=" · Rang "+it.rank;
   // Name line with damage
   var line2=it.name;
-  if(it.dmg!=null){line2+=" ("+it.dmg+" "+(it.wt==="magical"?"MAG":"PHY");if(it.el&&it.el!=="Neutre")line2+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line2+=")";}
+  if(it.dmg!=null){line2+=" ("+it.dmg+" "+(it.wt==="magical"?"Magique":"Physique");if(it.el&&it.el!=="Neutre")line2+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line2+=")";}
   var fs=props.fs||14;
   return(<div>
     <div style={{fontSize:fs-2,color:"var(--td)"}}>{header} · <span style={{color:rc,fontWeight:700}}>{(RA[it.rarity]||{}).s}</span></div>
@@ -395,7 +395,7 @@ export default function Game(){
       var xn=xpN(hero.level,hero.rarity);var canLv=hero.xp>=xn;
       var inTeam=g.team.indexOf(hero.uid)>=0;
       var atkEl=w.el&&w.el!=="Neutre"?w.el:null;
-      function mkTip(key){var arr=st._s[key];if(!arr||!arr.length)return null;var total=key==="hp"||key==="rel"?st[key]:key==="rgHp"?fmtPct(st[key]):fmtPM(st[key]);return arr.join("\n")+"\n= "+total;}
+      function mkTip(key){var arr=st._s[key];if(!arr||!arr.length)return null;var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);return arr.join("\n")+"\n= "+total;}
 
       if(slv&&canLv){
         var sN=cs(Object.assign({},hero,{level:hero.level+1}),g.bl);
@@ -413,13 +413,13 @@ export default function Game(){
                   else{dA=fmtPct(v);dB=fmtPct(nv);if(dA===dB)return;}
                   rows.push({icon:icon,label:label,val:v,nv:nv,type:type});
                 }
-                addIf("❤️","PV Max",st.hp,sN.hp,"flat");
-                addIf("⚔️","Force (STR)",st.str,sN.str,"pm");
-                addIf("🔮","Magie (MAG)",st.mag,sN.mag,"pm");
-                addIf("💥","Critique (CRT)",st.crit,sN.crit,"pct");
-                addIf("🛡️","Vulnérabilité Physique",st.phv,sN.phv,"pmInv");
-                addIf("🔰","Vulnérabilité Magique",st.mav,sN.mav,"pmInv");
-                addIf("💨","Esquive",st.dodge,sN.dodge,"pct");
+                addIf("🩸","PV",st.hp,sN.hp,"flat");
+                addIf("⚔️","STR",st.str,sN.str,"pm");
+                addIf("🔮","MAG",st.mag,sN.mag,"pm");
+                addIf("💥","CRT",st.crit,sN.crit,"pct");
+                addIf("🛡️","VPH",st.phv,sN.phv,"pmInv");
+                addIf("🔰","VMA",st.mav,sN.mav,"pmInv");
+                addIf("💨","EVA",st.dodge,sN.dodge,"pct");
                 return rows.map(function(r,i){return <StatRow key={i} icon={r.icon} label={r.label} val={r.val} nv={r.nv} type={r.type}/>;});
               })()}
             </div>
@@ -469,17 +469,17 @@ export default function Game(){
               <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
                 <PH k="carac" label="Caractéristiques" open={cp.carac}/>
                 {cp.carac&&<div>
-                  <StatRow icon="❤️" label="PV Max" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🩸" label="Points de vie (PV)" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
                   <StatRow icon="⚔️" label="Force (STR)" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
                   <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
                   <StatRow icon="💥" label="Critique (CRT)" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="🛡️" label="Vulnérabilité Physique" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="🔰" label="Vulnérabilité Magique" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="💨" label="Esquive" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🛡️" label="Vulnérabilité Physique (VPH)" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🔰" label="Vulnérabilité Magique (VMA)" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="💨" label="Esquive (EVA)" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="♻️" label="Récupération" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="♻️" label="Récupération (REC)" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
                 </div>}
               </div>
               <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
@@ -505,18 +505,16 @@ export default function Game(){
                 <PH k="degats" label="Dégâts" open={cp.degats}/>
                 {cp.degats&&<div>
                   <div style={{fontSize:13,marginBottom:6}}>
-                    <span style={{color:"#8888bb"}}>Arme :</span> <span style={{fontWeight:600}}>{ww.name}</span> <span style={{color:"var(--td)"}}>({ww.dmg} {isMag?"MAG":"PHY"})</span>
+                    <span style={{color:"#8888bb"}}>Arme :</span> <span style={{fontWeight:600}}>{ww.name}</span> <span style={{color:"var(--td)"}}>({ww.dmg} {isMag?"Magique":"Physique"})</span>
                   </div>
                   <div style={{fontSize:13,marginBottom:4}}>
-                    <span style={{color:"#8888bb"}}>{isMag?"MAG":"STR"} :</span> <span style={{fontWeight:600,color:isMag?"#60a5fa":"#ef8855"}}>{fmtPM(mainStat)}</span>
+                    <span style={{color:"#8888bb"}}>{isMag?"MAG":"STR"} :</span> <span style={{fontWeight:600,color:mainStat>=1?"#4ade80":"#facc15"}}>{fmtPM(mainStat)}</span>
                   </div>
                   <div style={{fontSize:13,marginBottom:4}}>
                     <span style={{color:"#8888bb"}}>Formule :</span> <span style={{color:"var(--td)"}}>Arme × {isMag?"MAG":"STR"} × variance(0.8-1.2)</span>
                   </div>
                   <div style={{background:"#ffffff06",borderRadius:8,padding:10,marginTop:6}}>
-                    <div style={{fontSize:14,fontWeight:700}}>Attaque normale : <span style={{color:"#4ade80"}}>{dmgMin} — {dmgMax}</span></div>
-                    <div style={{fontSize:14,fontWeight:700,marginTop:4}}>Coup critique (×3) : <span style={{color:"#fbbf24"}}>{dmgCrit}</span></div>
-                    {sk&&<div style={{fontSize:14,fontWeight:700,marginTop:4}}>Compétence ({sk.name}) : <span style={{color:"#c0392b"}}>{skDmgMin} — {skDmgMax}</span></div>}
+                    <div style={{fontSize:15,fontWeight:700}}><span style={{color:dmgMin>0?"#4ade80":"#facc15"}}>{dmgMin} — {dmgMax}</span> <span style={{color:"var(--t)"}}>{isMag?"Magique":"Physique"}</span></div>
                   </div>
                 </div>}
               </div>
@@ -538,7 +536,7 @@ export default function Game(){
                       <div style={{fontSize:12,color:"var(--td)"}}>{sk.desc}</div>
                     </div>
                   </div>
-                  <StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
                 </div>}
               </div>}
             </div>;
@@ -591,8 +589,8 @@ export default function Game(){
                 <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:12,color:(RA[h.rarity]||{}).c,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
               </div>
               <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
-                <div>❤️ {hst.hp}</div>
-                {(function(){var ww=gw(h);var isMag=ww.wt==="magical";var mult=isMag?hst.mag:hst.str;var avgDmg=Math.round(ww.dmg*Math.max(0.1,mult));return <div style={{color:isMag?"#60a5fa":"#ef8855"}}>⚔ Dégâts ({isMag?"MAG":"PHY"}) : ~{avgDmg}</div>;})()}
+                <div>🩸 {hst.hp}</div>
+                {(function(){var ww=gw(h);var iM=ww.wt==="magical";var ms=iM?hst.mag:hst.str;var avg=Math.round(ww.dmg*Math.max(0.1,ms));var dmgCol=ms>=1?"#4ade80":"#facc15";return <div>{iM?"🔮":"⚔️"} <span style={{color:dmgCol}}>~{avg}</span> <span style={{color:"var(--t)"}}>({iM?"Magique":"Physique"})</span></div>;})()}
               </div>
             </div>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:120,color:"#444",fontSize:14}}>Emplacement vide</div>}
           </div>;
@@ -632,8 +630,8 @@ export default function Game(){
               <div><div style={{fontWeight:700,fontSize:14}}>{h.name}</div><div style={{fontSize:12,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div></div>
             </div>
             <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
-              <div>❤️ {hst.hp}</div>
-              {(function(){var ww=gw(h);var isMag=ww.wt==="magical";var mult=isMag?hst.mag:hst.str;var avgDmg=Math.round(ww.dmg*Math.max(0.1,mult));return <div style={{color:isMag?"#60a5fa":"#ef8855"}}>⚔ Dégâts ({isMag?"MAG":"PHY"}) : ~{avgDmg}</div>;})()}
+              <div>🩸 {hst.hp}</div>
+              {(function(){var ww=gw(h);var iM=ww.wt==="magical";var ms=iM?hst.mag:hst.str;var avg=Math.round(ww.dmg*Math.max(0.1,ms));var dmgCol=ms>=1?"#4ade80":"#facc15";return <div>{iM?"🔮":"⚔️"} <span style={{color:dmgCol}}>~{avg}</span> <span style={{color:"var(--t)"}}>({iM?"Magique":"Physique"})</span></div>;})()}
             </div>
           </div>;
         })}
