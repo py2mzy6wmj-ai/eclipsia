@@ -132,7 +132,7 @@ var WP_NAMES = ["Épée", "Poignard", "Arc", "Hallebarde", "Hache", "Arbalète"]
 var WP_NAMES_MYTHIC = ["Faiseur-de-veuves", "Ultima", "Deuillegivre"];
 var EL_SUFFIXES = { Feu: "de Feu", Terre: "de Terre", Foudre: "de Foudre", Eau: "d'Eau", Sacré: "Sacré(e)", Ténèbres: "des Ténèbres" };
 
-var RARITY_BONUS = { 1: 1.0, 2: 1.10, 3: 1.25, 4: 2.0, 5: 3.0 };
+var RARITY_BONUS = { 1: 1.0, 2: 1.50, 3: 2.10, 4: 3.0, 5: 5.0 };
 var RARITY_TRAITS = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 2 };
 
 var RANK_BASE = {
