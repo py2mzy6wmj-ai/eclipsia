@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { HEROES, AR, AC, TL, ALL_EQ, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollWeaponDrop, generateWeapon, SKILLS } from './data';
+import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
@@ -43,6 +43,7 @@ function cs(hero,bl){
   var slots=["weapon","armor","accessory","talisman"];
   for(var si=0;si<slots.length;si++){var it=eq[slots[si]];if(!it||!it.bon)continue;var b=it.bon;
     if(b.hp){s.hp+=b.hp;_s.hp.push(it.name+": +"+b.hp);}
+    if(b.pvPct){var pvB=Math.floor(s.hp*b.pvPct);s.hp+=pvB;_s.hp.push(it.name+": +"+fmtPct(b.pvPct)+" (+"+pvB+")");}
     if(b.str){s.str+=b.str;_s.str.push(it.name+": "+fmtB(b.str));}
     if(b.mag){s.mag+=b.mag;_s.mag.push(it.name+": "+fmtB(b.mag));}
     if(b.crit){s.crit+=b.crit;_s.crit.push(it.name+": +"+fmtPct(b.crit));}
@@ -123,11 +124,11 @@ function ItemInfo(props){
   var parts=[];var b=it.bon||{};
   if(b.str)parts.push("STR "+fmtB(b.str));if(b.mag)parts.push("MAG "+fmtB(b.mag));
   if(b.crt)parts.push("CRT "+fmtB(b.crt));if(b.crit)parts.push("CRT +"+fmtPct(b.crit));
-  if(b.hp)parts.push("PV +"+b.hp);
-  if(b.rel)parts.push("Recharge "+b.rel+" tour"+(Math.abs(b.rel)>1?"s":""));
-  if(b.phv)parts.push("PHV "+fmtB(b.phv));if(b.mav)parts.push("MAV "+fmtB(b.mav));
-  if(b.dodge)parts.push("ESQ +"+fmtPct(b.dodge));if(b.rgHp)parts.push("Récupération +"+fmtPct(b.rgHp));
-  if(b.er)for(var ek in b.er)parts.push("Vuln "+ek+" "+fmtEV(1+b.er[ek]));
+  if(b.hp)parts.push("PV +"+b.hp);if(b.pvPct)parts.push("PV +"+fmtPct(b.pvPct));
+  if(b.rel)parts.push("REL "+b.rel+" tour"+(Math.abs(b.rel)>1?"s":""));
+  if(b.phv)parts.push("VPH "+fmtB(b.phv));if(b.mav)parts.push("VMA "+fmtB(b.mav));
+  if(b.dodge)parts.push("EVA +"+fmtPct(b.dodge));if(b.rgHp)parts.push("REC +"+fmtPct(b.rgHp));
+  if(b.er){for(var ek in b.er){var rv=b.er[ek];parts.push((EM[ek]||{}).i+" "+ek+" "+(rv<0?"+":"")+Math.round(Math.abs(rv)*100)+"%");}}
   // Header line: slot · Rang X · ★★
   var slotName=it.slot==="weapon"?"Arme":it.slot==="armor"?"Armure":it.slot==="accessory"?"Accessoire":"Talisman";
   var header=slotName;
@@ -166,7 +167,7 @@ function StatRow(props){
 }
 
 
-var INIT={gold:STARTING_GOLD,scrolls:3,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
+var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
 
 export default function Game(){
   var _g=useState(function(){try{var x=localStorage.getItem("ecl8");return x?JSON.parse(x):INIT;}catch(e){return INIT;}});var g=_g[0],setG=_g[1];
@@ -186,6 +187,9 @@ export default function Game(){
   var _cp=useState({carac:true,elem:false,degats:false,equip:false,skill:false});var cp=_cp[0],setCp=_cp[1];
   var _drag=useState(null);var drag=_drag[0],setDrag=_drag[1];
   var _floats=useState([]);var floats=_floats[0],setFloats=_floats[1];
+  var _vp=useState("none");var vp=_vp[0],setVp=_vp[1];
+  var _fs=useState({slot:"weapon",rank:1,rar:1});var fs=_fs[0],setFs=_fs[1];
+  var _fResult=useState(null);var fResult=_fResult[0],setFResult=_fResult[1];
   var lr=useRef(null);
 
   useEffect(function(){var t=setTimeout(function(){try{localStorage.setItem("ecl8",JSON.stringify(g));}catch(e){}},500);return function(){clearTimeout(t);};},[g]);
@@ -232,7 +236,26 @@ export default function Game(){
     setDrag(null);
   }
   function doEquip(hu,iu){setG(function(p){var it=p.inv.find(function(i){return i.uid===iu;});var h=p.roster.find(function(r){return r.uid===hu;});if(!it||!h)return p;var inv=p.inv.filter(function(i){return i.uid!==iu;});var eq=Object.assign({},h.equipment);if(eq[it.slot])inv.push(eq[it.slot]);eq[it.slot]=it;return Object.assign({},p,{inv:inv,roster:p.roster.map(function(r){return r.uid===hu?Object.assign({},r,{equipment:eq}):r;})});});}
-  function doSell(iu){setG(function(p){var it=p.inv.find(function(i){return i.uid===iu;});if(!it)return p;var price=Math.max(1,(it.dmg||10)*(it.rank||1)*(it.rarity||1));return Object.assign({},p,{gold:p.gold+price,inv:p.inv.filter(function(i){return i.uid!==iu;})});});}
+  function sellPrice(it){if(it.slot==="weapon")return Math.max(1,Math.floor((it.dmg||10)*(it.rank||1)*(it.rarity||1)/2));return Math.max(1,Math.floor(20*(it.rank||1)*(it.rarity||1)/2));}
+  function doSell(iu){var it=g.inv.find(function(i){return i.uid===iu;});if(!it)return;var price=sellPrice(it);
+    setFloats(function(f){return f.concat([{uid:"ui",val:"+"+price+"g",color:"#fbbf24",id:uid()}]);});
+    setG(function(p){return Object.assign({},p,{gold:p.gold+price,inv:p.inv.filter(function(i){return i.uid!==iu;})});});}
+  function doRecycle(iu){var it=g.inv.find(function(i){return i.uid===iu;});if(!it)return;
+    var gains=[];
+    var inerteKey=it.slot+"_inerte";gains.push(it.slot.charAt(0).toUpperCase()+it.slot.slice(1)+" inerte");
+    var gChances=[[0.30,0.60,0.10],[0.25,0.65,0.10],[0.20,0.65,0.15],[0.15,0.70,0.15],[0.10,0.65,0.25]];
+    var gc=gChances[(it.rarity||1)-1]||gChances[0];var gr2=Math.random();
+    var gCount=gr2<gc[0]?0:gr2<gc[0]+gc[1]?1:2;
+    if(gCount>0)gains.push("Gabarit Rg"+(it.rank||1)+" x"+gCount);
+    var gotCata=Math.random()<0.33;
+    if(gotCata)gains.push("Catalyseur "+(RA[it.rarity]||{}).s);
+    setFloats(function(f){return f.concat([{uid:"ui",val:"♻️ "+gains.join(", "),color:"#4ade80",id:uid()}]);});
+    setG(function(p){
+      var nm=Object.assign({},p.mat||{});nm[inerteKey]=(nm[inerteKey]||0)+1;
+      if(gCount>0){var gk="gabarit_"+(it.rank||1);nm[gk]=(nm[gk]||0)+gCount;}
+      if(gotCata){var ck="catalyseur_"+(it.rarity||1);nm[ck]=(nm[ck]||0)+1;}
+      return Object.assign({},p,{mat:nm,inv:p.inv.filter(function(i){return i.uid!==iu;})});
+    });}
   function doUneq(hu,sl){setG(function(p){var h=p.roster.find(function(r){return r.uid===hu;});if(!h||!h.equipment[sl])return p;var nEq=Object.assign({},h.equipment);var old=nEq[sl];nEq[sl]=null;return Object.assign({},p,{inv:[].concat(p.inv,[old]),roster:p.roster.map(function(r){return r.uid!==hu?r:Object.assign({},r,{equipment:nEq});})});});}
   function doUpg(id){var u=BUP.find(function(b){return b.id===id;});var lv=g.bl[id]||0;if(!u||lv>=u.mx)return;var c=Math.floor(u.c0*Math.pow(u.cm,lv));if(g.gold<c)return;setG(function(p){var bl=Object.assign({},p.bl);bl[id]=lv+1;return Object.assign({},p,{gold:p.gold-c,bl:bl});});}
   function navSheet(dir){if(!sheet||sR.length<=1)return;var idx=sR.findIndex(function(h){return h.uid===sheet;});setSheet(sR[(idx+dir+sR.length)%sR.length].uid);setSlv(false);}
@@ -316,7 +339,7 @@ export default function Game(){
       if(t.every(function(h){return h.hp<=0;})){setLogs(function(l){return l.concat([{t:"Défaite...",tp:"heroDeath"}]);});return Object.assign({},d,{team:t,en:en,rG:rG,rX:rX,ph:"result",tI:tI});}
       if(en.every(function(e){return e.hp<=0;})){
         var bon=Math.floor(15*DG[d.ti].rw);setLogs(function(l){return l.concat([{t:"Victoire! +"+bon+"g",tp:"kill"}]);});
-        var eq=[].concat(rE);var dr=rollWeaponDrop(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  Loot: "+dr.name+" (Rg"+dr.rank+" "+(RA[dr.rarity]||{}).s+") !",tp:"info"}]);});}
+        var eq=[].concat(rE);var dr=rollLoot(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  Loot: "+dr.name+" (Rg"+dr.rank+" "+(RA[dr.rarity]||{}).s+") !",tp:"info"}]);});}
         return Object.assign({},d,{team:t,en:en,rG:rG+bon,rX:rX,rE:eq,ph:"victory",tI:tI});}
       return Object.assign({},d,{team:t,en:en,tI:tI,rG:rG,rX:rX,rE:rE});
     });
@@ -328,7 +351,7 @@ export default function Game(){
       var dgDef=DG[dun.ti];
       // Generate loot drops based on nbLoot
       var nbL=dgDef.loot&&dgDef.loot.nbLoot?dgDef.loot.nbLoot:1;
-      for(var li=0;li<nbL;li++){var dr=rollWeaponDrop(dun.ti);if(dr){dr.uid=uid();rE.push(dr);}}
+      for(var li=0;li<nbL;li++){var dr=rollLoot(dun.ti);if(dr){dr.uid=uid();rE.push(dr);}}
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
       var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0))*xm);
       setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
@@ -555,25 +578,162 @@ export default function Game(){
     }
   }
 
-  var TM={base:"🏰 Base",roster:"👥 Héros",equip:"⚙️ Équipement",donjon:"⚔️ Donjon",invocation:"🎲 Invocation"};
+  var TM={base:"🏰 Ville",roster:"👥 Héros",equip:"⚙️ Équipement",inventaire:"📦 Inventaire",donjon:"⚔️ Donjon",invocation:"🎲 Invocation"};
 
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
       <h1 style={{fontFamily:"Cinzel",fontSize:20,fontWeight:900,color:"var(--acc)",textShadow:"0 0 12px #c0392b30"}}>⚔️ ECLIPSIA</h1>
-      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span style={{display:"flex",alignItems:"center",gap:4}}>📜 {g.scrolls||0}<button onClick={function(){if(g.gold>=1000)setG(function(p){return Object.assign({},p,{gold:p.gold-1000,scrolls:(p.scrolls||0)+1});});}} disabled={g.gold<1000} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:g.gold>=1000?"var(--card)":"#111",color:g.gold>=1000?"var(--t)":"#555",cursor:g.gold>=1000?"pointer":"not-allowed",fontWeight:700,opacity:g.gold>=1000?1:0.4}}>+1 (1000g)</button></span><span style={{fontSize:12,color:"var(--td)"}}>⚔️ {(g.beaten||[]).length}/{DG.length}</span></div>
+      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span>📜 {g.scrolls||0}</span><span style={{fontSize:12,color:"var(--td)"}}>⚔️ {(g.beaten||[]).length}/{DG.length}</span></div>
     </div>
-    <div style={{display:"flex",gap:4,marginBottom:10}}>{Object.keys(TM).map(function(k){return <button key={k} className={"b "+(tab===k?"ton":"")} onClick={function(){if(!inD||k==="donjon")setTab(k);}} style={{fontSize:13,flex:1,opacity:inD&&k!=="donjon"?.3:1}}>{TM[k]}</button>;})}
-      <button className="b" onClick={reset} style={{fontSize:10,color:"var(--red)",minWidth:40}}>🔄</button>
+    <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>{Object.keys(TM).map(function(k){return <button key={k} className={"b "+(tab===k?"ton":"")} onClick={function(){if(!inD||k==="donjon")setTab(k);}} style={{fontSize:11,flex:"1 1 auto",minWidth:70,opacity:inD&&k!=="donjon"?.3:1}}>{TM[k]}</button>;})}
+      <button className="b" onClick={reset} style={{fontSize:10,color:"var(--red)",minWidth:36}}>🔄</button>
     </div>
+    {floats.filter(function(f){return f.uid==="ui";}).length>0&&<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:200,pointerEvents:"none"}}>
+      {floats.filter(function(f){return f.uid==="ui";}).map(function(f){return <div key={f.id} style={{color:f.color,fontSize:16,fontWeight:800,textShadow:"0 2px 6px #000",animation:"floatUp 1.2s forwards",textAlign:"center",whiteSpace:"nowrap"}}>{f.val}</div>;})}
+    </div>}
 
-    {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Base</h2>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8}}>{BUP.map(function(u){var lv=g.bl[u.id]||0,c=Math.floor(u.c0*Math.pow(u.cm,lv)),mx=lv>=u.mx;
-        return <div key={u.id} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14}}>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:22}}>{u.ic}</span><span style={{fontSize:13,color:"var(--acc)",fontWeight:700}}>Nv.{lv}/{u.mx}</span></div>
-          <div style={{fontWeight:700,fontSize:14,marginTop:4}}>{u.name}</div><div style={{fontSize:12,color:"var(--td)",marginTop:2}}>{u.desc}</div>
-          <div style={{height:3,background:"#080810",borderRadius:2,overflow:"hidden",marginTop:6}}><div style={{width:(lv/u.mx*100)+"%",height:"100%",background:"var(--acc)",transition:"width .3s"}}/></div>
-          <button className="b bg" disabled={g.gold<c||mx} onClick={function(){doUpg(u.id);}} style={{width:"100%",marginTop:6,fontSize:13}}>{mx?"MAX":c.toLocaleString()+"g"}</button>
-        </div>;})}</div>
+    {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
+      {(function(){
+        var m=g.mat||{};var flv=g.bl.forge||0;
+        // Forge success formula: base chance depends on rank, rarity, forge level
+        function forgeChance(rank,rarity,fLv){var diff=(rank-1)*8+(rarity-1)*18;var skill=fLv*12;var ch=100-diff+skill;return Math.max(0,Math.min(100,Math.round(ch)));}
+        // Forge state
+        var inerteKey=fs.slot+"_inerte";var gabKey="gabarit_"+fs.rank;var cataKey="catalyseur_"+fs.rar;
+        var hasInerte=(m[inerteKey]||0)>0;var hasGab=(m[gabKey]||0)>0;var hasCata=(m[cataKey]||0)>0;
+        var canForge=hasInerte&&hasGab&&hasCata;
+        var fChance=forgeChance(fs.rank,fs.rar,flv);
+        var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
+        var CATA_NAMES=["","Catalyseur commun","Catalyseur inhabituel","Catalyseur rare","Catalyseur épique","Catalyseur légendaire"];
+        var SLOT_NAMES={weapon:"Arme",armor:"Armure",accessory:"Accessoire",talisman:"Talisman"};
+        var SLOT_KEYS=["weapon","armor","accessory","talisman"];
+        function doForge(){
+          if(!canForge)return;
+          setG(function(p){
+            var nm=Object.assign({},p.mat||{});nm[inerteKey]=(nm[inerteKey]||0)-1;nm[gabKey]=(nm[gabKey]||0)-1;nm[cataKey]=(nm[cataKey]||0)-1;
+            return Object.assign({},p,{mat:nm});
+          });
+          if(Math.random()*100<fChance){
+            var item;
+            if(fs.slot==="weapon")item=generateWeapon(fs.rank,fs.rar);
+            else if(fs.slot==="armor")item=generateArmor(fs.rank,fs.rar);
+            else if(fs.slot==="accessory")item=generateAccessory(fs.rank,fs.rar);
+            else item=generateTalisman(fs.rank,fs.rar);
+            item.uid=uid();
+            setG(function(p){return Object.assign({},p,{inv:[].concat(p.inv,[item])});});
+            setFResult({ok:true,item:item});
+          }else{setFResult({ok:false});}
+        }
+        // Forge level upgrade costs
+        var FORGE_COSTS=[0,500,1000,2500,10000,25000,50000,100000,250000,500000];
+        var fNextCost=flv<10?FORGE_COSTS[flv]:null;
+        // Market
+        var mlv=g.bl.marche||0;
+        var MARCHE_COSTS=[0,2000,8000,25000,75000,200000];
+        var mNextCost=mlv<5?MARCHE_COSTS[mlv]:null;
+        var shopItems=[];
+        if(mlv>=1){shopItems.push({id:"scroll",name:"Parchemin d'invocation",cat:"Consommable",cost:1000,rar:1,icon:"📜"});shopItems.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rg1)",cat:"Gabarit · Rang 1",cost:100,rar:1,icon:"📐"});shopItems.push({id:"catalyseur_1",name:CATA_NAMES[1],cat:"Catalyseur · ★",cost:500,rar:1,icon:"💎"});}
+        if(mlv>=2){shopItems.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rg2)",cat:"Gabarit · Rang 2",cost:300,rar:1,icon:"📐"});shopItems.push({id:"catalyseur_2",name:CATA_NAMES[2],cat:"Catalyseur · ★★",cost:1500,rar:2,icon:"💎"});
+          for(var si=0;si<4;si++){var sn=SLOT_KEYS[si];shopItems.push({id:sn+"_inerte",name:SLOT_NAMES[sn]+" inerte",cat:"Réceptacle",cost:200,rar:1,icon:"🔩"});}}
+        function doBuy(item){
+          if(g.gold<item.cost)return;
+          setFloats(function(f){return f.concat([{uid:"ui",val:"+1 "+item.name,color:"#4ade80",id:uid()}]);});
+          setG(function(p){
+            var np=Object.assign({},p,{gold:p.gold-item.cost});
+            if(item.id==="scroll"){np.scrolls=(np.scrolls||0)+1;}
+            else{var nm=Object.assign({},np.mat||{});nm[item.id]=(nm[item.id]||0)+1;np.mat=nm;}
+            return np;
+          });
+        }
+        function PnlH(props){return <div onClick={props.onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,marginBottom:6}}>
+          <div><span style={{fontSize:20,marginRight:8}}>{props.icon}</span><span style={{fontWeight:700,fontSize:14}}>{props.name}</span>{props.lv!=null&&<span style={{fontSize:11,color:"var(--acc)",marginLeft:6}}>Nv.{props.lv}</span>}</div>
+          <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:vp===props.k?"rotate(180deg)":"rotate(0)"}}>▼</span>
+        </div>;}
+        return <div>
+          {/* FORGERON */}
+          <PnlH k="forge" name="Forgeron" icon="🔨" lv={flv} onClick={function(){setVp(vp==="forge"?"none":"forge");}}/>
+          {vp==="forge"&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            {/* Forge level */}
+            {fNextCost!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <span style={{fontSize:12,color:"var(--td)"}}>Niveau {flv} → {flv+1}</span>
+              <button className="b bg" disabled={g.gold<fNextCost} onClick={function(){if(g.gold<fNextCost)return;setG(function(p){var bl=Object.assign({},p.bl);bl.forge=(bl.forge||0)+1;return Object.assign({},p,{gold:p.gold-fNextCost,bl:bl});});}} style={{fontSize:12}}>{fNextCost.toLocaleString()}g</button>
+            </div>}
+            {/* Selectors */}
+            <div style={{display:"flex",gap:6,marginBottom:8}}>
+              <div style={{flex:1,textAlign:"center"}}>
+                <div style={{fontSize:11,color:"var(--td)",marginBottom:4}}>Type</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i-1+4)%4]}));setFResult(null);}}>◀</button>
+                  <div style={{minWidth:80,fontSize:13,fontWeight:600}}>{SLOT_NAMES[fs.slot]}</div>
+                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i+1)%4]}));setFResult(null);}}>▶</button>
+                </div>
+                <div style={{fontSize:10,color:hasInerte?"#4ade80":"#ef4444",marginTop:2}}>{SLOT_NAMES[fs.slot]+" inerte"} ({m[inerteKey]||0})</div>
+              </div>
+              <div style={{flex:1,textAlign:"center"}}>
+                <div style={{fontSize:11,color:"var(--td)",marginBottom:4}}>Rang</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.max(1,fs.rank-1)}));setFResult(null);}}>◀</button>
+                  <div style={{minWidth:30,fontSize:13,fontWeight:600}}>{fs.rank}</div>
+                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.min(15,fs.rank+1)}));setFResult(null);}}>▶</button>
+                </div>
+                <div style={{fontSize:10,color:hasGab?"#4ade80":"#ef4444",marginTop:2}}>{GABARIT_NAMES[fs.rank]} ({m[gabKey]||0})</div>
+              </div>
+              <div style={{flex:1,textAlign:"center"}}>
+                <div style={{fontSize:11,color:"var(--td)",marginBottom:4}}>Rareté</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.max(1,fs.rar-1)}));setFResult(null);}}>◀</button>
+                  <div style={{minWidth:40,fontSize:13,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s}</div>
+                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.min(5,fs.rar+1)}));setFResult(null);}}>▶</button>
+                </div>
+                <div style={{fontSize:10,color:hasCata?"#4ade80":"#ef4444",marginTop:2}}>{CATA_NAMES[fs.rar]} ({m[cataKey]||0})</div>
+              </div>
+            </div>
+            {/* Chance + button */}
+            <div style={{textAlign:"center",marginBottom:8}}>
+              <div style={{fontSize:14,fontWeight:700,color:fChance>=80?"#4ade80":fChance>=50?"#fbbf24":fChance>0?"#ef8855":"#ef4444"}}>Chance de réussite : {fChance}%</div>
+            </div>
+            <button className="b bg" disabled={!canForge||fChance<=0} onClick={doForge} style={{width:"100%",fontSize:14,marginBottom:8}}>🔨 Forger</button>
+            {/* Result */}
+            {fResult&&<div style={{textAlign:"center",padding:10,background:"#ffffff06",borderRadius:8}}>
+              {fResult.ok?<div><div style={{color:"#4ade80",fontWeight:700,fontSize:15,marginBottom:4}}>Succès !</div><ItemInfo item={fResult.item}/></div>
+              :<div style={{color:"#ef4444",fontWeight:700,fontSize:15}}>Échec... Les matériaux sont perdus.</div>}
+            </div>}
+          </div>}
+
+          {/* MARCHÉ */}
+          <PnlH k="marche" name="Marché" icon="🏪" lv={mlv} onClick={function(){setVp(vp==="marche"?"none":"marche");}}/>
+          {vp==="marche"&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            {mlv===0&&<div style={{textAlign:"center",padding:20}}>
+              <div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Le marché n'est pas encore ouvert.</div>
+              <button className="b bg" disabled={g.gold<2000} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=1;return Object.assign({},p,{gold:p.gold-2000,bl:bl});});}} style={{fontSize:13}}>Ouvrir le marché (2 000g)</button>
+            </div>}
+            {mlv>=1&&<div>
+              {mNextCost!=null&&mlv<5&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <span style={{fontSize:12,color:"var(--td)"}}>Niveau {mlv} → {mlv+1}</span>
+                <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||0)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:12}}>{mNextCost.toLocaleString()}g</button>
+              </div>}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6}}>
+                {shopItems.map(function(si){var rc=(RA[si.rar]||{}).c||"#888";
+                  return <div key={si.id} style={{background:rc+"08",border:"1px solid "+rc+"30",borderRadius:10,padding:10}}>
+                    <div style={{fontSize:10,color:"var(--td)"}}>{si.cat}</div>
+                    <div style={{fontWeight:700,fontSize:14,color:rc}}>{si.icon} {si.name}</div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
+                      <span style={{fontSize:13,color:"#fbbf24",fontWeight:600}}>{si.cost.toLocaleString()}g</span>
+                      <button className="b bg" disabled={g.gold<si.cost} onClick={function(){doBuy(si);}} style={{fontSize:12,padding:"4px 12px"}}>Acheter</button>
+                    </div>
+                  </div>;
+                })}
+              </div>
+            </div>}
+          </div>}
+
+          {/* Other buildings - greyed out */}
+          {[{k:"rempart",n:"Rempart",ic:"🏰"},{k:"autel",n:"Autel",ic:"🩸"},{k:"tour",n:"Tour Arcane",ic:"🗼"},{k:"ecole",n:"École",ic:"📖"},{k:"mine",n:"Mine",ic:"⛏️"},{k:"oracle",n:"Oracle",ic:"🔮"},{k:"taverne",n:"Taverne",ic:"🍺"}].map(function(b){
+            return <div key={b.k} style={{display:"flex",alignItems:"center",padding:12,background:"#0e0d0d",border:"1px solid #1a1515",borderRadius:12,marginBottom:6,opacity:0.3}}>
+              <span style={{fontSize:20,marginRight:8}}>{b.ic}</span><span style={{fontWeight:700,fontSize:14,color:"#555"}}>{b.n}</span><span style={{marginLeft:"auto",fontSize:11,color:"#444"}}>Bientôt</span>
+            </div>;
+          })}
+        </div>;
+      })()}
     </div>}
 
     {tab==="roster"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:4}}>👥 Héros ({g.roster.length})</h2>
@@ -667,35 +827,74 @@ export default function Game(){
             {it&&<button className="b" style={{fontSize:10,padding:"3px 6px",marginLeft:8}} onClick={function(){doUneq(selH.uid,sl);}}>×</button>}</div>;
         })}
       </div>}
-      <h3 style={{fontSize:14,color:"var(--td)",marginBottom:6}}>Inventaire ({g.inv.length})</h3>
+      <h3 style={{fontSize:14,color:"var(--td)",marginBottom:6}}>Armurerie ({g.inv.length})</h3>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:6}}>
         {g.inv.sort(function(a,b){var so={weapon:0,armor:1,accessory:2,talisman:3};var sa=so[a.slot]||0,sb=so[b.slot]||0;return sa-sb||b.rarity-a.rarity;}).map(function(it){
           return <div key={it.uid} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,display:"flex",flexDirection:"column",position:"relative"}}>
-            <button onClick={function(){doSell(it.uid);}} style={{position:"absolute",top:4,right:4,fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer",fontWeight:700}} title="Vendre">💰</button>
-            <div style={{flex:1}}><ItemInfo item={it} fs={13}/></div>
+            <div style={{position:"absolute",top:4,right:4,display:"flex",gap:3}}>
+              <button onClick={function(){doRecycle(it.uid);}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#152a15",color:"#4ade80",cursor:"pointer",fontWeight:700}} title="Recycler">♻️</button>
+              <button onClick={function(){doSell(it.uid);}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer",fontWeight:700}} title={"Vendre ("+sellPrice(it)+"g)"}>💰</button>
+            </div>
+            <div style={{flex:1,paddingRight:50}}><ItemInfo item={it} fs={13}/></div>
             {sel&&<button className="b bgr" style={{fontSize:11,width:"100%",marginTop:8}} onClick={function(){doEquip(sel,it.uid);}}>Équiper</button>}</div>;
         })}
       </div>
       {!g.inv.length&&<div style={{textAlign:"center",padding:20,color:"var(--td)",fontSize:12}}>Vide !</div>}
     </div>}
 
+    {tab==="inventaire"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>📦 Inventaire</h2>
+      {(function(){
+        var m=g.mat||{};
+        var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
+        var CATA_NAMES=["","Catalyseur commun","Catalyseur inhabituel","Catalyseur rare","Catalyseur épique","Catalyseur légendaire"];
+        function gabRar(r){return r<=3?1:r<=6?2:r<=9?3:r<=12?4:5;}
+        function matRow(key,name,qty,rar){var rc=(RA[rar]||{}).c||"#888";return <div key={key} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #ffffff08"}}><span style={{color:rc,fontWeight:600,fontSize:14}}>{name}</span><span style={{fontFamily:"monospace",fontWeight:700,fontSize:14,color:"var(--t)"}}>{qty}</span></div>;}
+        var monnaies=[{n:"Pièces d'or",v:g.gold,r:1}];
+        var conso=[{n:"Parchemins d'invocation",v:g.scrolls||0,r:1}];
+        var materiaux=[];
+        // Inertes
+        var inerteSlots=[["weapon_inerte","Arme inerte",1],["armor_inerte","Armure inerte",1],["accessory_inerte","Accessoire inerte",1],["talisman_inerte","Talisman inerte",1]];
+        for(var ii=0;ii<inerteSlots.length;ii++){var ik=inerteSlots[ii];if(m[ik[0]]>0)materiaux.push({k:ik[0],n:ik[1],v:m[ik[0]],r:ik[2]});}
+        // Gabarits
+        for(var gi=1;gi<=15;gi++){var gk="gabarit_"+gi;if(m[gk]>0)materiaux.push({k:gk,n:GABARIT_NAMES[gi]+" (Rg"+gi+")",v:m[gk],r:gabRar(gi)});}
+        // Catalyseurs
+        for(var ci=1;ci<=5;ci++){var ck="catalyseur_"+ci;if(m[ck]>0)materiaux.push({k:ck,n:CATA_NAMES[ci],v:m[ck],r:ci});}
+        return <div>
+          <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Monnaies</div>
+            {monnaies.map(function(x){return matRow(x.n,x.n,x.v.toLocaleString(),x.r);})}
+          </div>
+          <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Consommables</div>
+            {conso.map(function(x){return matRow(x.n,x.n,x.v,x.r);})}
+          </div>
+          <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Matériaux de forge</div>
+            {materiaux.length?materiaux.map(function(x){return matRow(x.k,x.n,x.v,x.r);}):<div style={{color:"var(--td)",fontSize:13}}>Aucun matériau. Recyclez de l'équipement !</div>}
+          </div>
+        </div>;
+      })()}
+    </div>}
+
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
       {!dun&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:4}}>⚔️ Donjons</h2><div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe: {team.length}/4</div>
-        {DG.map(function(d,i){var bt=g.beaten||[];var lk=d.ul>=0&&bt.indexOf(d.ul)<0;if(d.secret&&bt.indexOf(29)<0)lk=true;var isOpen=dExp===i;
+        {DG.map(function(d,i){var bt=g.beaten||[];var lk=d.ul>=0&&bt.indexOf(d.ul)<0;if(d.secret&&bt.indexOf(29)<0)lk=true;if(lk)return null;var isOpen=dExp===i;var beaten=bt.indexOf(i)>=0;
           var enmPool=(d.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);
           var bssPool=(d.bosses||[]).map(function(bid){return BSS.find(function(b){return b.id===bid;});}).filter(Boolean);
           var lootInfo=d.loot?("Rang "+d.loot.ranks[0]+"-"+d.loot.ranks[1]+", "+Object.keys(d.loot.rarW).map(function(r){return (RA[parseInt(r)]||{}).n+" "+Math.round(d.loot.rarW[r]*100)+"%";}).join(", ")):"";
-          return <div key={i} style={{background:lk?"#08080e":"var(--card)",border:"1px solid var(--brd)",borderRadius:12,marginBottom:6,opacity:lk?.3:1,overflow:"hidden"}}>
-          <div onClick={function(){if(!lk)setDExp(isOpen?null:i);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:lk?"default":"pointer"}}>
-            <div><div style={{fontWeight:700,fontSize:15}}>{d.name}</div><div style={{fontSize:11,color:"var(--td)"}}>{d.structure.length} étapes · Difficulté ×{d.m}</div></div>
-            <span style={{fontSize:18,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>{lk?"🔒":"▼"}</span>
+          return <div key={i} style={{background:"var(--card)",border:beaten?"1px solid #4ade8040":"1px solid var(--brd)",borderRadius:12,marginBottom:6,overflow:"hidden"}}>
+          <div onClick={function(){setDExp(isOpen?null:i);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer"}}>
+            <div><div style={{fontWeight:700,fontSize:15}}>{beaten?"✅ ":""}{d.name}</div><div style={{fontSize:11,color:"var(--td)"}}>{d.structure.length} étapes</div></div>
+            <span style={{fontSize:18,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>▼</span>
           </div>
-          {isOpen&&!lk&&<div style={{padding:"0 12px 12px",borderTop:"1px solid var(--brd)"}}>
+          {isOpen&&<div style={{padding:"0 12px 12px",borderTop:"1px solid var(--brd)"}}>
             {d.desc&&<div style={{fontSize:12,color:"var(--td)",fontStyle:"italic",marginTop:8,marginBottom:8}}>{d.desc}</div>}
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Monstres :</span> {enmPool.map(function(e){return e.icon+" "+e.name;}).join(", ")}</div>
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Boss :</span> {bssPool.map(function(b){return b.icon+" "+b.name;}).join(", ")}</div>
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Loot :</span> {lootInfo}</div>
-            {d.reward&&<div style={{fontSize:12,marginBottom:8}}><span style={{color:"var(--td)"}}>Récompense :</span> 💰 {d.reward.gold} or{d.reward.guaranteedDrop?" + 1 équipement garanti":""}</div>}
+            {d.reward&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Or par victoire :</span> 💰 {d.reward.gold}</div>}
+            {d.firstBonus&&!beaten&&<div style={{fontSize:12,marginBottom:8,padding:6,background:"#fbbf2410",borderRadius:6,border:"1px solid #fbbf2430"}}><span style={{color:"#fbbf24",fontWeight:700}}>Bonus de 1ère victoire :</span> 💰 {d.firstBonus.gold.toLocaleString()} or · ⭐ {d.firstBonus.xp.toLocaleString()} XP · 📜 {d.firstBonus.scrolls} parchemins</div>}
+            {d.firstBonus&&beaten&&<div style={{fontSize:11,marginBottom:8,color:"#4ade80"}}>✅ Bonus de première victoire réclamé</div>}
             <button className="b bg" disabled={!team.length} onClick={function(){startDun(i);}} style={{fontSize:14,width:"100%",padding:"10px 0"}}>⚔️ Explorer</button>
           </div>}
         </div>;})}
@@ -718,7 +917,9 @@ export default function Game(){
           {dun.ph==="event"&&<div style={{textAlign:"center"}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center"}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
-          {dun.ph==="done"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>🎉 Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div><button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
+          {dun.ph==="done"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div>
+            {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:6,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}</div>;return null;})()}
+            <button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
         </div>
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>
           {(function(){var cur=dun.tO[dun.tI%dun.tO.length];var ch=dun.team.find(function(h){return h.uid===cur&&h.hp>0&&h.isHero;});var sk=ch?SKILLS[ch.id]:null;var ready=sk&&ch&&ch.cd<=0;
