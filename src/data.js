@@ -95,995 +95,205 @@ export var HEROES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
-//  ÉQUIPEMENT STATIQUE (armures, accessoires, talismans)
-//  Les armes sont générées aléatoirement (voir generateWeapon)
+//  GÉNÉRATION ALÉATOIRE D'ÉQUIPEMENT (armes, armures, accessoires, talismans)
 // ═══════════════════════════════════════════════════════════════
-
-export var AR = [
-  { id: "a01", name: "Cotte de Mailles", slot: "armor", rarity: 1, bon: { hp: 20, phv: -0.02 }, desc: "PV +20, PHV -2%" },
-  { id: "a02", name: "Robe de Tissu", slot: "armor", rarity: 1, bon: { mp: 12, mav: -0.02 }, desc: "PM +12, MAV -2%" },
-  { id: "a03", name: "Plastron Runique", slot: "armor", rarity: 2, bon: { hp: 45, phv: -0.03 }, desc: "PV +45, PHV -3%" },
-  { id: "a04", name: "Tunique du Sage", slot: "armor", rarity: 2, bon: { mp: 25, mav: -0.03 }, desc: "PM +25, MAV -3%" },
-  { id: "a05", name: "Armure Dragon", slot: "armor", rarity: 3, bon: { hp: 80, phv: -0.05, dodge: 0.01 }, desc: "Armure lourde" },
-  { id: "a06", name: "Égide Céleste", slot: "armor", rarity: 4, bon: { hp: 120, phv: -0.07 }, desc: "Légendaire" },
-];
-export var AC = [
-  { id: "x01", name: "Anneau Vigueur", slot: "accessory", rarity: 1, bon: { rgHp: 0.02 }, desc: "Régénération PV +2%/tour" },
-  { id: "x02", name: "Pendentif Célérité", slot: "accessory", rarity: 1, bon: { rel: -1 }, desc: "Recharge -1 tour" },
-  { id: "x03", name: "Collier Vivacité", slot: "accessory", rarity: 2, bon: { rel: -1, rgHp: 0.02 }, desc: "Recharge -1, Régénération PV +2%" },
-  { id: "x04", name: "Broche Sang", slot: "accessory", rarity: 2, bon: { rgHp: 0.04 }, desc: "Régénération PV +4%" },
-  { id: "x05", name: "Amulette Vitale", slot: "accessory", rarity: 3, bon: { rgHp: 0.04, rel: -2 }, desc: "Régénération PV +4%, Recharge -2" },
-  { id: "x06", name: "Couronne Éternité", slot: "accessory", rarity: 4, bon: { rgHp: 0.05, rel: -2 }, desc: "Légendaire, Recharge -2" },
-];
-export var TL = [
-  { id: "t01", name: "Charme Anti-Feu", slot: "talisman", rarity: 1, bon: { er: { Feu: -0.10 } }, desc: "Vulnérabilité Feu -10%" },
-  { id: "t02", name: "Charme Anti-Foudre", slot: "talisman", rarity: 1, bon: { er: { Foudre: -0.10 } }, desc: "Vulnérabilité Foudre -10%" },
-  { id: "t03", name: "Sceau Élémentaire", slot: "talisman", rarity: 2, bon: { er: { Feu: -0.08, Eau: -0.08, Terre: -0.08 } }, desc: "Vulnérabilité Feu/Eau/Terre -8%" },
-  { id: "t04", name: "Amulette Sacrée", slot: "talisman", rarity: 3, bon: { er: { Sacré: -0.15, Ténèbres: -0.15 } }, desc: "Vulnérabilité Sacré/Ténèbres -15%" },
-  { id: "t05", name: "Orbe Harmonie", slot: "talisman", rarity: 4, bon: { er: { Feu: -0.1, Terre: -0.1, Foudre: -0.1, Eau: -0.1, Sacré: -0.1, Ténèbres: -0.1 } }, desc: "Vulnérabilité toutes -10%" },
-];
-export var ALL_EQ = [].concat(AR, AC, TL);
-
-// ═══════════════════════════════════════════════════════════════
-//  GÉNÉRATION ALÉATOIRE D'ARMES
-// ═══════════════════════════════════════════════════════════════
-
-var WP_NAMES = ["Épée", "Poignard", "Arc", "Hallebarde", "Hache", "Arbalète"];
-var WP_NAMES_MYTHIC = ["Faiseur-de-veuves", "Ultima", "Deuillegivre"];
-var EL_SUFFIXES = { Feu: "de Feu", Terre: "de Terre", Foudre: "de Foudre", Eau: "d'Eau", Sacré: "Sacré(e)", Ténèbres: "des Ténèbres" };
 
 var RARITY_BONUS = { 1: 1.0, 2: 1.50, 3: 2.10, 4: 3.0, 5: 5.0 };
-var RARITY_TRAITS = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 2 };
+function randBetween(min, max) { return min + Math.random() * (max - min); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-var RANK_BASE = {
-  dmgMin: { r1: 15, r15: 2250 }, dmgMax: { r1: 30, r15: 3000 },
-  strMin: { r1: 0.01, r15: 0.15 }, strMax: { r1: 0.02, r15: 0.20 },
-  magMin: { r1: 0.01, r15: 0.15 }, magMax: { r1: 0.02, r15: 0.20 },
-  crtMin: { r1: 0.01, r15: 0.10 }, crtMax: { r1: 0.01, r15: 0.10 },
-};
+// Quadratic interpolation rank 1→15
+var RANK_LERP = {};
+function addRL(key, r1, r15) { RANK_LERP[key] = { r1: r1, r15: r15 }; }
+function lR(key, rank) { var b = RANK_LERP[key]; var t = (rank - 1) / 14; return b.r1 + (b.r15 - b.r1) * t * t; }
 
-function lerpRank(stat, rank) {
-  var b = RANK_BASE[stat];
-  var t = (rank - 1) / 14;
-  var curve = t * t;
-  return b.r1 + (b.r15 - b.r1) * curve;
+// ── WEAPON STATS ──
+addRL("wDmgMin", 15, 2250); addRL("wDmgMax", 30, 3000);
+addRL("wStrMin", 0.01, 0.15); addRL("wStrMax", 0.02, 0.20);
+addRL("wMagMin", 0.01, 0.15); addRL("wMagMax", 0.02, 0.20);
+addRL("wCrtMin", 0.01, 0.10); addRL("wCrtMax", 0.01, 0.10);
+
+// ── ARMOR STATS ──
+addRL("aPvMin", 10, 1500); addRL("aPvMax", 20, 2000);
+addRL("aPvPctMin", 0.02, 0.20); addRL("aPvPctMax", 0.04, 0.35);
+addRL("aVphMin", 0.01, 0.12); addRL("aVphMax", 0.03, 0.25);
+addRL("aVmaMin", 0.01, 0.12); addRL("aVmaMax", 0.03, 0.25);
+addRL("aEvaMin", 0.01, 0.10); addRL("aEvaMax", 0.01, 0.10);
+addRL("aRecMin", 0.01, 0.06); addRL("aRecMax", 0.01, 0.06);
+
+// ── ACCESSORY STATS ──
+addRL("xPvPctMin", 0.01, 0.12); addRL("xPvPctMax", 0.03, 0.25);
+addRL("xStrMin", 0.01, 0.10); addRL("xStrMax", 0.02, 0.13);
+addRL("xMagMin", 0.01, 0.10); addRL("xMagMax", 0.02, 0.13);
+addRL("xVphMin", 0.01, 0.10); addRL("xVphMax", 0.02, 0.13);
+addRL("xVmaMin", 0.01, 0.10); addRL("xVmaMax", 0.02, 0.13);
+addRL("xCrtMin", 0.01, 0.05); addRL("xCrtMax", 0.01, 0.05);
+addRL("xEvaMin", 0.01, 0.05); addRL("xEvaMax", 0.01, 0.05);
+addRL("xRecMin", 0.01, 0.03); addRL("xRecMax", 0.01, 0.03);
+
+// ── TALISMAN STATS ──
+addRL("tResMin", 0.01, 0.25); addRL("tResMax", 0.01, 0.25);
+
+// ── NAMES ──
+var WP_R1 = ["Épée","Hache","Sabre","Dague","Arc","Arbalète","Masse"];
+var WP_R6 = ["Épée longue","Hache de guerre","Cimeterre","Coutelas","Arc long","Arbalète lourde","Masse d'armes"];
+var WP_R11 = ["Flamberge","Francisque","Fauchon","Kriss","Arc composite","Arbalète à poulies","Fléau"];
+var WP_R15 = ["Zweihänder","Bardiche","Falcata","Miséricorde","Yumi","Arbalète à répétition","Étoile du matin"];
+var WP_LEG = ["Estripaille","Main-De-Dieu","Destin Brisé","Croc du Grand Loup","Dies Irae","Volonté du Panthéon","Fin-De-L'entraînement","Mémento Mori","Le Débiteur","Orage"];
+var ARM_R1 = ["Armure de cuir","Armure légère","Broigne"];
+var ARM_R6 = ["Brigandine","Haubert","Cotte de mailles"];
+var ARM_R11 = ["Cuirasse","Armure de lames","Lorica"];
+var ARM_R15 = ["Armure de plaques","Harnois"];
+var ACC_NM = ["Anneau","Bague","Jonc","Pendentif","Médaillon","Collier","Chaîne","Broche","Diadème","Tiare"];
+var TLS_NM = ["Amulette","Fétiche","Idole","Sceau","Sigil","Totem","Relique","Fragment","Grigri","Charme","Insigne","Emblème","Reliquaire"];
+
+var EL_SUF = { Feu: "de Feu", Terre: "de Terre", Foudre: "de Foudre", Eau: "d'Eau", Sacré: "Sacré(e)", Ténèbres: "des Ténèbres" };
+var WP_SUF = { str: "de puissance", mag: "d'intelligence", crt: "de rage", rel: "de concentration" };
+var ARM_SUF = { pvPct: "de vitalité", vph: "de robustesse", vma: "de résilience", eva: "de souplesse", rec: "de soins" };
+var ACC_PSUF = { pvPct: "de vitalité", str: "de puissance", mag: "d'intelligence", vph: "de robustesse", vma: "de résilience" };
+var ACC_SSUF = { crt: "de rage", eva: "de souplesse", rec: "de soins", rel: "de concentration" };
+var TLS_SUF1 = { Feu:"ignifuge", Eau:"hydrophobe", Foudre:"paratonnerre", Terre:"aérien(ne)", Sacré:"sacré(e)", Ténèbres:"maudit(e)" };
+var TLS_SUF2 = {"Feu+Eau":"vaporeux(se)","Feu+Foudre":"cataclysmique","Feu+Terre":"volcanique","Feu+Sacré":"de foi","Feu+Ténèbres":"infernal(e)","Eau+Foudre":"de conduction","Eau+Terre":"de vie","Eau+Sacré":"béni(e)","Eau+Ténèbres":"pesteux(se)","Foudre+Terre":"tellurique","Foudre+Sacré":"divin(e)","Foudre+Ténèbres":"abyssal(e)","Terre+Sacré":"consacré(e)","Terre+Ténèbres":"rampant(e)","Sacré+Ténèbres":"d'humanité"};
+
+function nameByRank(r, lists) {
+  if (lists.length === 4) { if (r >= 15) return pick(lists[3]); if (r >= 11) return pick(lists[2]); if (r >= 6) return pick(lists[1]); return pick(lists[0]); }
+  if (lists.length === 3) { if (r >= 11) return pick(lists[2]); if (r >= 6) return pick(lists[1]); return pick(lists[0]); }
+  return pick(lists[0]);
 }
 
-function randBetween(min, max) { return min + Math.random() * (max - min); }
+function uid4() { return Math.random().toString(36).slice(2, 8); }
 
-// forcedWt: optionnel, force "physical" ou "magical" (pour arme de départ)
+// ════════════════════════════════════════
+//  GENERATE WEAPON
+// ════════════════════════════════════════
 export function generateWeapon(rank, rarity, forcedWt) {
-  var rarMult = RARITY_BONUS[rarity] || 1;
-  var numTraits = RARITY_TRAITS[rarity] || 1;
+  var rm = RARITY_BONUS[rarity] || 1;
+  var nT = { 1:1, 2:1, 3:2, 4:2, 5:3 }[rarity] || 1;
   var wt = forcedWt || (Math.random() < 0.5 ? "physical" : "magical");
-
-  var dmgBase = Math.round(randBetween(lerpRank("dmgMin", rank), lerpRank("dmgMax", rank)));
-  var dmg = Math.round(dmgBase * rarMult);
-
-  var traitPool = ["str", "mag", "crt"];
-  var traits = {};
-  for (var i = 0; i < numTraits && traitPool.length > 0; i++) {
+  var dmg = Math.round(randBetween(lR("wDmgMin",rank), lR("wDmgMax",rank)) * rm);
+  var traitPool = ["str","mag","crt","rel"];
+  var bon = {};
+  for (var i = 0; i < nT && traitPool.length > 0; i++) {
     var idx = Math.floor(Math.random() * traitPool.length);
-    var trait = traitPool.splice(idx, 1)[0];
-    var val;
-    if (trait === "str") val = randBetween(lerpRank("strMin", rank), lerpRank("strMax", rank));
-    else if (trait === "mag") val = randBetween(lerpRank("magMin", rank), lerpRank("magMax", rank));
-    else val = randBetween(lerpRank("crtMin", rank), lerpRank("crtMax", rank));
-    traits[trait] = Math.round(val * rarMult * 100) / 100;
-  }
-
-  var el = "Neutre";
-  if (rarity >= 3) {
-    if (Math.random() < 0.60) {
-      el = EL[Math.floor(Math.random() * EL.length)];
+    var t = traitPool.splice(idx, 1)[0];
+    if (t === "rel") { bon.rel = -1; }
+    else {
+      var lo = lR("w" + t.charAt(0).toUpperCase() + t.slice(1) + "Min", rank);
+      var hi = lR("w" + t.charAt(0).toUpperCase() + t.slice(1) + "Max", rank);
+      bon[t] = Math.round(randBetween(lo, hi) * rm * 100) / 100;
     }
   }
-
+  var el = "Neutre";
+  if (rarity >= 3 && Math.random() < 0.60) el = pick(EL);
   var name;
-  if (rarity === 5) {
-    name = WP_NAMES_MYTHIC[Math.floor(Math.random() * WP_NAMES_MYTHIC.length)];
-  } else {
-    name = WP_NAMES[Math.floor(Math.random() * WP_NAMES.length)];
-  }
-  if (wt === "magical") name = name + " magique";
-  if (el !== "Neutre") name = name + " " + (EL_SUFFIXES[el] || el);
-
-  var descParts = [];
-  if (traits.str) descParts.push("STR +" + Math.round(traits.str * 100) + "%");
-  if (traits.mag) descParts.push("MAG +" + Math.round(traits.mag * 100) + "%");
-  if (traits.crt) descParts.push("CRT +" + Math.round(traits.crt * 100) + "%");
-  if (el !== "Neutre") descParts.push((EM[el] || {}).i + " " + el);
-
-  return {
-    id: "wg_" + Math.random().toString(36).slice(2, 8),
-    name: name, slot: "weapon", wt: wt, rarity: rarity, rank: rank,
-    dmg: dmg, el: el, bon: traits,
-    desc: descParts.join(", ") || "Arme ordinaire",
-    generated: true,
-  };
+  if (rarity === 5) name = pick(WP_LEG);
+  else name = nameByRank(rank, [WP_R1, WP_R6, WP_R11, WP_R15]);
+  if (wt === "magical") name += " magique";
+  var firstTrait = Object.keys(bon)[0];
+  if (firstTrait && WP_SUF[firstTrait]) name += " " + WP_SUF[firstTrait];
+  if (el !== "Neutre") name += " " + (EL_SUF[el] || el);
+  return { id: "wg_" + uid4(), name: name, slot: "weapon", wt: wt, rarity: rarity, rank: rank, dmg: dmg, el: el, bon: bon, generated: true };
 }
 
+// ════════════════════════════════════════
+//  GENERATE ARMOR
+// ════════════════════════════════════════
+export function generateArmor(rank, rarity) {
+  var rm = RARITY_BONUS[rarity] || 1;
+  var nT = { 1:1, 2:1, 3:2, 4:3, 5:4 }[rarity] || 1;
+  var hp = Math.round(randBetween(lR("aPvMin",rank), lR("aPvMax",rank)) * rm);
+  var traitPool = ["pvPct","vph","vma","eva","rec"];
+  var bon = { hp: hp };
+  for (var i = 0; i < nT && traitPool.length > 0; i++) {
+    var idx = Math.floor(Math.random() * traitPool.length);
+    var t = traitPool.splice(idx, 1)[0];
+    var lo = lR("a" + t.charAt(0).toUpperCase() + t.slice(1) + "Min", rank);
+    var hi = lR("a" + t.charAt(0).toUpperCase() + t.slice(1) + "Max", rank);
+    var val = Math.round(randBetween(lo, hi) * rm * 100) / 100;
+    if (t === "pvPct") bon.pvPct = val;
+    else if (t === "vph") bon.phv = -val;
+    else if (t === "vma") bon.mav = -val;
+    else if (t === "eva") bon.dodge = val;
+    else if (t === "rec") bon.rgHp = val;
+  }
+  var name = nameByRank(rank, [ARM_R1, ARM_R6, ARM_R11, ARM_R15]);
+  var firstTrait = Object.keys(bon).filter(function(k){return k!=="hp";})[0];
+  var traitKey = firstTrait === "phv" ? "vph" : firstTrait === "mav" ? "vma" : firstTrait === "dodge" ? "eva" : firstTrait === "rgHp" ? "rec" : firstTrait;
+  if (traitKey && ARM_SUF[traitKey]) name += " " + ARM_SUF[traitKey];
+  return { id: "ag_" + uid4(), name: name, slot: "armor", rarity: rarity, rank: rank, bon: bon, generated: true };
+}
 
-// ═══════════════════════════════════════════════════════════════
-//  ENNEMIS — tous sur la même échelle de base
-//  La puissance réelle vient du multi caché du donjon
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════
+//  GENERATE ACCESSORY
+// ════════════════════════════════════════
+export function generateAccessory(rank, rarity) {
+  var rm = RARITY_BONUS[rarity] || 1;
+  var nP = { 1:1, 2:1, 3:2, 4:2, 5:3 }[rarity] || 1;
+  var nS = { 1:1, 2:1, 3:1, 4:2, 5:2 }[rarity] || 1;
+  var priPool = ["pvPct","str","mag","vph","vma"];
+  var secPool = ["crt","eva","rec","rel"];
+  var bon = {};
+  var firstName = "";
+  for (var i = 0; i < nP && priPool.length > 0; i++) {
+    var idx = Math.floor(Math.random() * priPool.length);
+    var t = priPool.splice(idx, 1)[0];
+    var lo = lR("x" + t.charAt(0).toUpperCase() + t.slice(1) + "Min", rank);
+    var hi = lR("x" + t.charAt(0).toUpperCase() + t.slice(1) + "Max", rank);
+    var val = Math.round(randBetween(lo, hi) * rm * 100) / 100;
+    if (t === "vph") bon.phv = -val;
+    else if (t === "vma") bon.mav = -val;
+    else bon[t] = val;
+    if (i === 0) firstName = t;
+  }
+  for (var j = 0; j < nS && secPool.length > 0; j++) {
+    var idx2 = Math.floor(Math.random() * secPool.length);
+    var t2 = secPool.splice(idx2, 1)[0];
+    if (t2 === "rel") { bon.rel = -1; }
+    else {
+      var lo2 = lR("x" + t2.charAt(0).toUpperCase() + t2.slice(1) + "Min", rank);
+      var hi2 = lR("x" + t2.charAt(0).toUpperCase() + t2.slice(1) + "Max", rank);
+      bon[t2] = Math.round(randBetween(lo2, hi2) * rm * 100) / 100;
+    }
+  }
+  var name = pick(ACC_NM);
+  if (firstName && ACC_PSUF[firstName]) name += " " + ACC_PSUF[firstName];
+  var firstSec = Object.keys(bon).filter(function(k){return ACC_SSUF[k];})[0];
+  if (firstSec && ACC_SSUF[firstSec]) name += " " + ACC_SSUF[firstSec];
+  return { id: "xg_" + uid4(), name: name, slot: "accessory", rarity: rarity, rank: rank, bon: bon, generated: true };
+}
 
-export var ENM = [
-  // Vallée Venteuse
-  { id: "e_loup", name: "Loup", icon: "🐺", hp: 40, dmg: 10, at: "physical", str: 1.04, mag: 0.20, crit: 0.08, phv: 0.97, dodge: 0.08, mav: 1.02, xp: 5, gold: 4, er: defER() },
-  { id: "e_vautour", name: "Vautour", icon: "🦅", hp: 28, dmg: 8, at: "physical", str: 1.02, mag: 0.20, crit: 0.12, phv: 1.02, dodge: 0.14, mav: 1.04, xp: 4, gold: 3, er: { Feu: 1.1, Terre: 1, Foudre: 1.1, Eau: 1, Sacré: 1, Ténèbres: 1 } },
-  // Sombre Forêt
-  { id: "e_sanglier", name: "Sanglier", icon: "🐗", hp: 55, dmg: 12, at: "physical", str: 1.06, mag: 0.15, crit: 0.04, phv: 0.93, dodge: 0.03, mav: 1.05, xp: 6, gold: 5, er: defER() },
-  { id: "e_chasseur", name: "Chasseur", icon: "🏹", hp: 35, dmg: 11, at: "physical", str: 1.05, mag: 0.25, crit: 0.10, phv: 0.98, dodge: 0.06, mav: 1.0, xp: 5, gold: 6, er: defER() },
-  // Mer Souterraine
-  { id: "e_slime_bleu", name: "Slime bleu", icon: "🫧", hp: 50, dmg: 7, at: "magical", str: 0.20, mag: 1.02, crit: 0.02, phv: 0.94, dodge: 0.02, mav: 0.94, xp: 4, gold: 3, er: { Feu: 1.15, Terre: 1, Foudre: 1.1, Eau: 0.50, Sacré: 1, Ténèbres: 1 } },
-  { id: "e_crabe", name: "Crabe géant", icon: "🦀", hp: 60, dmg: 13, at: "physical", str: 1.05, mag: 0.15, crit: 0.03, phv: 0.88, dodge: 0.01, mav: 1.05, xp: 6, gold: 5, er: { Feu: 1, Terre: 0.9, Foudre: 1.1, Eau: 0.85, Sacré: 1, Ténèbres: 1 } },
-  // Désert Aride
-  { id: "e_saurien", name: "Guerrier saurien", icon: "🦎", hp: 48, dmg: 12, at: "physical", str: 1.06, mag: 0.25, crit: 0.06, phv: 0.94, dodge: 0.05, mav: 0.98, xp: 6, gold: 6, er: { Feu: 0.9, Terre: 0.9, Foudre: 1, Eau: 1.1, Sacré: 1, Ténèbres: 1 } },
-  { id: "e_scorpion", name: "Scorpion", icon: "🦂", hp: 38, dmg: 14, at: "physical", str: 1.08, mag: 0.15, crit: 0.10, phv: 0.96, dodge: 0.06, mav: 1.04, xp: 5, gold: 5, er: { Feu: 1.1, Terre: 0.85, Foudre: 1, Eau: 1.1, Sacré: 1, Ténèbres: 1 } },
-  { id: "e_cactuaire", name: "Cactuaire", icon: "🌵", hp: 30, dmg: 9, at: "physical", str: 1.03, mag: 0.30, crit: 0.15, phv: 0.98, dodge: 0.12, mav: 1.0, xp: 4, gold: 4, er: { Feu: 1.2, Terre: 0.8, Foudre: 1, Eau: 0.7, Sacré: 1, Ténèbres: 1 } },
-  // Temple Abandonné
-  { id: "e_slime_jaune", name: "Slime jaune", icon: "💛", hp: 52, dmg: 8, at: "magical", str: 0.20, mag: 1.04, crit: 0.02, phv: 0.95, dodge: 0.02, mav: 0.92, xp: 4, gold: 3, er: { Feu: 1.1, Terre: 1, Foudre: 0.50, Eau: 1.1, Sacré: 1, Ténèbres: 1 } },
-  { id: "e_mage_noir", name: "Mage noir", icon: "🧙", hp: 32, dmg: 14, at: "magical", str: 0.15, mag: 1.08, crit: 0.06, phv: 1.04, dodge: 0.04, mav: 0.93, xp: 7, gold: 7, er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.2, Ténèbres: 0.8 } },
-  { id: "e_esprit", name: "Esprit farouche", icon: "👻", hp: 30, dmg: 11, at: "magical", str: 0.10, mag: 1.06, crit: 0.04, phv: 1.08, dodge: 0.15, mav: 0.95, xp: 5, gold: 5, er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.25, Ténèbres: 0.70 } },
-  // Cité Maudite
-  { id: "e_coupe_jarret", name: "Coupe-jarret", icon: "🗡️", hp: 36, dmg: 13, at: "physical", str: 1.07, mag: 0.20, crit: 0.12, phv: 0.99, dodge: 0.10, mav: 1.02, xp: 5, gold: 8, er: defER() },
-  { id: "e_soldat_corrompu", name: "Soldat corrompu", icon: "⚔️", hp: 52, dmg: 11, at: "physical", str: 1.05, mag: 0.20, crit: 0.05, phv: 0.92, dodge: 0.03, mav: 0.98, xp: 6, gold: 6, er: defER() },
-  { id: "e_homme_serpent", name: "Homme-serpent", icon: "🐍", hp: 42, dmg: 12, at: "physical", str: 1.05, mag: 0.35, crit: 0.08, phv: 0.96, dodge: 0.08, mav: 0.96, xp: 6, gold: 6, er: { Feu: 1, Terre: 0.9, Foudre: 1, Eau: 1, Sacré: 1.1, Ténèbres: 0.9 } },
-  // Palais du Roi Déchu
-  { id: "e_garde_royal", name: "Garde royal", icon: "🛡️", hp: 58, dmg: 11, at: "physical", str: 1.04, mag: 0.20, crit: 0.04, phv: 0.88, dodge: 0.02, mav: 0.96, xp: 6, gold: 5, er: defER() },
-  { id: "e_statue_animee", name: "Statue animée", icon: "🗿", hp: 70, dmg: 13, at: "physical", str: 1.06, mag: 0.10, crit: 0.02, phv: 0.84, dodge: 0, mav: 1.06, xp: 7, gold: 5, er: { Feu: 0.9, Terre: 0.7, Foudre: 0.9, Eau: 1, Sacré: 1.1, Ténèbres: 1 } },
-  { id: "e_assassin", name: "Assassin", icon: "🥷", hp: 30, dmg: 15, at: "physical", str: 1.10, mag: 0.20, crit: 0.15, phv: 1.02, dodge: 0.14, mav: 1.02, xp: 6, gold: 8, er: defER() },
-  // Catacombes Royales
-  { id: "e_squelette", name: "Squelette", icon: "💀", hp: 38, dmg: 10, at: "physical", str: 1.02, mag: 0.20, crit: 0.04, phv: 0.96, dodge: 0.02, mav: 1.0, xp: 4, gold: 3, er: { Feu: 1.15, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.2, Ténèbres: 0.8 } },
-  { id: "e_zombie", name: "Zombie", icon: "🧟", hp: 65, dmg: 9, at: "physical", str: 1.03, mag: 0.10, crit: 0.01, phv: 0.92, dodge: 0, mav: 1.04, xp: 5, gold: 3, er: { Feu: 1.2, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.2, Ténèbres: 0.7 } },
-  { id: "e_slime_noir", name: "Slime noir", icon: "🖤", hp: 55, dmg: 8, at: "magical", str: 0.20, mag: 1.04, crit: 0.02, phv: 0.94, dodge: 0.02, mav: 0.92, xp: 4, gold: 3, er: { Feu: 1.1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.2, Ténèbres: 0.40 } },
-  // Couloirs Infernaux
-  { id: "e_slime_rouge", name: "Slime rouge", icon: "❤️‍🔥", hp: 50, dmg: 9, at: "magical", str: 0.20, mag: 1.05, crit: 0.03, phv: 0.94, dodge: 0.02, mav: 0.92, xp: 5, gold: 4, er: { Feu: 0, Terre: 1, Foudre: 1, Eau: 1.3, Sacré: 1, Ténèbres: 1 } },
-  { id: "e_demon_inf", name: "Démon inférieur", icon: "😈", hp: 45, dmg: 13, at: "physical", str: 1.07, mag: 0.30, crit: 0.08, phv: 0.95, dodge: 0.05, mav: 0.95, xp: 6, gold: 6, er: { Feu: 0.7, Terre: 1, Foudre: 1, Eau: 1.15, Sacré: 1.2, Ténèbres: 0.8 } },
-  { id: "e_armure", name: "Armure possédée", icon: "🛡️", hp: 68, dmg: 12, at: "physical", str: 1.05, mag: 0.15, crit: 0.03, phv: 0.85, dodge: 0, mav: 1.0, xp: 6, gold: 5, er: { Feu: 1, Terre: 0.9, Foudre: 1, Eau: 1, Sacré: 1.15, Ténèbres: 0.85 } },
-  { id: "e_diablotin", name: "Diablotin", icon: "👿", hp: 25, dmg: 10, at: "magical", str: 0.20, mag: 1.06, crit: 0.10, phv: 1.04, dodge: 0.12, mav: 0.98, xp: 4, gold: 5, er: { Feu: 0.6, Terre: 1, Foudre: 1, Eau: 1.2, Sacré: 1.15, Ténèbres: 0.7 } },
-  // Forteresse du Seigneur des Enfers
-  { id: "e_demon_sup", name: "Démon supérieur", icon: "👹", hp: 55, dmg: 15, at: "physical", str: 1.10, mag: 0.35, crit: 0.08, phv: 0.92, dodge: 0.05, mav: 0.92, xp: 8, gold: 8, er: { Feu: 0.5, Terre: 1, Foudre: 1, Eau: 1.2, Sacré: 1.25, Ténèbres: 0.7 } },
-  { id: "e_chien_infernal", name: "Chien infernal", icon: "🐕‍🦺", hp: 40, dmg: 14, at: "physical", str: 1.08, mag: 0.20, crit: 0.10, phv: 0.96, dodge: 0.08, mav: 1.02, xp: 6, gold: 6, er: { Feu: 0, Terre: 1, Foudre: 1, Eau: 1.3, Sacré: 1.1, Ténèbres: 0.8 } },
-  { id: "e_mage_noir2", name: "Mage noir", icon: "🧙‍♂️", hp: 32, dmg: 15, at: "magical", str: 0.15, mag: 1.10, crit: 0.06, phv: 1.04, dodge: 0.04, mav: 0.90, xp: 7, gold: 7, er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.2, Ténèbres: 0.7 } },
-  { id: "e_slime_chroma", name: "Slime chromatique", icon: "🌈", hp: 60, dmg: 10, at: "magical", str: 0.25, mag: 1.06, crit: 0.04, phv: 0.92, dodge: 0.03, mav: 0.90, xp: 6, gold: 5, er: { Feu: 0.85, Terre: 0.85, Foudre: 0.85, Eau: 0.85, Sacré: 0.85, Ténèbres: 0.85 } },
-];
+// ════════════════════════════════════════
+//  GENERATE TALISMAN
+// ════════════════════════════════════════
+export function generateTalisman(rank, rarity) {
+  var rm = RARITY_BONUS[rarity] || 1;
+  var nT = { 1:1, 2:1, 3:2, 4:3, 5:4 }[rarity] || 1;
+  var pool = [].concat(EL);
+  var bon = { er: {} };
+  var elems = [];
+  for (var i = 0; i < nT && pool.length > 0; i++) {
+    var idx = Math.floor(Math.random() * pool.length);
+    var el = pool.splice(idx, 1)[0];
+    var val = Math.round(randBetween(lR("tResMin",rank), lR("tResMax",rank)) * rm * 100) / 100;
+    bon.er[el] = -val;
+    elems.push(el);
+  }
+  var name = pick(TLS_NM);
+  if (elems.length >= 4) name += " chromatique";
+  else if (elems.length === 3) name += " amalgamé(e)";
+  else if (elems.length === 2) {
+    var key = elems.sort().join("+");
+    name += " " + (TLS_SUF2[key] || TLS_SUF1[elems[0]] || "");
+  } else if (elems.length === 1) {
+    name += " " + (TLS_SUF1[elems[0]] || "");
+  }
+  return { id: "tg_" + uid4(), name: name, slot: "talisman", rarity: rarity, rank: rank, bon: bon, generated: true };
+}
 
-// ═══════════════════════════════════════════════════════════════
-//  BOSS — même échelle de base, plus de HP/dégâts que les monstres
-// ═══════════════════════════════════════════════════════════════
-
-export var BSS = [
-  { id: "b_loup_garou", name: "Loup-Garou", icon: "🐺", hp: 180, dmg: 16, at: "physical", str: 1.10, mag: 0.20, crit: 0.10, phv: 0.92, dodge: 0.08, mav: 1.04, xp: 30, gold: 25, boss: true, er: { Feu: 1.1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.15, Ténèbres: 1 } },
-  { id: "b_ours_noir", name: "Ours Noir", icon: "🐻", hp: 250, dmg: 18, at: "physical", str: 1.12, mag: 0.15, crit: 0.06, phv: 0.86, dodge: 0.02, mav: 1.02, xp: 40, gold: 35, boss: true, er: { Feu: 1.2, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1, Ténèbres: 1 } },
-  { id: "b_kraken", name: "Kraken", icon: "🦑", hp: 220, dmg: 16, at: "magical", str: 0.25, mag: 1.10, crit: 0.04, phv: 0.90, dodge: 0.04, mav: 0.88, xp: 45, gold: 40, boss: true, er: { Feu: 1, Terre: 1, Foudre: 1.25, Eau: 0, Sacré: 1, Ténèbres: 1 } },
-  { id: "b_ver_sables", name: "Ver des sables", icon: "🪱", hp: 200, dmg: 20, at: "physical", str: 1.08, mag: 0.20, crit: 0.06, phv: 0.94, dodge: 0.18, mav: 1.0, xp: 50, gold: 45, boss: true, er: { Feu: 1, Terre: 0.7, Foudre: 1, Eau: 1.3, Sacré: 1, Ténèbres: 1 } },
-  { id: "b_banshee", name: "Banshee", icon: "👻", hp: 180, dmg: 18, at: "magical", str: 0.15, mag: 1.12, crit: 0.06, phv: 0.96, dodge: 0.10, mav: 0.90, xp: 55, gold: 50, boss: true, er: { Feu: 0.9, Terre: 0.9, Foudre: 0.9, Eau: 0.9, Sacré: 1.4, Ténèbres: 0.85 } },
-  // Cité Maudite — 3 boss
-  { id: "b_pegre_mage", name: "Parrain Mage", icon: "🧙", hp: 150, dmg: 17, at: "magical", str: 0.20, mag: 1.12, crit: 0.06, phv: 1.02, dodge: 0.06, mav: 0.88, xp: 30, gold: 30, boss: true, er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.15, Ténèbres: 0.85 } },
-  { id: "b_pegre_tank", name: "Parrain Tank", icon: "🛡️", hp: 280, dmg: 12, at: "physical", str: 1.04, mag: 0.15, crit: 0.02, phv: 0.82, dodge: 0.01, mav: 0.94, xp: 30, gold: 30, boss: true, er: defER() },
-  { id: "b_pegre_assassin", name: "Parrain Assassin", icon: "🥷", hp: 130, dmg: 20, at: "physical", str: 1.14, mag: 0.20, crit: 0.18, phv: 1.0, dodge: 0.14, mav: 1.02, xp: 30, gold: 30, boss: true, er: defER() },
-  { id: "b_heritier", name: "Héritier pestiféré", icon: "👑", hp: 240, dmg: 17, at: "magical", str: 0.20, mag: 1.10, crit: 0.06, phv: 0.80, dodge: 0.10, mav: 0.88, xp: 65, gold: 55, boss: true, er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.2, Ténèbres: 0.80 } },
-  { id: "b_necromancien", name: "Nécromancien", icon: "💀", hp: 200, dmg: 16, at: "magical", str: 0.15, mag: 1.14, crit: 0.05, phv: 0.98, dodge: 0.04, mav: 0.86, xp: 70, gold: 60, boss: true, er: { Feu: 1, Terre: 1, Foudre: 1, Eau: 1, Sacré: 1.35, Ténèbres: 0 } },
-  // Couloirs Infernaux — 2 boss jumeaux
-  { id: "b_phobos", name: "Phobos", icon: "🔥", hp: 200, dmg: 18, at: "physical", str: 1.12, mag: 0.20, crit: 0.08, phv: 0.90, dodge: 0.06, mav: 0, xp: 50, gold: 45, boss: true, er: { Feu: 0.5, Terre: 0.5, Foudre: 0, Eau: 0, Sacré: 1, Ténèbres: 1 } },
-  { id: "b_deimos", name: "Deimos", icon: "🌊", hp: 200, dmg: 18, at: "magical", str: 0.20, mag: 1.12, crit: 0.08, phv: 0, dodge: 0.06, mav: 0.90, xp: 50, gold: 45, boss: true, er: { Feu: 0, Terre: 0, Foudre: 0.5, Eau: 0.5, Sacré: 1, Ténèbres: 1 } },
-  { id: "b_myhrra", name: "Myhrra", icon: "😈", hp: 350, dmg: 22, at: "physical", str: 1.16, mag: 0.30, crit: 0.12, phv: 0.86, dodge: 0.06, mav: 0.88, xp: 100, gold: 80, boss: true, er: { Feu: 0, Terre: 0.85, Foudre: 0.85, Eau: 1.15, Sacré: 1.2, Ténèbres: 0.6 } },
-  // Donjon secret
-  { id: "b_oblivium", name: "Oblivium", icon: "🌀", hp: 800, dmg: 30, at: "magical", str: 0.30, mag: 1.20, crit: 0.10, phv: 0.85, dodge: 0.08, mav: 0.85, xp: 500, gold: 500, boss: true, er: { Feu: 0.80, Terre: 0.80, Foudre: 0.80, Eau: 0.80, Sacré: 0.80, Ténèbres: 0.80 } },
-  { id: "b_pierre_eau", name: "Pierre de lien (Eau)", icon: "💧", hp: 150, dmg: 10, at: "magical", str: 0.10, mag: 1.0, crit: 0, phv: 0, dodge: 0, mav: 1.0, xp: 20, gold: 20, boss: true, er: { Feu: 0, Terre: 0, Foudre: 0, Eau: 1.5, Sacré: 0, Ténèbres: 0 } },
-  { id: "b_pierre_foudre", name: "Pierre de lien (Foudre)", icon: "⚡", hp: 150, dmg: 10, at: "magical", str: 0.10, mag: 1.0, crit: 0, phv: 0, dodge: 0, mav: 1.0, xp: 20, gold: 20, boss: true, er: { Feu: 0, Terre: 0, Foudre: 1.5, Eau: 0, Sacré: 0, Ténèbres: 0 } },
-  { id: "b_pierre_terre", name: "Pierre de lien (Terre)", icon: "🪨", hp: 150, dmg: 10, at: "physical", str: 1.0, mag: 0.10, crit: 0, phv: 1.0, dodge: 0, mav: 0, xp: 20, gold: 20, boss: true, er: { Feu: 0, Terre: 1.5, Eau: 0, Foudre: 0, Sacré: 0, Ténèbres: 0 } },
-  { id: "b_pierre_feu", name: "Pierre de lien (Feu)", icon: "🔥", hp: 150, dmg: 10, at: "physical", str: 1.0, mag: 0.10, crit: 0, phv: 1.0, dodge: 0, mav: 0, xp: 20, gold: 20, boss: true, er: { Feu: 1.5, Terre: 0, Foudre: 0, Eau: 0, Sacré: 0, Ténèbres: 0 } },
-];
-
-// ═══════════════════════════════════════════════════════════════
-//  DONJONS — 10 donjons × 3 difficultés + 1 secret
-//  m: multiplicateur caché (non affiché), appliqué aux stats des ennemis
-//  diff: 0=Normal, 1=Difficile, 2=Cauchemar
-//  ul: déblocage séquentiel (index du donjon précédent à battre, -1 = premier)
-//  firstBonus: { gold, xp, scrolls } — récompense de première victoire
-// ═══════════════════════════════════════════════════════════════
-
-export var DG = [
-  {
-    name: "Vallée Venteuse", m: 1, rw: 1.0, diff: 0, ul: -1,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_loup", "e_vautour"],
-    bosses: ["b_loup_garou"],
-    loot: { ranks: [1, 1], rarW: { 1: 1.0 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 100 },
-    firstBonus: { gold: 100, xp: 100, scrolls: 1 },
-    desc: "Une vallée balayée par les vents, territoire des loups et des charognards.",
-  },
-  {
-    name: "Sombre Forêt", m: 1.5, rw: 1.0, diff: 0, ul: 0,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_sanglier", "e_chasseur"],
-    bosses: ["b_ours_noir"],
-    loot: { ranks: [1, 1], rarW: { 1: 0.9, 2: 0.1 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 150 },
-    firstBonus: { gold: 150, xp: 150, scrolls: 2 },
-    desc: "La forêt est dense et hostile. L'Ours Noir règne sur ces bois.",
-  },
-  {
-    name: "Mer Souterraine", m: 2.1, rw: 1.0, diff: 0, ul: 1,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [2, 1] },
-      { type: "combat", count: [2, 1] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_bleu", "e_crabe"],
-    bosses: ["b_kraken"],
-    loot: { ranks: [1, 2], rarW: { 1: 0.8, 2: 0.2 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 210 },
-    firstBonus: { gold: 210, xp: 210, scrolls: 2 },
-    desc: "Un lac souterrain grouillant de créatures marines.",
-  },
-  {
-    name: "Désert Aride", m: 3, rw: 1.0, diff: 0, ul: 2,
-    structure: [
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "boss" }
-    ],
-    enemies: ["e_saurien", "e_scorpion", "e_cactuaire"],
-    bosses: ["b_ver_sables"],
-    loot: { ranks: [1, 2], rarW: { 1: 0.7, 2: 0.3 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 300 },
-    firstBonus: { gold: 300, xp: 300, scrolls: 3 },
-    desc: "Le sable brûlant cache des prédateurs impitoyables.",
-  },
-  {
-    name: "Temple Abandonné", m: 4, rw: 1.0, diff: 0, ul: 3,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_jaune", "e_mage_noir", "e_esprit"],
-    bosses: ["b_banshee"],
-    loot: { ranks: [2, 2], rarW: { 2: 0.6, 3: 0.35, 4: 0.05 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 400 },
-    firstBonus: { gold: 400, xp: 400, scrolls: 4 },
-    desc: "Un temple oublié des dieux, hanté par les esprits.",
-  },
-  {
-    name: "Cité Maudite", m: 5.5, rw: 1.0, diff: 0, ul: 4,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "boss" }
-    ],
-    enemies: ["e_coupe_jarret", "e_soldat_corrompu", "e_homme_serpent"],
-    bosses: ["b_pegre_mage", "b_pegre_tank", "b_pegre_assassin"],
-    loot: { ranks: [2, 2], rarW: { 2: 0.55, 3: 0.38, 4: 0.07 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 550 },
-    firstBonus: { gold: 550, xp: 550, scrolls: 6 },
-    desc: "Les rues sont le domaine de la pègre et de la corruption.",
-  },
-  {
-    name: "Palais du Roi Déchu", m: 8, rw: 1.0, diff: 0, ul: 5,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_garde_royal", "e_statue_animee", "e_assassin"],
-    bosses: ["b_heritier"],
-    loot: { ranks: [2, 3], rarW: { 2: 0.53, 3: 0.39, 4: 0.08 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 800 },
-    firstBonus: { gold: 800, xp: 800, scrolls: 8 },
-    desc: "Le palais tombe en ruines, gardé par ses derniers serviteurs.",
-  },
-  {
-    name: "Catacombes Royales", m: 10, rw: 1.0, diff: 0, ul: 6,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_squelette", "e_zombie", "e_slime_noir"],
-    bosses: ["b_necromancien"],
-    loot: { ranks: [2, 3], rarW: { 2: 0.5, 3: 0.4, 4: 0.1 }, dropRate: 0.20, nbLoot: 3 },
-    reward: { gold: 1000 },
-    firstBonus: { gold: 1000, xp: 1000, scrolls: 10 },
-    desc: "Les morts ne reposent pas en paix dans ces catacombes.",
-  },
-  {
-    name: "Couloirs Infernaux", m: 12, rw: 1.0, diff: 0, ul: 7,
-    structure: [
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_rouge", "e_demon_inf", "e_armure", "e_diablotin"],
-    bosses: ["b_phobos", "b_deimos"],
-    loot: { ranks: [3, 3], rarW: { 3: 0.47, 4: 0.42, 5: 0.11 }, dropRate: 0.20, nbLoot: 3 },
-    reward: { gold: 1200 },
-    firstBonus: { gold: 1200, xp: 1200, scrolls: 12 },
-    desc: "Les flammes de l'enfer illuminent ces couloirs maudits.",
-  },
-  {
-    name: "Forteresse du Seigneur des Enfers", m: 15, rw: 1.0, diff: 0, ul: 8,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "boss" }
-    ],
-    enemies: ["e_demon_sup", "e_chien_infernal", "e_mage_noir2", "e_slime_chroma"],
-    bosses: ["b_myhrra"],
-    loot: { ranks: [3, 3], rarW: { 3: 0.45, 4: 0.4, 5: 0.15 }, dropRate: 0.20, nbLoot: 4 },
-    reward: { gold: 1500 },
-    firstBonus: { gold: 1500, xp: 1500, scrolls: 15 },
-    desc: "Le cœur des enfers. Myhrra attend au sommet.",
-  },
-  {
-    name: "Vallée Venteuse (Difficile)", m: 30, rw: 1.6, diff: 1, ul: 9,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_loup", "e_vautour"],
-    bosses: ["b_loup_garou"],
-    loot: { ranks: [3, 4], rarW: { 3: 0.7, 4: 0.3 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 3000 },
-    firstBonus: { gold: 2100, xp: 2100, scrolls: 21 },
-    desc: "Une vallée balayée par les vents, territoire des loups et des charognards.",
-  },
-  {
-    name: "Sombre Forêt (Difficile)", m: 35, rw: 1.6, diff: 1, ul: 10,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_sanglier", "e_chasseur"],
-    bosses: ["b_ours_noir"],
-    loot: { ranks: [3, 4], rarW: { 3: 0.6, 4: 0.35, 5: 0.05 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 3500 },
-    firstBonus: { gold: 2450, xp: 2450, scrolls: 24 },
-    desc: "La forêt est dense et hostile. L'Ours Noir règne sur ces bois.",
-  },
-  {
-    name: "Mer Souterraine (Difficile)", m: 41, rw: 1.6, diff: 1, ul: 11,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [2, 1] },
-      { type: "combat", count: [2, 1] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_bleu", "e_crabe"],
-    bosses: ["b_kraken"],
-    loot: { ranks: [4, 4], rarW: { 4: 0.55, 5: 0.38, 6: 0.07 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 4100 },
-    firstBonus: { gold: 2870, xp: 2870, scrolls: 29 },
-    desc: "Un lac souterrain grouillant de créatures marines.",
-  },
-  {
-    name: "Désert Aride (Difficile)", m: 48, rw: 1.6, diff: 1, ul: 12,
-    structure: [
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "boss" }
-    ],
-    enemies: ["e_saurien", "e_scorpion", "e_cactuaire"],
-    bosses: ["b_ver_sables"],
-    loot: { ranks: [4, 4], rarW: { 4: 0.53, 5: 0.39, 6: 0.08 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 4800 },
-    firstBonus: { gold: 3360, xp: 3360, scrolls: 34 },
-    desc: "Le sable brûlant cache des prédateurs impitoyables.",
-  },
-  {
-    name: "Temple Abandonné (Difficile)", m: 56, rw: 1.6, diff: 1, ul: 13,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_jaune", "e_mage_noir", "e_esprit"],
-    bosses: ["b_banshee"],
-    loot: { ranks: [4, 5], rarW: { 4: 0.5, 5: 0.4, 6: 0.1 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 5600 },
-    firstBonus: { gold: 3920, xp: 3920, scrolls: 39 },
-    desc: "Un temple oublié des dieux, hanté par les esprits.",
-  },
-  {
-    name: "Cité Maudite (Difficile)", m: 64, rw: 1.6, diff: 1, ul: 14,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "boss" }
-    ],
-    enemies: ["e_coupe_jarret", "e_soldat_corrompu", "e_homme_serpent"],
-    bosses: ["b_pegre_mage", "b_pegre_tank", "b_pegre_assassin"],
-    loot: { ranks: [4, 5], rarW: { 4: 0.47, 5: 0.42, 6: 0.11 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 6400 },
-    firstBonus: { gold: 4480, xp: 4480, scrolls: 45 },
-    desc: "Les rues sont le domaine de la pègre et de la corruption.",
-  },
-  {
-    name: "Palais du Roi Déchu (Difficile)", m: 72, rw: 1.6, diff: 1, ul: 15,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_garde_royal", "e_statue_animee", "e_assassin"],
-    bosses: ["b_heritier"],
-    loot: { ranks: [5, 5], rarW: { 5: 0.45, 6: 0.4, 7: 0.15 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 7200 },
-    firstBonus: { gold: 5040, xp: 5040, scrolls: 50 },
-    desc: "Le palais tombe en ruines, gardé par ses derniers serviteurs.",
-  },
-  {
-    name: "Catacombes Royales (Difficile)", m: 81, rw: 1.6, diff: 1, ul: 16,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_squelette", "e_zombie", "e_slime_noir"],
-    bosses: ["b_necromancien"],
-    loot: { ranks: [5, 5], rarW: { 5: 0.4, 6: 0.4, 7: 0.2 }, dropRate: 0.20, nbLoot: 3 },
-    reward: { gold: 8100 },
-    firstBonus: { gold: 5670, xp: 5670, scrolls: 57 },
-    desc: "Les morts ne reposent pas en paix dans ces catacombes.",
-  },
-  {
-    name: "Couloirs Infernaux (Difficile)", m: 90, rw: 1.6, diff: 1, ul: 17,
-    structure: [
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_rouge", "e_demon_inf", "e_armure", "e_diablotin"],
-    bosses: ["b_phobos", "b_deimos"],
-    loot: { ranks: [5, 6], rarW: { 5: 0.39, 6: 0.39, 7: 0.22 }, dropRate: 0.20, nbLoot: 3 },
-    reward: { gold: 9000 },
-    firstBonus: { gold: 6300, xp: 6300, scrolls: 63 },
-    desc: "Les flammes de l'enfer illuminent ces couloirs maudits.",
-  },
-  {
-    name: "Forteresse du Seigneur des Enfers (Difficile)", m: 100, rw: 1.6, diff: 1, ul: 18,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "boss" }
-    ],
-    enemies: ["e_demon_sup", "e_chien_infernal", "e_mage_noir2", "e_slime_chroma"],
-    bosses: ["b_myhrra"],
-    loot: { ranks: [5, 6], rarW: { 5: 0.37, 6: 0.38, 7: 0.25 }, dropRate: 0.20, nbLoot: 4 },
-    reward: { gold: 10000 },
-    firstBonus: { gold: 7000, xp: 7000, scrolls: 70 },
-    desc: "Le cœur des enfers. Myhrra attend au sommet.",
-  },
-  {
-    name: "Vallée Venteuse (Cauchemar)", m: 200, rw: 2.5, diff: 2, ul: 19,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_loup", "e_vautour"],
-    bosses: ["b_loup_garou"],
-    loot: { ranks: [6, 6], rarW: { 6: 0.53, 7: 0.39, 8: 0.08 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 20000 },
-    firstBonus: { gold: 8000, xp: 8000, scrolls: 80 },
-    desc: "Une vallée balayée par les vents, territoire des loups et des charognards.",
-  },
-  {
-    name: "Sombre Forêt (Cauchemar)", m: 230, rw: 2.5, diff: 2, ul: 20,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_sanglier", "e_chasseur"],
-    bosses: ["b_ours_noir"],
-    loot: { ranks: [6, 6], rarW: { 6: 0.5, 7: 0.4, 8: 0.1 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 23000 },
-    firstBonus: { gold: 9200, xp: 9200, scrolls: 92 },
-    desc: "La forêt est dense et hostile. L'Ours Noir règne sur ces bois.",
-  },
-  {
-    name: "Mer Souterraine (Cauchemar)", m: 260, rw: 2.5, diff: 2, ul: 21,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [2, 1] },
-      { type: "combat", count: [2, 1] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_bleu", "e_crabe"],
-    bosses: ["b_kraken"],
-    loot: { ranks: [6, 7], rarW: { 6: 0.47, 7: 0.42, 8: 0.11 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 26000 },
-    firstBonus: { gold: 10400, xp: 10400, scrolls: 104 },
-    desc: "Un lac souterrain grouillant de créatures marines.",
-  },
-  {
-    name: "Désert Aride (Cauchemar)", m: 300, rw: 2.5, diff: 2, ul: 22,
-    structure: [
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "boss" }
-    ],
-    enemies: ["e_saurien", "e_scorpion", "e_cactuaire"],
-    bosses: ["b_ver_sables"],
-    loot: { ranks: [6, 7], rarW: { 6: 0.45, 7: 0.4, 8: 0.15 }, dropRate: 0.20, nbLoot: 1 },
-    reward: { gold: 30000 },
-    firstBonus: { gold: 12000, xp: 12000, scrolls: 120 },
-    desc: "Le sable brûlant cache des prédateurs impitoyables.",
-  },
-  {
-    name: "Temple Abandonné (Cauchemar)", m: 350, rw: 2.5, diff: 2, ul: 23,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_jaune", "e_mage_noir", "e_esprit"],
-    bosses: ["b_banshee"],
-    loot: { ranks: [7, 7], rarW: { 7: 0.4, 8: 0.4, 9: 0.2 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 35000 },
-    firstBonus: { gold: 14000, xp: 14000, scrolls: 140 },
-    desc: "Un temple oublié des dieux, hanté par les esprits.",
-  },
-  {
-    name: "Cité Maudite (Cauchemar)", m: 400, rw: 2.5, diff: 2, ul: 24,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "boss" }
-    ],
-    enemies: ["e_coupe_jarret", "e_soldat_corrompu", "e_homme_serpent"],
-    bosses: ["b_pegre_mage", "b_pegre_tank", "b_pegre_assassin"],
-    loot: { ranks: [7, 7], rarW: { 7: 0.39, 8: 0.39, 9: 0.22 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 40000 },
-    firstBonus: { gold: 16000, xp: 16000, scrolls: 160 },
-    desc: "Les rues sont le domaine de la pègre et de la corruption.",
-  },
-  {
-    name: "Palais du Roi Déchu (Cauchemar)", m: 450, rw: 2.5, diff: 2, ul: 25,
-    structure: [
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_garde_royal", "e_statue_animee", "e_assassin"],
-    bosses: ["b_heritier"],
-    loot: { ranks: [7, 8], rarW: { 7: 0.37, 8: 0.38, 9: 0.25 }, dropRate: 0.20, nbLoot: 2 },
-    reward: { gold: 45000 },
-    firstBonus: { gold: 18000, xp: 18000, scrolls: 180 },
-    desc: "Le palais tombe en ruines, gardé par ses derniers serviteurs.",
-  },
-  {
-    name: "Catacombes Royales (Cauchemar)", m: 500, rw: 2.5, diff: 2, ul: 26,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [1, 2] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "boss" }
-    ],
-    enemies: ["e_squelette", "e_zombie", "e_slime_noir"],
-    bosses: ["b_necromancien"],
-    loot: { ranks: [7, 8], rarW: { 7: 0.34, 8: 0.35, 9: 0.29, 10: 0.02 }, dropRate: 0.20, nbLoot: 3 },
-    reward: { gold: 50000 },
-    firstBonus: { gold: 20000, xp: 20000, scrolls: 200 },
-    desc: "Les morts ne reposent pas en paix dans ces catacombes.",
-  },
-  {
-    name: "Couloirs Infernaux (Cauchemar)", m: 550, rw: 2.5, diff: 2, ul: 27,
-    structure: [
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "boss" }
-    ],
-    enemies: ["e_slime_rouge", "e_demon_inf", "e_armure", "e_diablotin"],
-    bosses: ["b_phobos", "b_deimos"],
-    loot: { ranks: [8, 8], rarW: { 8: 0.33, 9: 0.34, 10: 0.3, 11: 0.03 }, dropRate: 0.20, nbLoot: 3 },
-    reward: { gold: 55000 },
-    firstBonus: { gold: 22000, xp: 22000, scrolls: 220 },
-    desc: "Les flammes de l'enfer illuminent ces couloirs maudits.",
-  },
-  {
-    name: "Forteresse du Seigneur des Enfers (Cauchemar)", m: 600, rw: 2.5, diff: 2, ul: 28,
-    structure: [
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "combat", count: [1, 1] },
-      { type: "event" },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "combat", count: [2, 2] },
-      { type: "event" },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "combat", count: [2, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "combat", count: [3, 3] },
-      { type: "event" },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "combat", count: [3, 4] },
-      { type: "boss" }
-    ],
-    enemies: ["e_demon_sup", "e_chien_infernal", "e_mage_noir2", "e_slime_chroma"],
-    bosses: ["b_myhrra"],
-    loot: { ranks: [8, 8], rarW: { 8: 0.31, 9: 0.31, 10: 0.33, 11: 0.05 }, dropRate: 0.20, nbLoot: 4 },
-    reward: { gold: 60000 },
-    firstBonus: { gold: 24000, xp: 24000, scrolls: 240 },
-    desc: "Le cœur des enfers. Myhrra attend au sommet.",
-  },
-  {
-    name: "Pinnacle du Mal Absolu", m: 1000, rw: 10, diff: 3, ul: 29, secret: true, once: true,
-    structure: [
-      { type: "boss" }
-    ],
-    enemies: [],
-    bosses: ["b_oblivium", "b_pierre_eau", "b_pierre_foudre", "b_pierre_terre", "b_pierre_feu"],
-    loot: { ranks: [10, 10], rarW: { 5: 1.0 }, dropRate: 1.0, nbLoot: 1 },
-    reward: { gold: 0 },
-    firstBonus: { gold: 100000, xp: 100000, scrolls: 100 },
-    desc: "Le mal absolu attend. Un seul combat. Pas de retour possible.",
-  },
-];
-
-// Génère un drop d'arme pour un donjon
-export function rollWeaponDrop(dungeonIdx) {
+// ════════════════════════════════════════
+//  ROLL LOOT — 20% per combat, 30% weapon, 30% armor, 20% accessory, 20% talisman
+// ════════════════════════════════════════
+export function rollLoot(dungeonIdx) {
   var d = DG[dungeonIdx];
   if (!d || !d.loot) return null;
   if (Math.random() > d.loot.dropRate) return null;
@@ -1091,8 +301,15 @@ export function rollWeaponDrop(dungeonIdx) {
   var rw = d.loot.rarW;
   var roll = Math.random(), cum = 0, rarity = 1;
   for (var r in rw) { cum += rw[r]; if (roll < cum) { rarity = parseInt(r); break; } }
-  return generateWeapon(rank, rarity);
+  var typeRoll = Math.random();
+  if (typeRoll < 0.30) return generateWeapon(rank, rarity);
+  if (typeRoll < 0.60) return generateArmor(rank, rarity);
+  if (typeRoll < 0.80) return generateAccessory(rank, rarity);
+  return generateTalisman(rank, rarity);
 }
+
+// Keep old rollWeaponDrop for backward compatibility
+export function rollWeaponDrop(dungeonIdx) { return rollLoot(dungeonIdx); }
 
 // ═══════════════════════════════════════════════════════════════
 //  ÉVÉNEMENTS
