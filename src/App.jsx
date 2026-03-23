@@ -34,10 +34,7 @@ function cs(hero,bl){
   var s={hp:bHp,rel:bRel,str:bStr,mag:bMag,crit:bCrit,phv:bPhv,mav:bMav,dodge:bDodge,rgHp:bRgHp,relBonus:0,er:Object.assign({},t.er||defER()),_s:_s};
   if(bRgHp>0)_s.rgHp.push("Nv."+lv+": "+fmtPct(bRgHp));
   if(bl){
-    if(bl.autel){var bv=Math.floor(s.hp*bl.autel*.02);s.hp+=bv;_s.hp.push("Autel Nv."+bl.autel+": +"+bv);}
-    if(bl.forge){s.str+=bl.forge*.003;_s.str.push("Forge Nv."+bl.forge+": "+fmtB(bl.forge*.003));}
-    if(bl.rempart){s.phv-=bl.rempart*.003;_s.phv.push("Rempart Nv."+bl.rempart+": "+fmtB(-bl.rempart*.003));}
-    if(bl.tour){s.mag+=bl.tour*.003;_s.mag.push("Tour Nv."+bl.tour+": "+fmtB(bl.tour*.003));}
+    // Old passive bonuses removed — buildings now have different functions
   }
   var eq=hero.equipment||{};
   var slots=["weapon","armor","accessory","talisman"];
@@ -237,10 +234,12 @@ export default function Game(){
   }
   function doEquip(hu,iu){setG(function(p){var it=p.inv.find(function(i){return i.uid===iu;});var h=p.roster.find(function(r){return r.uid===hu;});if(!it||!h)return p;var inv=p.inv.filter(function(i){return i.uid!==iu;});var eq=Object.assign({},h.equipment);if(eq[it.slot])inv.push(eq[it.slot]);eq[it.slot]=it;return Object.assign({},p,{inv:inv,roster:p.roster.map(function(r){return r.uid===hu?Object.assign({},r,{equipment:eq}):r;})});});}
   function sellPrice(it){if(it.slot==="weapon")return Math.max(1,Math.floor((it.dmg||10)*(it.rank||1)*(it.rarity||1)/2));return Math.max(1,Math.floor(20*(it.rank||1)*(it.rarity||1)/2));}
-  function doSell(iu){var it=g.inv.find(function(i){return i.uid===iu;});if(!it)return;var price=sellPrice(it);
-    setFloats(function(f){return f.concat([{uid:"ui",val:"+"+price+"g",color:"#fbbf24",id:uid()}]);});
+  function doSell(iu,e){var it=g.inv.find(function(i){return i.uid===iu;});if(!it)return;var price=sellPrice(it);
+    var mx=e?e.clientX:200,my=e?e.clientY:100;
+    setFloats(function(f){return f.concat([{uid:"ui",val:"+"+price+"g",color:"#fbbf24",id:uid(),x:mx,y:my}]);});
     setG(function(p){return Object.assign({},p,{gold:p.gold+price,inv:p.inv.filter(function(i){return i.uid!==iu;})});});}
-  function doRecycle(iu){var it=g.inv.find(function(i){return i.uid===iu;});if(!it)return;
+  function doRecycle(iu,e){var it=g.inv.find(function(i){return i.uid===iu;});if(!it)return;
+    var mx=e?e.clientX:200,my=e?e.clientY:100;
     var gains=[];
     var inerteKey=it.slot+"_inerte";gains.push(it.slot.charAt(0).toUpperCase()+it.slot.slice(1)+" inerte");
     var gChances=[[0.30,0.60,0.10],[0.25,0.65,0.10],[0.20,0.65,0.15],[0.15,0.70,0.15],[0.10,0.65,0.25]];
@@ -249,7 +248,7 @@ export default function Game(){
     if(gCount>0)gains.push("Gabarit Rg"+(it.rank||1)+" x"+gCount);
     var gotCata=Math.random()<0.33;
     if(gotCata)gains.push("Catalyseur "+(RA[it.rarity]||{}).s);
-    setFloats(function(f){return f.concat([{uid:"ui",val:"♻️ "+gains.join(", "),color:"#4ade80",id:uid()}]);});
+    setFloats(function(f){return f.concat([{uid:"ui",val:"♻️ "+gains.join(", "),color:"#4ade80",id:uid(),x:mx,y:my}]);});
     setG(function(p){
       var nm=Object.assign({},p.mat||{});nm[inerteKey]=(nm[inerteKey]||0)+1;
       if(gCount>0){var gk="gabarit_"+(it.rank||1);nm[gk]=(nm[gk]||0)+gCount;}
@@ -588,13 +587,13 @@ export default function Game(){
     <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>{Object.keys(TM).map(function(k){return <button key={k} className={"b "+(tab===k?"ton":"")} onClick={function(){if(!inD||k==="donjon")setTab(k);}} style={{fontSize:11,flex:"1 1 auto",minWidth:70,opacity:inD&&k!=="donjon"?.3:1}}>{TM[k]}</button>;})}
       <button className="b" onClick={reset} style={{fontSize:10,color:"var(--red)",minWidth:36}}>🔄</button>
     </div>
-    {floats.filter(function(f){return f.uid==="ui";}).length>0&&<div style={{position:"fixed",top:60,left:"50%",transform:"translateX(-50%)",zIndex:200,pointerEvents:"none"}}>
+    {floats.filter(function(f){return f.uid==="ui";}).length>0&&<div style={{position:"fixed",top:(floats.find(function(f){return f.uid==="ui";}).y||100)-30,left:(floats.find(function(f){return f.uid==="ui";}).x||200),zIndex:200,pointerEvents:"none"}}>
       {floats.filter(function(f){return f.uid==="ui";}).map(function(f){return <div key={f.id} style={{color:f.color,fontSize:16,fontWeight:800,textShadow:"0 2px 6px #000",animation:"floatUp 1.2s forwards",textAlign:"center",whiteSpace:"nowrap"}}>{f.val}</div>;})}
     </div>}
 
     {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
       {(function(){
-        var m=g.mat||{};var flv=g.bl.forge||0;
+        var m=g.mat||{};var flv=g.bl.forge||1;
         // Forge success formula: base chance depends on rank, rarity, forge level
         function forgeChance(rank,rarity,fLv){var diff=(rank-1)*8+(rarity-1)*18;var skill=fLv*12;var ch=100-diff+skill;return Math.max(0,Math.min(100,Math.round(ch)));}
         // Forge state
@@ -624,12 +623,12 @@ export default function Game(){
           }else{setFResult({ok:false});}
         }
         // Forge level upgrade costs
-        var FORGE_COSTS=[0,500,1000,2500,10000,25000,50000,100000,250000,500000];
-        var fNextCost=flv<10?FORGE_COSTS[flv]:null;
+        var FORGE_COSTS={2:500,3:1000,4:2500,5:10000,6:25000,7:50000,8:100000,9:250000,10:500000};
+        var fNextCost=flv<10?FORGE_COSTS[flv+1]||null:null;
         // Market
-        var mlv=g.bl.marche||0;
-        var MARCHE_COSTS=[0,2000,8000,25000,75000,200000];
-        var mNextCost=mlv<5?MARCHE_COSTS[mlv]:null;
+        var mlv=g.bl.marche||1;
+        var MARCHE_COSTS={2:2000,3:8000,4:25000,5:75000};
+        var mNextCost=mlv<5?MARCHE_COSTS[mlv+1]||null:null;
         var shopItems=[];
         if(mlv>=1){shopItems.push({id:"scroll",name:"Parchemin d'invocation",cat:"Consommable",cost:1000,rar:1,icon:"📜"});shopItems.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rg1)",cat:"Gabarit · Rang 1",cost:100,rar:1,icon:"📐"});shopItems.push({id:"catalyseur_1",name:CATA_NAMES[1],cat:"Catalyseur · ★",cost:500,rar:1,icon:"💎"});}
         if(mlv>=2){shopItems.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rg2)",cat:"Gabarit · Rang 2",cost:300,rar:1,icon:"📐"});shopItems.push({id:"catalyseur_2",name:CATA_NAMES[2],cat:"Catalyseur · ★★",cost:1500,rar:2,icon:"💎"});
@@ -644,14 +643,14 @@ export default function Game(){
             return np;
           });
         }
-        function PnlH(props){return <div onClick={props.onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,marginBottom:6}}>
+        function PnlH(props){var isOpen=vp===props.k;return <div onClick={props.onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:isOpen?"12px 12px 0 0":"12px",marginBottom:isOpen?0:6}}>
           <div><span style={{fontSize:20,marginRight:8}}>{props.icon}</span><span style={{fontWeight:700,fontSize:14}}>{props.name}</span>{props.lv!=null&&<span style={{fontSize:11,color:"var(--acc)",marginLeft:6}}>Nv.{props.lv}</span>}</div>
-          <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:vp===props.k?"rotate(180deg)":"rotate(0)"}}>▼</span>
+          <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>▼</span>
         </div>;}
         return <div>
           {/* FORGERON */}
           <PnlH k="forge" name="Forgeron" icon="🔨" lv={flv} onClick={function(){setVp(vp==="forge"?"none":"forge");}}/>
-          {vp==="forge"&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+          {vp==="forge"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
             {/* Forge level */}
             {fNextCost!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
               <span style={{fontSize:12,color:"var(--td)"}}>Niveau {flv} → {flv+1}</span>
@@ -701,12 +700,8 @@ export default function Game(){
 
           {/* MARCHÉ */}
           <PnlH k="marche" name="Marché" icon="🏪" lv={mlv} onClick={function(){setVp(vp==="marche"?"none":"marche");}}/>
-          {vp==="marche"&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-            {mlv===0&&<div style={{textAlign:"center",padding:20}}>
-              <div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Le marché n'est pas encore ouvert.</div>
-              <button className="b bg" disabled={g.gold<2000} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=1;return Object.assign({},p,{gold:p.gold-2000,bl:bl});});}} style={{fontSize:13}}>Ouvrir le marché (2 000g)</button>
-            </div>}
-            {mlv>=1&&<div>
+          {vp==="marche"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginTop:-6,marginBottom:10,border:"1px solid var(--brd)",borderTop:"none"}}>
+            <div>
               {mNextCost!=null&&mlv<5&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <span style={{fontSize:12,color:"var(--td)"}}>Niveau {mlv} → {mlv+1}</span>
                 <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||0)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:12}}>{mNextCost.toLocaleString()}g</button>
@@ -723,7 +718,7 @@ export default function Game(){
                   </div>;
                 })}
               </div>
-            </div>}
+            </div>
           </div>}
 
           {/* Other buildings - greyed out */}
@@ -832,8 +827,8 @@ export default function Game(){
         {g.inv.sort(function(a,b){var so={weapon:0,armor:1,accessory:2,talisman:3};var sa=so[a.slot]||0,sb=so[b.slot]||0;return sa-sb||b.rarity-a.rarity;}).map(function(it){
           return <div key={it.uid} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,display:"flex",flexDirection:"column",position:"relative"}}>
             <div style={{position:"absolute",top:4,right:4,display:"flex",gap:3}}>
-              <button onClick={function(){doRecycle(it.uid);}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#152a15",color:"#4ade80",cursor:"pointer",fontWeight:700}} title="Recycler">♻️</button>
-              <button onClick={function(){doSell(it.uid);}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer",fontWeight:700}} title={"Vendre ("+sellPrice(it)+"g)"}>💰</button>
+              <button onClick={function(e){doRecycle(it.uid,e);}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#152a15",color:"#4ade80",cursor:"pointer",fontWeight:700}} title="Recycler">♻️</button>
+              <button onClick={function(e){doSell(it.uid,e);}} style={{fontSize:9,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer",fontWeight:700}} title={"Vendre ("+sellPrice(it)+"g)"}>💰</button>
             </div>
             <div style={{flex:1,paddingRight:50}}><ItemInfo item={it} fs={13}/></div>
             {sel&&<button className="b bgr" style={{fontSize:11,width:"100%",marginTop:8}} onClick={function(){doEquip(sel,it.uid);}}>Équiper</button>}</div>;
@@ -848,29 +843,29 @@ export default function Game(){
         var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
         var CATA_NAMES=["","Catalyseur commun","Catalyseur inhabituel","Catalyseur rare","Catalyseur épique","Catalyseur légendaire"];
         function gabRar(r){return r<=3?1:r<=6?2:r<=9?3:r<=12?4:5;}
-        function matRow(key,name,qty,rar){var rc=(RA[rar]||{}).c||"#888";return <div key={key} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #ffffff08"}}><span style={{color:rc,fontWeight:600,fontSize:14}}>{name}</span><span style={{fontFamily:"monospace",fontWeight:700,fontSize:14,color:"var(--t)"}}>{qty}</span></div>;}
-        var monnaies=[{n:"Pièces d'or",v:g.gold,r:1}];
-        var conso=[{n:"Parchemins d'invocation",v:g.scrolls||0,r:1}];
+        function matRow(key,name,qty,rar,icon){var rc=rar===1?"var(--t)":(RA[rar]||{}).c||"var(--t)";return <div key={key} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #ffffff08"}}><span style={{color:rc,fontSize:14}}>{icon?icon+" ":""}{name}</span><span style={{fontFamily:"monospace",fontWeight:600,fontSize:14,color:"var(--t)"}}>{qty}</span></div>;}
+        var monnaies=[{n:"Pièces d'or",v:g.gold,r:1,ic:"💰"}];
+        var conso=[{n:"Parchemins d'invocation",v:g.scrolls||0,r:1,ic:"📜"}];
         var materiaux=[];
         // Inertes
-        var inerteSlots=[["weapon_inerte","Arme inerte",1],["armor_inerte","Armure inerte",1],["accessory_inerte","Accessoire inerte",1],["talisman_inerte","Talisman inerte",1]];
-        for(var ii=0;ii<inerteSlots.length;ii++){var ik=inerteSlots[ii];if(m[ik[0]]>0)materiaux.push({k:ik[0],n:ik[1],v:m[ik[0]],r:ik[2]});}
+        var inerteSlots=[["weapon_inerte","Arme inerte",1,"🔩"],["armor_inerte","Armure inerte",1,"🔩"],["accessory_inerte","Accessoire inerte",1,"🔩"],["talisman_inerte","Talisman inerte",1,"🔩"]];
+        for(var ii=0;ii<inerteSlots.length;ii++){var ik=inerteSlots[ii];if(m[ik[0]]>0)materiaux.push({k:ik[0],n:ik[1],v:m[ik[0]],r:ik[2],ic:ik[3]});}
         // Gabarits
-        for(var gi=1;gi<=15;gi++){var gk="gabarit_"+gi;if(m[gk]>0)materiaux.push({k:gk,n:GABARIT_NAMES[gi]+" (Rg"+gi+")",v:m[gk],r:gabRar(gi)});}
+        for(var gi=1;gi<=15;gi++){var gk="gabarit_"+gi;var gabRarity=gi<=3?1:gi<=6?2:gi<=9?3:gi<=12?4:5;if(m[gk]>0)materiaux.push({k:gk,n:GABARIT_NAMES[gi]+" (Rg"+gi+")",v:m[gk],r:gabRarity,ic:"📐"});}
         // Catalyseurs
-        for(var ci=1;ci<=5;ci++){var ck="catalyseur_"+ci;if(m[ck]>0)materiaux.push({k:ck,n:CATA_NAMES[ci],v:m[ck],r:ci});}
+        for(var ci=1;ci<=5;ci++){var ck="catalyseur_"+ci;if(m[ck]>0)materiaux.push({k:ck,n:CATA_NAMES[ci],v:m[ck],r:ci,ic:"💎"});}
         return <div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Monnaies</div>
-            {monnaies.map(function(x){return matRow(x.n,x.n,x.v.toLocaleString(),x.r);})}
+            {monnaies.map(function(x){return matRow(x.n,x.n,x.v.toLocaleString(),x.r,x.ic);})}
           </div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Consommables</div>
-            {conso.map(function(x){return matRow(x.n,x.n,x.v,x.r);})}
+            {conso.map(function(x){return matRow(x.n,x.n,x.v,x.r,x.ic);})}
           </div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Matériaux de forge</div>
-            {materiaux.length?materiaux.map(function(x){return matRow(x.k,x.n,x.v,x.r);}):<div style={{color:"var(--td)",fontSize:13}}>Aucun matériau. Recyclez de l'équipement !</div>}
+            {materiaux.length?materiaux.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);}):<div style={{color:"var(--td)",fontSize:13}}>Aucun matériau. Recyclez de l'équipement !</div>}
           </div>
         </div>;
       })()}
