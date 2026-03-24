@@ -245,20 +245,23 @@ export function generateAccessory(rank, rarity) {
     else bon[t] = val;
     if (i === 0) firstName = t;
   }
+  var secTraitName = "";
   for (var j = 0; j < nS && secPool.length > 0; j++) {
     var idx2 = Math.floor(Math.random() * secPool.length);
     var t2 = secPool.splice(idx2, 1)[0];
+    if (j === 0) secTraitName = t2;
     if (t2 === "rel") { bon.rel = -1; }
     else {
       var lo2 = lR("x" + t2.charAt(0).toUpperCase() + t2.slice(1) + "Min", rank);
       var hi2 = lR("x" + t2.charAt(0).toUpperCase() + t2.slice(1) + "Max", rank);
-      bon[t2] = Math.round(randBetween(lo2, hi2) * rm * 100) / 100;
+      var val2 = Math.round(randBetween(lo2, hi2) * rm * 100) / 100;
+      var key2 = t2 === "eva" ? "dodge" : t2 === "rec" ? "rgHp" : t2;
+      bon[key2] = val2;
     }
   }
   var name = pick(ACC_NM);
   if (firstName && ACC_PSUF[firstName]) name += " " + ACC_PSUF[firstName];
-  var firstSec = Object.keys(bon).filter(function(k){return ACC_SSUF[k];})[0];
-  if (firstSec && ACC_SSUF[firstSec]) name += " " + ACC_SSUF[firstSec];
+  if (secTraitName && ACC_SSUF[secTraitName]) name += " " + ACC_SSUF[secTraitName];
   return { id: "xg_" + uid4(), name: name, slot: "accessory", rarity: rarity, rank: rank, bon: bon, generated: true };
 }
 
