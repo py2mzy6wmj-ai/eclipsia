@@ -145,15 +145,15 @@ var ARM_R6 = ["Brigandine","Haubert","Cotte de mailles"];
 var ARM_R11 = ["Cuirasse","Armure de lames","Lorica"];
 var ARM_R15 = ["Armure de plaques","Harnois"];
 var ACC_NM = ["Anneau","Bague","Jonc","Pendentif","Médaillon","Collier","Chaîne","Broche","Diadème","Tiare"];
-var TLS_NM = ["Amulette","Fétiche","Idole","Sceau","Sigil","Totem","Relique","Fragment","Grigri","Charme","Insigne","Emblème","Reliquaire"];
+var TLS_NM = ["Fétiche","Sceau","Sigil","Totem","Fragment","Ossuaire","Grigri","Charme","Emblème","Reliquaire"];
 
-var EL_SUF = { Feu: "de Feu", Terre: "de Terre", Foudre: "de Foudre", Eau: "d'Eau", Sacré: "Sacré(e)", Ténèbres: "des Ténèbres" };
+var EL_SUF = { Feu: "de Feu", Terre: "de Terre", Foudre: "de Foudre", Eau: "d'Eau", Sacré: "Sacré", Ténèbres: "des Ténèbres" };
 var WP_SUF = { str: "de puissance", mag: "d'intelligence", crt: "de rage", rel: "de concentration" };
 var ARM_SUF = { pvPct: "de vitalité", vph: "de robustesse", vma: "de résilience", eva: "de souplesse", rec: "de soins" };
 var ACC_PSUF = { pvPct: "de vitalité", str: "de puissance", mag: "d'intelligence", vph: "de robustesse", vma: "de résilience" };
 var ACC_SSUF = { crt: "de rage", eva: "de souplesse", rec: "de soins", rel: "de concentration" };
-var TLS_SUF1 = { Feu:"ignifuge", Eau:"hydrophobe", Foudre:"paratonnerre", Terre:"aérien(ne)", Sacré:"sacré(e)", Ténèbres:"maudit(e)" };
-var TLS_SUF2 = {"Feu+Eau":"vaporeux(se)","Feu+Foudre":"cataclysmique","Feu+Terre":"volcanique","Feu+Sacré":"de foi","Feu+Ténèbres":"infernal(e)","Eau+Foudre":"de conduction","Eau+Terre":"de vie","Eau+Sacré":"béni(e)","Eau+Ténèbres":"pesteux(se)","Foudre+Terre":"tellurique","Foudre+Sacré":"divin(e)","Foudre+Ténèbres":"abyssal(e)","Terre+Sacré":"consacré(e)","Terre+Ténèbres":"rampant(e)","Sacré+Ténèbres":"d'humanité"};
+var TLS_SUF1 = { Feu:"ignifuge", Eau:"hydrophobe", Foudre:"paratonnerre", Terre:"aérien", Sacré:"sacré", Ténèbres:"maudit" };
+var TLS_SUF2 = {"Feu+Eau":"vaporeux","Feu+Foudre":"cataclysmique","Feu+Terre":"volcanique","Feu+Sacré":"de foi","Feu+Ténèbres":"infernal","Eau+Foudre":"de conduction","Eau+Terre":"de vie","Eau+Sacré":"béni","Eau+Ténèbres":"pesteux","Foudre+Terre":"tellurique","Foudre+Sacré":"divin","Foudre+Ténèbres":"abyssal","Terre+Sacré":"consacré","Terre+Ténèbres":"rampant","Sacré+Ténèbres":"d'humanité"};
 
 function nameByRank(r, lists) {
   if (lists.length === 4) { if (r >= 15) return pick(lists[3]); if (r >= 11) return pick(lists[2]); if (r >= 6) return pick(lists[1]); return pick(lists[0]); }
@@ -283,7 +283,7 @@ export function generateTalisman(rank, rarity) {
   }
   var name = pick(TLS_NM);
   if (elems.length >= 4) name += " chromatique";
-  else if (elems.length === 3) name += " amalgamé(e)";
+  else if (elems.length === 3) name += " amalgamé";
   else if (elems.length === 2) {
     var key = elems.sort().join("+");
     name += " " + (TLS_SUF2[key] || TLS_SUF1[elems[0]] || "");
@@ -381,6 +381,31 @@ export var DG = [
   { name:"Catacombes Royales",m:10,rw:1,diff:0,ul:6,structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"boss"}],enemies:["e_squelette","e_zombie","e_slime_noir"],bosses:["b_necromancien"],loot:{ranks:[2,3],rarW:{1:0.5,2:0.4,3:0.1},dropRate:0.20,nbLoot:3},reward:{gold:1000},firstBonus:{gold:1000,xp:1000,scrolls:10},desc:"Les morts ne reposent pas en paix." },
   { name:"Couloirs Infernaux",m:12,rw:1,diff:0,ul:7,structure:[{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"event"},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"event"},{type:"combat",count:[3,4]},{type:"combat",count:[3,4]},{type:"combat",count:[3,4]},{type:"combat",count:[3,4]},{type:"boss"}],enemies:["e_slime_rouge","e_demon_inf","e_armure","e_diablotin"],bosses:["b_phobos","b_deimos"],loot:{ranks:[3,3],rarW:{1:0.47,2:0.42,3:0.11},dropRate:0.20,nbLoot:3},reward:{gold:1200},firstBonus:{gold:1200,xp:1200,scrolls:12},desc:"Les flammes de l'enfer illuminent ces couloirs." },
   { name:"Forteresse des Enfers",m:15,rw:1,diff:0,ul:8,structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"event"},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"event"},{type:"combat",count:[3,4]},{type:"combat",count:[3,4]},{type:"combat",count:[3,4]},{type:"combat",count:[3,4]},{type:"boss"}],enemies:["e_demon_sup","e_chien_infernal","e_mage_noir2","e_slime_chroma"],bosses:["b_myhrra"],loot:{ranks:[3,3],rarW:{1:0.45,2:0.40,3:0.15},dropRate:0.20,nbLoot:4},reward:{gold:1500},firstBonus:{gold:1500,xp:1500,scrolls:15},desc:"Myhrra attend au sommet." },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  CONSOMMABLES
+// ═══════════════════════════════════════════════════════════════
+
+export var TOMES = [
+  { id: "tome_1", name: "Tome d'expérience mineur", rarity: 1, xp: 50, icon: "📖", shopLv: 2, cost: 100 },
+  { id: "tome_2", name: "Tome d'expérience", rarity: 2, xp: 200, icon: "📖", shopLv: 0, cost: 0 },
+  { id: "tome_3", name: "Tome d'expérience majeur", rarity: 3, xp: 500, icon: "📖", shopLv: 0, cost: 0 },
+  { id: "tome_4", name: "Tome d'expérience considérable", rarity: 4, xp: 1000, icon: "📖", shopLv: 0, cost: 0 },
+  { id: "tome_5", name: "Tome d'expérience extraordinaire", rarity: 5, xp: 2500, icon: "📖", shopLv: 0, cost: 0 },
+];
+
+export var FRAGMENTS = [
+  { id: "frag_enzi", name: "Fragment d'âme (Enzi)", heroId: "enzi", rarity: 1, icon: "🧩" },
+  { id: "frag_kiara", name: "Fragment d'âme (Kiara)", heroId: "kiara", rarity: 1, icon: "🧩" },
+  { id: "frag_marken", name: "Fragment d'âme (Marken)", heroId: "marken", rarity: 1, icon: "🧩" },
+  { id: "frag_mira", name: "Fragment d'âme (Mira)", heroId: "mira", rarity: 2, icon: "🧩" },
+  { id: "frag_constello", name: "Fragment d'âme (Constello)", heroId: "constello", rarity: 2, icon: "🧩" },
+  { id: "frag_sahad", name: "Fragment d'âme (Sahad)", heroId: "sahad", rarity: 3, icon: "🧩" },
+  { id: "frag_syrio", name: "Fragment d'âme (Syrio)", heroId: "syrio", rarity: 3, icon: "🧩" },
+  { id: "frag_cerys", name: "Fragment d'âme (Cerys)", heroId: "cerys", rarity: 4, icon: "🧩" },
+  { id: "frag_keros", name: "Fragment d'âme (Kéros)", heroId: "keros", rarity: 4, icon: "🧩" },
+  { id: "frag_orion", name: "Fragment d'âme (Orion)", heroId: "orion", rarity: 5, icon: "🧩" },
 ];
 
 // ═══════════════════════════════════════════════════════════════

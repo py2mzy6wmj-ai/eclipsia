@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS } from './data';
+import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS, TOMES, FRAGMENTS } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
@@ -119,20 +119,21 @@ function erc(v){return v===0?"#60a5fa":v<.99?"#4ade80":v>1.01?"#facc15":"#ddddf4
 function ItemInfo(props){
   var it=props.item;if(!it)return null;var rc=(RA[it.rarity]||{}).c||"#888";
   var parts=[];var b=it.bon||{};
-  if(b.str)parts.push("STR "+fmtB(b.str));if(b.mag)parts.push("MAG "+fmtB(b.mag));
-  if(b.crt)parts.push("CRT "+fmtB(b.crt));if(b.crit)parts.push("CRT +"+fmtPct(b.crit));
-  if(b.hp)parts.push("PV +"+b.hp);if(b.pvPct)parts.push("PV +"+fmtPct(b.pvPct));
-  if(b.rel)parts.push("REL "+b.rel+" tour"+(Math.abs(b.rel)>1?"s":""));
-  if(b.phv)parts.push("VPH "+fmtB(b.phv));if(b.mav)parts.push("VMA "+fmtB(b.mav));
-  if(b.dodge)parts.push("EVA +"+fmtPct(b.dodge));if(b.rgHp)parts.push("REC +"+fmtPct(b.rgHp));
-  if(b.er){for(var ek in b.er){var rv=b.er[ek];parts.push((EM[ek]||{}).i+" "+ek+" "+(rv<0?"+":"")+Math.round(Math.abs(rv)*100)+"%");}}
+  if(b.str)parts.push("Force "+fmtB(b.str));if(b.mag)parts.push("Magie "+fmtB(b.mag));
+  if(b.crt)parts.push("Critique "+fmtB(b.crt));if(b.crit)parts.push("Critique +"+fmtPct(b.crit));
+  if(b.pvPct)parts.push("Points de vie +"+fmtPct(b.pvPct));
+  if(b.rel)parts.push("Recharge "+b.rel+" tour"+(Math.abs(b.rel)>1?"s":""));
+  if(b.phv)parts.push("Vuln. Physique "+fmtB(b.phv));if(b.mav)parts.push("Vuln. Magique "+fmtB(b.mav));
+  if(b.dodge)parts.push("Esquive +"+fmtPct(b.dodge));if(b.rgHp)parts.push("Récupération +"+fmtPct(b.rgHp));
+  if(b.er){for(var ek in b.er){var rv=b.er[ek];var pct=Math.round(Math.abs(rv)*100);parts.push("Vuln. "+((EM[ek]||{}).i||"")+" "+ek+" "+(rv<0?"-":"+")+pct+"%");}}
   // Header line: slot · Rang X · ★★
   var slotName=it.slot==="weapon"?"Arme":it.slot==="armor"?"Armure":it.slot==="accessory"?"Accessoire":"Talisman";
   var header=slotName;
   if(it.rank)header+=" · Rang "+it.rank;
-  // Name line with damage
+  // Name line with damage for weapons, HP for armor
   var line2=it.name;
-  if(it.dmg!=null){line2+=" ("+it.dmg+" "+(it.wt==="magical"?"Magique":"Physique");if(it.el&&it.el!=="Neutre")line2+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line2+=")";}
+  if(it.slot==="weapon"&&it.dmg!=null){line2+=" ("+it.dmg+" "+(it.wt==="magical"?"Magique":"Physique");if(it.el&&it.el!=="Neutre")line2+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line2+=")";}
+  if(it.slot==="armor"&&b.hp){line2+=" ("+b.hp+" points de vie)";}
   var fs=props.fs||14;
   return(<div>
     <div style={{fontSize:fs-2,color:"var(--td)"}}>{header} · <span style={{color:rc,fontWeight:700}}>{(RA[it.rarity]||{}).s}</span></div>
@@ -164,7 +165,7 @@ function StatRow(props){
 }
 
 
-var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
+var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},conso:{},bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
 
 export default function Game(){
   var _g=useState(function(){try{var x=localStorage.getItem("ecl8");return x?JSON.parse(x):INIT;}catch(e){return INIT;}});var g=_g[0],setG=_g[1];
@@ -199,7 +200,7 @@ export default function Game(){
   function doInvoc(n){
     if(sc<n)return;setGa(true);setGr(null);
     setTimeout(function(){
-      var res=[],ros=[].concat(g.roster);
+      var res=[],ros=[].concat(g.roster),dupItems=[];
       for(var i=0;i<n;i++){
         var bon=(g.bl.oracle||0)*.004;var r=Math.random(),cum=0,rr=1;
         for(var j=5;j>=1;j--){cum+=Math.max(.01,RA[j].r+(j>=3?bon/3:-bon/2));if(r<cum){rr=j;break;}}
@@ -207,12 +208,21 @@ export default function Game(){
         if(!pool.length)pool=HEROES.filter(function(h){return h.rarity<=rr;});
         if(!pool.length)pool=HEROES;
         var t=pick(pool);var ex=ros.find(function(h){return h.id===t.id;});
-        if(ex){ros=ros;res.push({h:t,dup:true,gold:50});}
+        if(ex){
+          var frag=FRAGMENTS.find(function(f){return f.heroId===t.id;});
+          var tome=TOMES.find(function(tm){return tm.rarity===t.rarity;});
+          res.push({h:t,dup:true,frag:frag,tome:tome});
+          if(frag)dupItems.push(frag.id);
+          if(tome)dupItems.push(tome.id);
+        }
         else{var wp=generateWeapon(1,1,t.wt||"physical");wp.uid=uid();
           ros.push({id:t.id,uid:uid(),name:t.name,icon:t.icon,rarity:t.rarity,level:1,xp:0,equipment:{weapon:wp,armor:null,accessory:null,talisman:null}});res.push({h:t,dup:false});}
       }
-      var dupGold=res.reduce(function(a,r){return a+(r.dup?50:0);},0);
-      setG(function(p){return Object.assign({},p,{scrolls:(p.scrolls||0)-n,gold:p.gold+dupGold,roster:ros});});setGr(n===1?res[0]:res);setGa(false);
+      setG(function(p){
+        var nc=Object.assign({},p.conso||{});
+        for(var di=0;di<dupItems.length;di++){nc[dupItems[di]]=(nc[dupItems[di]]||0)+1;}
+        return Object.assign({},p,{scrolls:(p.scrolls||0)-n,roster:ros,conso:nc});
+      });setGr(n===1?res[0]:res);setGa(false);
     },n>1?1800:1000);
   }
 
@@ -274,9 +284,9 @@ export default function Game(){
     var stepType=step.type||step;
     if(stepType==="event"){
       var ev=pick(EVT);var ex={};var detail="";
-      if(ev.tp==="heal"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25))});});detail="L'équipe récupère 25% de PV.";}
+      if(ev.tp==="heal"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25))});});detail="L'équipe récupère 25% de ses points de vie.";}
       if(ev.tp==="mpFull"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{cd:0});});detail="Toutes les compétences sont rechargées !";}
-      if(ev.tp==="trap"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.max(1,h.hp-Math.floor(h.hpMax*.12))});});detail="L'équipe perd 12% de PV !";}
+      if(ev.tp==="trap"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.max(1,h.hp-Math.floor(h.hpMax*.12))});});detail="L'équipe perd 12% de ses points de vie !";}
       if(ev.tp==="buff"){t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.05})});});detail="Force de l'équipe augmentée (+5%) !";ex.buffs=(dun.buffs||0)+1;}
       if(ev.tp==="gold"){var gv=15+Math.floor(Math.random()*35);ex.rG=(dun.rG||0)+gv;detail="L'équipe trouve "+gv+" pièces d'or !";}
       if(ev.tp==="xp"){ex.bX=(dun.bX||0)+12;detail="L'équipe gagne 12 XP bonus !";}
@@ -303,7 +313,7 @@ export default function Game(){
       }
       if(!unit)return d;
       // Regen HP when it's a hero's turn
-      if(isH&&unit.rgHp){var rh=Math.floor(unit.hpMax*(unit.rgHp||0));if(rh>0&&unit.hp<unit.hpMax){unit.hp=Math.min(unit.hpMax,unit.hp+rh);t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{hp:unit.hp}):h;});setLogs(function(l){return l.concat([{t:"  "+unit.name+" récupère "+rh+" PV",tp:"info"}]);});}}
+      if(isH&&unit.rgHp){var rh=Math.floor(unit.hpMax*(unit.rgHp||0));if(rh>0&&unit.hp<unit.hpMax){unit.hp=Math.min(unit.hpMax,unit.hp+rh);t=t.map(function(h){return h.uid===unit.uid?Object.assign({},h,{hp:unit.hp}):h;});setLogs(function(l){return l.concat([{t:"  "+unit.name+" récupère "+rh+" points de vie",tp:"info"}]);});}}
       if(isH){
         var ae=en.filter(function(e){return e.hp>0;});if(!ae.length)return d;
         var target=ae.find(function(e){return e.uid===tgt&&e.hp>0;})||pick(ae);
@@ -315,7 +325,7 @@ export default function Game(){
         var res=skWt==="magical"?mDmg(unit,target,baseDmg,w.el):pDmg(unit,target,baseDmg,w.el);
         var ln=useSkill?("  "+unit.name+" — "+sk.name+" → "+target.name):("  "+unit.name+" → "+target.name);
         var logTp=useSkill?"skill":"heroAtk";
-        if(res.hit){target.hp-=res.dmg;en=en.map(function(e){return e.uid===target.uid?Object.assign({},e,{hp:target.hp}):e;});ln+=" : -"+res.dmg+"PV";if(res.msg)ln+=" ("+res.msg+")";if(res.st.cr)logTp="skill";
+        if(res.hit){target.hp-=res.dmg;en=en.map(function(e){return e.uid===target.uid?Object.assign({},e,{hp:target.hp}):e;});ln+=" : "+res.dmg+" dégâts";if(res.msg)ln+=" ("+res.msg+")";if(res.st.cr)logTp="skill";
           setFloats(function(f){return f.concat([{uid:target.uid,val:"-"+res.dmg,color:res.st.cr?"#fbbf24":useSkill?"#c0392b":"#ffffff",id:uid()}]);});}
         else{ln+=" : "+res.msg;logTp="miss";}
         setLogs(function(l){return l.concat([{t:ln,st:res.st,tp:logTp}]);});
@@ -329,7 +339,7 @@ export default function Game(){
         var res=unit.at==="magical"?mDmg({stats:unit.stats},target,unit.dmg,"Neutre"):pDmg({stats:unit.stats},target,unit.dmg,"Neutre");
         var ln="  "+unit.name+" → "+target.name;
         var logTp2="enemyAtk";
-        if(res.hit){target.hp-=res.dmg;t=t.map(function(h){return h.uid===target.uid?Object.assign({},h,{hp:target.hp}):h;});ln+=" : -"+res.dmg+"PV";if(res.msg)ln+=" ("+res.msg+")";
+        if(res.hit){target.hp-=res.dmg;t=t.map(function(h){return h.uid===target.uid?Object.assign({},h,{hp:target.hp}):h;});ln+=" : "+res.dmg+" dégâts";if(res.msg)ln+=" ("+res.msg+")";
           setFloats(function(f){return f.concat([{uid:target.uid,val:"-"+res.dmg,color:"#ffffff",id:uid()}]);});}
         else{ln+=" : "+res.msg;logTp2="miss";}
         setLogs(function(l){return l.concat([{t:ln,st:res.st,tp:logTp2}]);});
@@ -444,13 +454,13 @@ export default function Game(){
                   else{dA=fmtPct(v);dB=fmtPct(nv);if(dA===dB)return;}
                   rows.push({icon:icon,label:label,val:v,nv:nv,type:type});
                 }
-                addIf("🩸","PV",st.hp,sN.hp,"flat");
-                addIf("⚔️","STR",st.str,sN.str,"pm");
-                addIf("🔮","MAG",st.mag,sN.mag,"pm");
-                addIf("💥","CRT",st.crit,sN.crit,"pct");
-                addIf("🛡️","VPH",st.phv,sN.phv,"pmInv");
-                addIf("🔰","VMA",st.mav,sN.mav,"pmInv");
-                addIf("💨","EVA",st.dodge,sN.dodge,"pct");
+                addIf("🩸","Points de vie",st.hp,sN.hp,"flat");
+                addIf("⚔️","Force",st.str,sN.str,"pm");
+                addIf("🔮","Magie",st.mag,sN.mag,"pm");
+                addIf("💥","Critique",st.crit,sN.crit,"pct");
+                addIf("🛡️","Vuln. Physique",st.phv,sN.phv,"pmInv");
+                addIf("🔰","Vuln. Magique",st.mav,sN.mav,"pmInv");
+                addIf("💨","Esquive",st.dodge,sN.dodge,"pct");
                 return rows.map(function(r,i){return <StatRow key={i} icon={r.icon} label={r.label} val={r.val} nv={r.nv} type={r.type}/>;});
               })()}
             </div>
@@ -500,17 +510,17 @@ export default function Game(){
               <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
                 <PH k="carac" label="Caractéristiques" open={cp.carac}/>
                 {cp.carac&&<div>
-                  <StatRow icon="🩸" label="Points de vie (PV)" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🩸" label="Points de vie" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="⚔️" label="Force (STR)" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="🔮" label="Magie (MAG)" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="💥" label="Critique (CRT)" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="⚔️" label="Force" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🔮" label="Magie" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="💥" label="Critique" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="🛡️" label="Vulnérabilité Physique (VPH)" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="🔰" label="Vulnérabilité Magique (VMA)" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="💨" label="Esquive (EVA)" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🛡️" label="Vulnérabilité Physique" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🔰" label="Vulnérabilité Magique" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="💨" label="Esquive" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="♻️" label="Récupération (REC)" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="♻️" label="Récupération" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
                 </div>}
               </div>
               <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
@@ -539,10 +549,10 @@ export default function Game(){
                     <span style={{color:"#8888bb"}}>Arme :</span> <span style={{fontWeight:600}}>{ww.name}</span> <span style={{color:"var(--td)"}}>({ww.dmg} {isMag?"Magique":"Physique"})</span>
                   </div>
                   <div style={{fontSize:13,marginBottom:4}}>
-                    <span style={{color:"#8888bb"}}>{isMag?"MAG":"STR"} :</span> <span style={{fontWeight:600,color:mainStat>=1?"#4ade80":"#facc15"}}>{fmtPM(mainStat)}</span>
+                    <span style={{color:"#8888bb"}}>{isMag?"Magie":"Force"} :</span> <span style={{fontWeight:600,color:mainStat>=1?"#4ade80":"#facc15"}}>{fmtPM(mainStat)}</span>
                   </div>
                   <div style={{fontSize:13,marginBottom:4}}>
-                    <span style={{color:"#8888bb"}}>Formule :</span> <span style={{color:"var(--td)"}}>Arme × {isMag?"MAG":"STR"} × variance(0.8-1.2)</span>
+                    <span style={{color:"#8888bb"}}>Formule :</span> <span style={{color:"var(--td)"}}>Arme × {isMag?"Magie":"Force"} × variance(0.8-1.2)</span>
                   </div>
                   <div style={{background:"#ffffff06",borderRadius:8,padding:10,marginTop:6}}>
                     <div style={{fontSize:15,fontWeight:700}}><span style={{color:dmgMin>0?"#4ade80":"#facc15"}}>{dmgMin} — {dmgMax}</span> <span style={{color:"var(--t)"}}>{isMag?"Magique":"Physique"}</span></div>
@@ -567,7 +577,7 @@ export default function Game(){
                       <div style={{fontSize:12,color:"var(--td)"}}>{sk.desc}</div>
                     </div>
                   </div>
-                  <StatRow icon="⏳" label="Recharge (REL)" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
                 </div>}
               </div>}
             </div>;
@@ -594,9 +604,7 @@ export default function Game(){
     {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
       {(function(){
         var m=g.mat||{};var flv=g.bl.forge||1;
-        // Forge success formula: base chance depends on rank, rarity, forge level
         function forgeChance(rank,rarity,fLv){var diff=(rank-1)*8+(rarity-1)*18;var skill=fLv*12;var ch=100-diff+skill;return Math.max(0,Math.min(100,Math.round(ch)));}
-        // Forge state
         var inerteKey=fs.slot+"_inerte";var gabKey="gabarit_"+fs.rank;var cataKey="catalyseur_"+fs.rar;
         var hasInerte=(m[inerteKey]||0)>0;var hasGab=(m[gabKey]||0)>0;var hasCata=(m[cataKey]||0)>0;
         var canForge=hasInerte&&hasGab&&hasCata;
@@ -622,27 +630,34 @@ export default function Game(){
             setFResult({ok:true,item:item});
           }else{setFResult({ok:false});}
         }
-        // Forge level upgrade costs
         var FORGE_COSTS={2:500,3:1000,4:2500,5:10000,6:25000,7:50000,8:100000,9:250000,10:500000};
         var fNextCost=flv<10?FORGE_COSTS[flv+1]||null:null;
         // Market
         var mlv=g.bl.marche||1;
         var MARCHE_COSTS={2:2000,3:8000,4:25000,5:75000};
         var mNextCost=mlv<5?MARCHE_COSTS[mlv+1]||null:null;
-        var shopItems=[];
-        if(mlv>=1){shopItems.push({id:"scroll",name:"Parchemin d'invocation",cat:"Consommable",cost:1000,rar:1,icon:"📜"});shopItems.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rg1)",cat:"Gabarit · Rang 1",cost:100,rar:1,icon:"📐"});shopItems.push({id:"catalyseur_1",name:CATA_NAMES[1],cat:"Catalyseur · ★",cost:500,rar:1,icon:"💎"});}
-        if(mlv>=2){shopItems.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rg2)",cat:"Gabarit · Rang 2",cost:300,rar:1,icon:"📐"});shopItems.push({id:"catalyseur_2",name:CATA_NAMES[2],cat:"Catalyseur · ★★",cost:1500,rar:2,icon:"💎"});
-          for(var si=0;si<4;si++){var sn=SLOT_KEYS[si];shopItems.push({id:sn+"_inerte",name:SLOT_NAMES[sn]+" inerte",cat:"Réceptacle",cost:200,rar:1,icon:"🔩"});}}
+        // Shop items categorized
+        var shopConso=[];var shopGab=[];var shopCata=[];
+        if(mlv>=1){shopConso.push({id:"scroll",name:"Parchemin d'invocation",cost:1000,rar:1,icon:"📜"});shopGab.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rg1)",cost:100,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_1",name:CATA_NAMES[1],cost:500,rar:1,icon:"💎"});}
+        if(mlv>=2){shopConso.push({id:"tome_1",name:"Tome d'expérience mineur",cost:100,rar:1,icon:"📖"});shopGab.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rg2)",cost:300,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_2",name:CATA_NAMES[2],cost:1500,rar:2,icon:"💎"});}
         function doBuy(item){
           if(g.gold<item.cost)return;
           setFloats(function(f){return f.concat([{uid:"ui",val:"+1 "+item.name,color:"#4ade80",id:uid()}]);});
           setG(function(p){
             var np=Object.assign({},p,{gold:p.gold-item.cost});
             if(item.id==="scroll"){np.scrolls=(np.scrolls||0)+1;}
+            else if(item.id.indexOf("tome_")===0){var nc=Object.assign({},np.conso||{});nc[item.id]=(nc[item.id]||0)+1;np.conso=nc;}
             else{var nm=Object.assign({},np.mat||{});nm[item.id]=(nm[item.id]||0)+1;np.mat=nm;}
             return np;
           });
         }
+        function ShopCard(props){var si=props.item;var rc=(RA[si.rar]||{}).c||"#888";return <div style={{background:rc+"08",border:"1px solid "+rc+"30",borderRadius:10,padding:10}}>
+          <div style={{fontWeight:700,fontSize:13,color:rc}}>{si.icon} {si.name}</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
+            <span style={{fontSize:13,color:"#fbbf24",fontWeight:600}}>{si.cost.toLocaleString()}g</span>
+            <button className="b bg" disabled={g.gold<si.cost} onClick={function(){doBuy(si);}} style={{fontSize:12,padding:"4px 12px"}}>Acheter</button>
+          </div>
+        </div>;}
         function PnlH(props){var isOpen=vp===props.k;return <div onClick={props.onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:isOpen?"12px 12px 0 0":"12px",marginBottom:isOpen?0:6}}>
           <div><span style={{fontSize:20,marginRight:8}}>{props.icon}</span><span style={{fontWeight:700,fontSize:14}}>{props.name}</span>{props.lv!=null&&<span style={{fontSize:11,color:"var(--acc)",marginLeft:6}}>Nv.{props.lv}</span>}</div>
           <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>▼</span>
@@ -651,50 +666,55 @@ export default function Game(){
           {/* FORGERON */}
           <PnlH k="forge" name="Forgeron" icon="🔨" lv={flv} onClick={function(){setVp(vp==="forge"?"none":"forge");}}/>
           {vp==="forge"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-            {/* Forge level */}
-            {fNextCost!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <span style={{fontSize:12,color:"var(--td)"}}>Niveau {flv} → {flv+1}</span>
-              <button className="b bg" disabled={g.gold<fNextCost} onClick={function(){if(g.gold<fNextCost)return;setG(function(p){var bl=Object.assign({},p.bl);bl.forge=(bl.forge||0)+1;return Object.assign({},p,{gold:p.gold-fNextCost,bl:bl});});}} style={{fontSize:12}}>{fNextCost.toLocaleString()}g</button>
-            </div>}
-            {/* Selectors */}
-            <div style={{display:"flex",gap:6,marginBottom:8}}>
-              <div style={{flex:1,textAlign:"center"}}>
-                <div style={{fontSize:11,color:"var(--td)",marginBottom:4}}>Type</div>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i-1+4)%4]}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:80,fontSize:13,fontWeight:600}}>{SLOT_NAMES[fs.slot]}</div>
-                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i+1)%4]}));setFResult(null);}}>▶</button>
+            <div style={{fontSize:12,color:"#8888bb",fontStyle:"italic",lineHeight:1.6,marginBottom:12,padding:10,background:"#ffffff04",borderRadius:8}}>Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.</div>
+            {/* 3 lines: Type, Rang, Rareté */}
+            <div style={{marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
+                <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Type</span>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i-1+4)%4]}));setFResult(null);}}>◀</button>
+                  <div style={{minWidth:90,textAlign:"center",fontSize:14,fontWeight:600}}>{SLOT_NAMES[fs.slot]}</div>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i+1)%4]}));setFResult(null);}}>▶</button>
                 </div>
-                <div style={{fontSize:10,color:hasInerte?"#4ade80":"#ef4444",marginTop:2}}>{SLOT_NAMES[fs.slot]+" inerte"} ({m[inerteKey]||0})</div>
+                <span style={{fontSize:11,color:hasInerte?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[inerteKey]||0} en stock</span>
               </div>
-              <div style={{flex:1,textAlign:"center"}}>
-                <div style={{fontSize:11,color:"var(--td)",marginBottom:4}}>Rang</div>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.max(1,fs.rank-1)}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:30,fontSize:13,fontWeight:600}}>{fs.rank}</div>
-                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.min(15,fs.rank+1)}));setFResult(null);}}>▶</button>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
+                <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Rang</span>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.max(1,fs.rank-1)}));setFResult(null);}}>◀</button>
+                  <div style={{minWidth:90,textAlign:"center",fontSize:14,fontWeight:600}}>{fs.rank} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>({GABARIT_NAMES[fs.rank]})</span></div>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.min(15,fs.rank+1)}));setFResult(null);}}>▶</button>
                 </div>
-                <div style={{fontSize:10,color:hasGab?"#4ade80":"#ef4444",marginTop:2}}>{GABARIT_NAMES[fs.rank]} ({m[gabKey]||0})</div>
+                <span style={{fontSize:11,color:hasGab?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[gabKey]||0} en stock</span>
               </div>
-              <div style={{flex:1,textAlign:"center"}}>
-                <div style={{fontSize:11,color:"var(--td)",marginBottom:4}}>Rareté</div>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.max(1,fs.rar-1)}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:40,fontSize:13,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s}</div>
-                  <button className="b" style={{padding:"4px 8px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.min(5,fs.rar+1)}));setFResult(null);}}>▶</button>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0"}}>
+                <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Rareté</span>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.max(1,fs.rar-1)}));setFResult(null);}}>◀</button>
+                  <div style={{minWidth:90,textAlign:"center",fontSize:14,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s} {(RA[fs.rar]||{}).n}</div>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.min(5,fs.rar+1)}));setFResult(null);}}>▶</button>
                 </div>
-                <div style={{fontSize:10,color:hasCata?"#4ade80":"#ef4444",marginTop:2}}>{CATA_NAMES[fs.rar]} ({m[cataKey]||0})</div>
+                <span style={{fontSize:11,color:hasCata?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[cataKey]||0} en stock</span>
               </div>
+            </div>
+            {/* Live preview */}
+            <div style={{background:"#ffffff06",borderRadius:8,padding:10,marginBottom:10,textAlign:"center"}}>
+              <div style={{fontSize:12,color:"var(--td)",marginBottom:4}}>Résultat possible</div>
+              <div style={{fontSize:15,fontWeight:700,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s} {SLOT_NAMES[fs.slot]} · Rang {fs.rank}</div>
             </div>
             {/* Chance + button */}
             <div style={{textAlign:"center",marginBottom:8}}>
               <div style={{fontSize:14,fontWeight:700,color:fChance>=80?"#4ade80":fChance>=50?"#fbbf24":fChance>0?"#ef8855":"#ef4444"}}>Chance de réussite : {fChance}%</div>
             </div>
             <button className="b bg" disabled={!canForge||fChance<=0} onClick={doForge} style={{width:"100%",fontSize:14,marginBottom:8}}>🔨 Forger</button>
-            {/* Result */}
             {fResult&&<div style={{textAlign:"center",padding:10,background:"#ffffff06",borderRadius:8}}>
               {fResult.ok?<div><div style={{color:"#4ade80",fontWeight:700,fontSize:15,marginBottom:4}}>Succès !</div><ItemInfo item={fResult.item}/></div>
               :<div style={{color:"#ef4444",fontWeight:700,fontSize:15}}>Échec... Les matériaux sont perdus.</div>}
+            </div>}
+            {/* Bottom upgrade bandeau */}
+            {fNextCost!=null&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:10,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Forgeron au niveau {flv+1}</span>
+              <button className="b bg" disabled={g.gold<fNextCost} onClick={function(){if(g.gold<fNextCost)return;setG(function(p){var bl=Object.assign({},p.bl);bl.forge=(bl.forge||0)+1;return Object.assign({},p,{gold:p.gold-fNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{fNextCost.toLocaleString()} or</button>
             </div>}
           </div>}
 
@@ -702,22 +722,29 @@ export default function Game(){
           <PnlH k="marche" name="Marché" icon="🏪" lv={mlv} onClick={function(){setVp(vp==="marche"?"none":"marche");}}/>
           {vp==="marche"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginTop:-6,marginBottom:10,border:"1px solid var(--brd)",borderTop:"none"}}>
             <div>
-              {mNextCost!=null&&mlv<5&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <span style={{fontSize:12,color:"var(--td)"}}>Niveau {mlv} → {mlv+1}</span>
-                <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||0)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:12}}>{mNextCost.toLocaleString()}g</button>
+              {shopConso.length>0&&<div>
+                <div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Consommables</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>
+                  {shopConso.map(function(si){return <ShopCard key={si.id} item={si}/>;})}
+                </div>
               </div>}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6}}>
-                {shopItems.map(function(si){var rc=(RA[si.rar]||{}).c||"#888";
-                  return <div key={si.id} style={{background:rc+"08",border:"1px solid "+rc+"30",borderRadius:10,padding:10}}>
-                    <div style={{fontSize:10,color:"var(--td)"}}>{si.cat}</div>
-                    <div style={{fontWeight:700,fontSize:14,color:rc}}>{si.icon} {si.name}</div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-                      <span style={{fontSize:13,color:"#fbbf24",fontWeight:600}}>{si.cost.toLocaleString()}g</span>
-                      <button className="b bg" disabled={g.gold<si.cost} onClick={function(){doBuy(si);}} style={{fontSize:12,padding:"4px 12px"}}>Acheter</button>
-                    </div>
-                  </div>;
-                })}
-              </div>
+              {shopGab.length>0&&<div>
+                <div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Gabarits</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>
+                  {shopGab.map(function(si){return <ShopCard key={si.id} item={si}/>;})}
+                </div>
+              </div>}
+              {shopCata.length>0&&<div>
+                <div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Catalyseurs</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>
+                  {shopCata.map(function(si){return <ShopCard key={si.id} item={si}/>;})}
+                </div>
+              </div>}
+              {/* Bottom upgrade bandeau */}
+              {mNextCost!=null&&mlv<5&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:4,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Marché au niveau {mlv+1}</span>
+                <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||0)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{mNextCost.toLocaleString()} or</button>
+              </div>}
             </div>
           </div>}
 
@@ -839,21 +866,25 @@ export default function Game(){
 
     {tab==="inventaire"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>📦 Inventaire</h2>
       {(function(){
-        var m=g.mat||{};
+        var m=g.mat||{};var co=g.conso||{};
         var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
         var CATA_NAMES=["","Catalyseur commun","Catalyseur inhabituel","Catalyseur rare","Catalyseur épique","Catalyseur légendaire"];
-        function gabRar(r){return r<=3?1:r<=6?2:r<=9?3:r<=12?4:5;}
         function matRow(key,name,qty,rar,icon){var rc=rar===1?"var(--t)":(RA[rar]||{}).c||"var(--t)";return <div key={key} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #ffffff08"}}><span style={{color:rc,fontSize:14}}>{icon?icon+" ":""}{name}</span><span style={{fontFamily:"monospace",fontWeight:600,fontSize:14,color:"var(--t)"}}>{qty}</span></div>;}
+        // Monnaies
         var monnaies=[{n:"Pièces d'or",v:g.gold,r:1,ic:"💰"}];
-        var conso=[{n:"Parchemins d'invocation",v:g.scrolls||0,r:1,ic:"📜"}];
-        var materiaux=[];
-        // Inertes
+        // Consommables: scrolls + tomes + fragments
+        var consoList=[];
+        consoList.push({k:"scrolls",n:"Parchemins d'invocation",v:g.scrolls||0,r:1,ic:"📜"});
+        for(var ti=0;ti<TOMES.length;ti++){var tm=TOMES[ti];if((co[tm.id]||0)>0)consoList.push({k:tm.id,n:tm.name,v:co[tm.id],r:tm.rarity,ic:tm.icon});}
+        for(var fi=0;fi<FRAGMENTS.length;fi++){var fr=FRAGMENTS[fi];if((co[fr.id]||0)>0)consoList.push({k:fr.id,n:fr.name,v:co[fr.id],r:fr.rarity,ic:fr.icon});}
+        // Matériaux: inertes, gabarits by rank, catalyseurs by rarity
+        var inertes=[];
         var inerteSlots=[["weapon_inerte","Arme inerte",1,"🔩"],["armor_inerte","Armure inerte",1,"🔩"],["accessory_inerte","Accessoire inerte",1,"🔩"],["talisman_inerte","Talisman inerte",1,"🔩"]];
-        for(var ii=0;ii<inerteSlots.length;ii++){var ik=inerteSlots[ii];if(m[ik[0]]>0)materiaux.push({k:ik[0],n:ik[1],v:m[ik[0]],r:ik[2],ic:ik[3]});}
-        // Gabarits
-        for(var gi=1;gi<=15;gi++){var gk="gabarit_"+gi;var gabRarity=gi<=3?1:gi<=6?2:gi<=9?3:gi<=12?4:5;if(m[gk]>0)materiaux.push({k:gk,n:GABARIT_NAMES[gi]+" (Rg"+gi+")",v:m[gk],r:gabRarity,ic:"📐"});}
-        // Catalyseurs
-        for(var ci=1;ci<=5;ci++){var ck="catalyseur_"+ci;if(m[ck]>0)materiaux.push({k:ck,n:CATA_NAMES[ci],v:m[ck],r:ci,ic:"💎"});}
+        for(var ii=0;ii<inerteSlots.length;ii++){var ik=inerteSlots[ii];if(m[ik[0]]>0)inertes.push({k:ik[0],n:ik[1],v:m[ik[0]],r:ik[2],ic:ik[3]});}
+        var gabarits=[];
+        for(var gi=1;gi<=15;gi++){var gk="gabarit_"+gi;var gabRarity=gi<=3?1:gi<=6?2:gi<=9?3:gi<=12?4:5;if(m[gk]>0)gabarits.push({k:gk,n:GABARIT_NAMES[gi]+" (Rg"+gi+")",v:m[gk],r:gabRarity,ic:"📐"});}
+        var catalyseurs=[];
+        for(var ci=1;ci<=5;ci++){var ck="catalyseur_"+ci;if(m[ck]>0)catalyseurs.push({k:ck,n:CATA_NAMES[ci],v:m[ck],r:ci,ic:"💎"});}
         return <div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Monnaies</div>
@@ -861,11 +892,17 @@ export default function Game(){
           </div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Consommables</div>
-            {conso.map(function(x){return matRow(x.n,x.n,x.v,x.r,x.ic);})}
+            {consoList.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);})}
           </div>
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Matériaux de forge</div>
-            {materiaux.length?materiaux.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);}):<div style={{color:"var(--td)",fontSize:13}}>Aucun matériau. Recyclez de l'équipement !</div>}
+            {inertes.length>0&&<div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:4,marginTop:4}}>Bases inertes</div>}
+            {inertes.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);})}
+            {gabarits.length>0&&<div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:4,marginTop:8}}>Gabarits</div>}
+            {gabarits.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);})}
+            {catalyseurs.length>0&&<div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:4,marginTop:8}}>Catalyseurs</div>}
+            {catalyseurs.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);})}
+            {!inertes.length&&!gabarits.length&&!catalyseurs.length&&<div style={{color:"var(--td)",fontSize:13}}>Aucun matériau. Recyclez de l'équipement !</div>}
           </div>
         </div>;
       })()}
@@ -950,10 +987,10 @@ export default function Game(){
           {logs[hl].st.res==="dodged"&&"Esquive "+Math.round((logs[hl].st.dg||0)*100)+"% → Esquivé !"}
           {logs[hl].st.res==="hit"&&<div>
             {"Dégâts "+(logs[hl].st.wt==="magical"?"du sort":"de l'arme")+" : "+logs[hl].st.bd+" ("+(logs[hl].st.wt==="magical"?"magique":"physique")+")\n"}
-            {logs[hl].st.strB!=null&&"STR attaquant : "+fmtPM(logs[hl].st.strB+1)+"\n"}
-            {logs[hl].st.magB!=null&&"MAG attaquant : "+fmtPM(logs[hl].st.magB+1)+"\n"}
-            {logs[hl].st.phvB!=null&&"PHV cible : "+fmtPM(logs[hl].st.phvB+1)+"\n"}
-            {logs[hl].st.mavB!=null&&"MAV cible : "+fmtPM(logs[hl].st.mavB+1)+"\n"}
+            {logs[hl].st.strB!=null&&"Force attaquant : "+fmtPM(logs[hl].st.strB+1)+"\n"}
+            {logs[hl].st.magB!=null&&"Magie attaquant : "+fmtPM(logs[hl].st.magB+1)+"\n"}
+            {logs[hl].st.phvB!=null&&"Vuln. Physique cible : "+fmtPM(logs[hl].st.phvB+1)+"\n"}
+            {logs[hl].st.mavB!=null&&"Vuln. Magique cible : "+fmtPM(logs[hl].st.mavB+1)+"\n"}
             {"Multiplicateur combiné : "+fmtPM(logs[hl].st.mult)+"\n"}
             {logs[hl].st.v!=null&&"Variance : "+Math.round(logs[hl].st.v*100)+"%\n"}
             {logs[hl].st.cr&&"Critique : ×3\n"}
@@ -975,14 +1012,14 @@ export default function Game(){
         {Array.isArray(gr)?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(85px,1fr))",gap:4}}>
           {gr.map(function(r,i){return <div key={i} style={{padding:6,borderRadius:8,textAlign:"center",background:r.dup?"#ffffff05":(RA[r.h.rarity]||{}).c+"12",border:"1px solid "+(RA[r.h.rarity]||{}).c+"30"}}>
             <Portrait id={r.h.id} size={48} fs={20} icon={r.h.icon}/><div style={{fontSize:10,fontWeight:700,marginTop:2}}>{r.h.name}</div><div style={{fontSize:9,color:(RA[r.h.rarity]||{}).c}}>{(RA[r.h.rarity]||{}).s}</div>
-            {r.dup&&<div style={{fontSize:9,color:"#d4a017"}}>+50 or</div>}
+            {r.dup&&<div style={{fontSize:9,color:"#d4a017"}}>{r.frag?"🧩":""}+{r.tome?"📖":""}</div>}
             {!r.dup&&<div style={{fontSize:9,color:"#4ade80",fontWeight:700}}>NOUVEAU</div>}</div>;})}
         </div>:<div>
           <div style={{margin:"0 auto 8px",width:"fit-content"}}><Portrait id={gr.h.id} size={120} fs={60} icon={gr.h.icon}/></div>
           <div style={{fontSize:20,fontWeight:700,color:(RA[gr.h.rarity]||{}).c,marginTop:4}}>{gr.h.name}</div>
           <div style={{fontSize:14,color:(RA[gr.h.rarity]||{}).c}}>{(RA[gr.h.rarity]||{}).s} {(RA[gr.h.rarity]||{}).n}</div>
           <div style={{fontSize:12,color:"var(--td)",marginTop:2,fontStyle:"italic"}}>{gr.h.title}</div>
-          {gr.dup&&<div style={{fontSize:13,color:"#d4a017",marginTop:6}}>Doublon → +50 or</div>}
+          {gr.dup&&<div style={{fontSize:13,color:"#d4a017",marginTop:6}}>Doublon → 🧩 {gr.frag?gr.frag.name:""} + 📖 {gr.tome?gr.tome.name:""}</div>}
           {!gr.dup&&<div style={{fontSize:14,color:"#4ade80",marginTop:6,fontWeight:700}}>✨ NOUVEAU !</div>}
         </div>}
       </div>}
