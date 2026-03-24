@@ -136,7 +136,7 @@ function ItemInfo(props){
   if(it.slot==="armor"&&b.hp){line2+=" ("+b.hp+" points de vie)";}
   var fs=props.fs||14;
   return(<div>
-    <div style={{fontSize:fs-2,color:"var(--td)"}}>{header} · <span style={{color:rc,fontWeight:700}}>{(RA[it.rarity]||{}).s}</span></div>
+    <div style={{fontSize:fs-2,color:rc}}>{header} · {(RA[it.rarity]||{}).s}</div>
     <div style={{fontWeight:600,fontSize:fs,color:rc}}>{line2}</div>
     {parts.length>0&&<div style={{fontSize:fs-2,color:"#4ade80",marginTop:1}}>{parts.join(", ")}</div>}
   </div>);
@@ -348,7 +348,7 @@ export default function Game(){
       if(t.every(function(h){return h.hp<=0;})){setLogs(function(l){return l.concat([{t:"Défaite...",tp:"heroDeath"}]);});return Object.assign({},d,{team:t,en:en,rG:rG,rX:rX,ph:"result",tI:tI});}
       if(en.every(function(e){return e.hp<=0;})){
         var bon=Math.floor(15*DG[d.ti].rw);setLogs(function(l){return l.concat([{t:"Victoire! +"+bon+"g",tp:"kill"}]);});
-        var eq=[].concat(rE);var dr=rollLoot(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  Loot: "+dr.name+" (Rg"+dr.rank+" "+(RA[dr.rarity]||{}).s+") !",tp:"info"}]);});}
+        var eq=[].concat(rE);var dr=rollLoot(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  Loot: "+dr.name+" (Rang "+dr.rank+" "+(RA[dr.rarity]||{}).s+") !",tp:"info"}]);});}
         return Object.assign({},d,{team:t,en:en,rG:rG+bon,rX:rX,rE:eq,ph:"victory",tI:tI});}
       return Object.assign({},d,{team:t,en:en,tI:tI,rG:rG,rX:rX,rE:rE});
     });
@@ -638,8 +638,8 @@ export default function Game(){
         var mNextCost=mlv<5?MARCHE_COSTS[mlv+1]||null:null;
         // Shop items categorized
         var shopConso=[];var shopGab=[];var shopCata=[];
-        if(mlv>=1){shopConso.push({id:"scroll",name:"Parchemin d'invocation",cost:1000,rar:1,icon:"📜"});shopGab.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rg1)",cost:100,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_1",name:CATA_NAMES[1],cost:500,rar:1,icon:"💎"});}
-        if(mlv>=2){shopConso.push({id:"tome_1",name:"Tome d'expérience mineur",cost:100,rar:1,icon:"📖"});shopGab.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rg2)",cost:300,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_2",name:CATA_NAMES[2],cost:1500,rar:2,icon:"💎"});}
+        if(mlv>=1){shopConso.push({id:"scroll",name:"Parchemin d'invocation",cost:1000,rar:1,icon:"📜"});shopGab.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rang 1)",cost:100,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_1",name:CATA_NAMES[1],cost:500,rar:1,icon:"💎"});}
+        if(mlv>=2){shopConso.push({id:"tome_1",name:"Tome d'expérience mineur",cost:100,rar:1,icon:"📖"});shopGab.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rang 2)",cost:300,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_2",name:CATA_NAMES[2],cost:1500,rar:2,icon:"💎"});}
         function doBuy(item){
           if(g.gold<item.cost)return;
           setFloats(function(f){return f.concat([{uid:"ui",val:"+1 "+item.name,color:"#4ade80",id:uid()}]);});
@@ -666,14 +666,14 @@ export default function Game(){
           {/* FORGERON */}
           <PnlH k="forge" name="Forgeron" icon="🔨" lv={flv} onClick={function(){setVp(vp==="forge"?"none":"forge");}}/>
           {vp==="forge"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-            <div style={{fontSize:12,color:"#8888bb",fontStyle:"italic",lineHeight:1.6,marginBottom:12,padding:10,background:"#ffffff04",borderRadius:8}}>Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.</div>
-            {/* 3 lines: Type, Rang, Rareté */}
+            <div style={{fontSize:12,color:"var(--td)",fontStyle:"italic",lineHeight:1.6,marginBottom:12,padding:10,background:"#ffffff04",borderRadius:8}}>Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.</div>
+            {/* 3 lines: Type, Rang, Rareté — show item names */}
             <div style={{marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
                 <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Type</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i-1+4)%4]}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:90,textAlign:"center",fontSize:14,fontWeight:600}}>{SLOT_NAMES[fs.slot]}</div>
+                  <div style={{minWidth:130,textAlign:"center",fontSize:13,fontWeight:600}}>{SLOT_NAMES[fs.slot]+" inerte"}</div>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i+1)%4]}));setFResult(null);}}>▶</button>
                 </div>
                 <span style={{fontSize:11,color:hasInerte?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[inerteKey]||0} en stock</span>
@@ -682,7 +682,7 @@ export default function Game(){
                 <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Rang</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.max(1,fs.rank-1)}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:90,textAlign:"center",fontSize:14,fontWeight:600}}>{fs.rank} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>({GABARIT_NAMES[fs.rank]})</span></div>
+                  <div style={{minWidth:130,textAlign:"center",fontSize:13,fontWeight:600}}>{GABARIT_NAMES[fs.rank]+" (Rang "+fs.rank+")"}</div>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.min(15,fs.rank+1)}));setFResult(null);}}>▶</button>
                 </div>
                 <span style={{fontSize:11,color:hasGab?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[gabKey]||0} en stock</span>
@@ -691,7 +691,7 @@ export default function Game(){
                 <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Rareté</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.max(1,fs.rar-1)}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:90,textAlign:"center",fontSize:14,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s} {(RA[fs.rar]||{}).n}</div>
+                  <div style={{minWidth:130,textAlign:"center",fontSize:13,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{CATA_NAMES[fs.rar]}</div>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.min(5,fs.rar+1)}));setFResult(null);}}>▶</button>
                 </div>
                 <span style={{fontSize:11,color:hasCata?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[cataKey]||0} en stock</span>
@@ -699,8 +699,8 @@ export default function Game(){
             </div>
             {/* Live preview */}
             <div style={{background:"#ffffff06",borderRadius:8,padding:10,marginBottom:10,textAlign:"center"}}>
-              <div style={{fontSize:12,color:"var(--td)",marginBottom:4}}>Résultat possible</div>
-              <div style={{fontSize:15,fontWeight:700,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s} {SLOT_NAMES[fs.slot]} · Rang {fs.rank}</div>
+              <div style={{fontSize:12,color:"var(--td)",marginBottom:4}}>Résultat attendu</div>
+              <div style={{fontSize:15,fontWeight:700,color:(RA[fs.rar]||{}).c}}>{SLOT_NAMES[fs.slot]} · Rang {fs.rank} · {(RA[fs.rar]||{}).s}</div>
             </div>
             {/* Chance + button */}
             <div style={{textAlign:"center",marginBottom:8}}>
@@ -882,7 +882,7 @@ export default function Game(){
         var inerteSlots=[["weapon_inerte","Arme inerte",1,"🔩"],["armor_inerte","Armure inerte",1,"🔩"],["accessory_inerte","Accessoire inerte",1,"🔩"],["talisman_inerte","Talisman inerte",1,"🔩"]];
         for(var ii=0;ii<inerteSlots.length;ii++){var ik=inerteSlots[ii];if(m[ik[0]]>0)inertes.push({k:ik[0],n:ik[1],v:m[ik[0]],r:ik[2],ic:ik[3]});}
         var gabarits=[];
-        for(var gi=1;gi<=15;gi++){var gk="gabarit_"+gi;var gabRarity=gi<=3?1:gi<=6?2:gi<=9?3:gi<=12?4:5;if(m[gk]>0)gabarits.push({k:gk,n:GABARIT_NAMES[gi]+" (Rg"+gi+")",v:m[gk],r:gabRarity,ic:"📐"});}
+        for(var gi=1;gi<=15;gi++){var gk="gabarit_"+gi;var gabRarity=gi<=3?1:gi<=6?2:gi<=9?3:gi<=12?4:5;if(m[gk]>0)gabarits.push({k:gk,n:GABARIT_NAMES[gi]+" (Rang "+gi+")",v:m[gk],r:gabRarity,ic:"📐"});}
         var catalyseurs=[];
         for(var ci=1;ci<=5;ci++){var ck="catalyseur_"+ci;if(m[ck]>0)catalyseurs.push({k:ck,n:CATA_NAMES[ci],v:m[ck],r:ci,ic:"💎"});}
         return <div>
