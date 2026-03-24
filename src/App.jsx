@@ -379,7 +379,20 @@ export default function Game(){
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
       var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0)+(dgDef.reward?dgDef.reward.xp||0:0))*xm);
       setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
-      setLogs(function(l){return l.concat([{t:"───────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"Or: +"+tg+" · XP: +"+tx+" · Loot: "+rE.length+" objets",tp:"info"}]);});
+      var logMsgs=[{t:"───────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"Or: +"+tg+" · XP: +"+tx+" · Loot: "+rE.length+" objets",tp:"info"}];
+      if(bt0.indexOf(dun.ti)<0){
+        var fb0Log=dgDef.firstBonus;
+        if(fb0Log){
+          var fbParts=[];
+          if(fb0Log.gold)fbParts.push("💰 "+fb0Log.gold.toLocaleString()+" or");
+          if(fb0Log.xp)fbParts.push("⭐ "+fb0Log.xp.toLocaleString()+" XP");
+          if(fb0Log.scrolls)fbParts.push("📜 "+fb0Log.scrolls+" parchemins");
+          if(fb0Log.equip)fbParts.push("🎁 "+fb0Log.equip+" équipement"+(fb0Log.equip>1?"s":""));
+          if(fb0Log.tomes){for(var tlk in fb0Log.tomes){var tlm=TOMES.find(function(t){return t.id===tlk;});fbParts.push("📖 "+fb0Log.tomes[tlk]+"× "+(tlm?tlm.name:tlk));}}
+          logMsgs.push({t:"Bonus de 1ère victoire : "+fbParts.join(" · "),tp:"event"});
+        }
+      }
+      setLogs(function(l){return l.concat(logMsgs);});
       return;
     }
     var mm2=1+(g.bl.mine||0)*.03,xm2=1+(g.bl.ecole||0)*.03;
@@ -602,6 +615,27 @@ export default function Game(){
             </div>;
           })()}
         </div>
+      {tomePanel===hero.uid&&<div onClick={function(){setTomePanel(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>📖 Utiliser des Tomes</h3>
+          <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Sélectionnez les tomes à utiliser pour {hero.name}</div>
+          {(function(){var co=g.conso||{};var totalXp=0;var rows=TOMES.map(function(tm){var qty=tomeQty[tm.id]||0;var have=co[tm.id]||0;if(have<=0&&qty<=0)return null;totalXp+=qty*tm.xp;var trc=(RA[tm.rarity]||{}).c;return <div key={tm.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #ffffff08"}}>
+            <div><span style={{color:trc,fontWeight:600,fontSize:13}}>{tm.icon} {tm.name}</span><span style={{fontSize:11,color:"var(--td)",marginLeft:6}}>({have} dispo · +{tm.xp} xp)</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              <button className="b" style={{padding:"2px 8px",fontSize:14}} disabled={qty<=0} onClick={function(){setTomeQty(function(p){var o=Object.assign({},p);o[tm.id]=Math.max(0,(o[tm.id]||0)-1);return o;});}}>-</button>
+              <span style={{minWidth:24,textAlign:"center",fontWeight:700,fontSize:14}}>{qty}</span>
+              <button className="b" style={{padding:"2px 8px",fontSize:14}} disabled={qty>=have} onClick={function(){setTomeQty(function(p){var o=Object.assign({},p);o[tm.id]=Math.min(have,(o[tm.id]||0)+1);return o;});}}>+</button>
+            </div>
+          </div>;}).filter(Boolean);
+          return <div>{rows.length?rows:<div style={{color:"var(--td)",fontSize:13,padding:10}}>Aucun tome disponible</div>}
+            {totalXp>0&&<div style={{textAlign:"center",marginTop:10,fontSize:16,fontWeight:700,color:"#a855f7"}}>+{totalXp} XP</div>}
+            <div style={{display:"flex",gap:8,marginTop:12}}>
+              <button className="b bgr" disabled={totalXp<=0} onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});for(var tk in tomeQty){if(tomeQty[tk]>0)nc[tk]=(nc[tk]||0)-tomeQty[tk];}return Object.assign({},p,{conso:nc,roster:p.roster.map(function(r){return r.uid===hero.uid?Object.assign({},r,{xp:r.xp+totalXp}):r;})});});setTomePanel(null);}} style={{flex:1,fontSize:14}}>Valider</button>
+              <button className="b" onClick={function(){setTomePanel(null);}} style={{flex:1,fontSize:14}}>Annuler</button>
+            </div>
+          </div>;})()}
+        </div>
+      </div>}
       </div>);
     }
   }
@@ -982,7 +1016,7 @@ export default function Game(){
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Boss :</span> {bssPool.map(function(b){return b.icon+" "+b.name;}).join(", ")}</div>
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Loot :</span> {lootInfo}</div>
             {d.reward&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Récompenses par victoire :</span> 💰 {d.reward.gold} or · ⭐ {d.reward.xp||0} xp · 🎁 {d.loot?d.loot.nbLoot:0} équipement{d.loot&&d.loot.nbLoot>1?"s":""}</div>}
-            {d.firstBonus&&!beaten&&<div style={{fontSize:12,marginBottom:8,padding:6,background:"#fbbf2410",borderRadius:6,border:"1px solid #fbbf2430"}}><span style={{color:"#fbbf24",fontWeight:700}}>Bonus de 1ère victoire :</span> 💰 {d.firstBonus.gold.toLocaleString()} or · ⭐ {d.firstBonus.xp.toLocaleString()} XP · 📜 {d.firstBonus.scrolls} parchemins</div>}
+            {d.firstBonus&&!beaten&&<div style={{fontSize:12,marginBottom:8,padding:6,background:"#fbbf2410",borderRadius:6,border:"1px solid #fbbf2430"}}><span style={{color:"#fbbf24",fontWeight:700}}>Bonus de 1ère victoire :</span> 💰 {d.firstBonus.gold.toLocaleString()} or · ⭐ {d.firstBonus.xp.toLocaleString()} XP · 📜 {d.firstBonus.scrolls} parchemins{d.firstBonus.equip?" · 🎁 "+d.firstBonus.equip+" équipement"+(d.firstBonus.equip>1?"s":""):""}{d.firstBonus.tomes?" · 📖 "+Object.keys(d.firstBonus.tomes).map(function(tk){var tm=TOMES.find(function(t){return t.id===tk;});return (d.firstBonus.tomes[tk])+"× "+(tm?tm.name:tk);}).join(", "):""}</div>}
             {d.firstBonus&&beaten&&<div style={{fontSize:11,marginBottom:8,color:"#4ade80"}}>✅ Bonus de première victoire réclamé</div>}
             <button className="b bg" disabled={!team.length} onClick={function(){startDun(i);}} style={{fontSize:14,width:"100%",padding:"10px 0"}}>⚔️ Explorer</button>
           </div>}
@@ -1007,7 +1041,7 @@ export default function Game(){
           {dun.ph==="victory"&&<div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center"}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
           {dun.ph==="done"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div>
-            {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:6,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}</div>;return null;})()}
+            {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:6,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}{fb.equip?" · 🎁 "+fb.equip:""}{fb.tomes?" · 📖 "+Object.keys(fb.tomes).map(function(tk){var tm=TOMES.find(function(t){return t.id===tk;});return fb.tomes[tk]+"× "+(tm?tm.name:tk);}).join(", "):""}</div>;return null;})()}
             <button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
         </div>
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>

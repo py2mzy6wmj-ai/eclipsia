@@ -401,10 +401,10 @@ export var FRAGMENTS = [
   { id: "frag_marken", name: "Fragment d'âme (Marken)", heroId: "marken", rarity: 1, icon: "🧩" },
   { id: "frag_mira", name: "Fragment d'âme (Mira)", heroId: "mira", rarity: 1, icon: "🧩" },
   { id: "frag_constello", name: "Fragment d'âme (Constello)", heroId: "constello", rarity: 2, icon: "🧩" },
-  { id: "frag_sahad", name: "Fragment d'âme (Sahad)", heroId: "sahad", rarity: 3, icon: "🧩" },
-  { id: "frag_syrio", name: "Fragment d'âme (Syrio)", heroId: "syrio", rarity: 3, icon: "🧩" },
-  { id: "frag_cerys", name: "Fragment d'âme (Cerys)", heroId: "cerys", rarity: 4, icon: "🧩" },
-  { id: "frag_keros", name: "Fragment d'âme (Kéros)", heroId: "keros", rarity: 4, icon: "🧩" },
+  { id: "frag_sahad", name: "Fragment d'âme (Sahad)", heroId: "sahad", rarity: 2, icon: "🧩" },
+  { id: "frag_syrio", name: "Fragment d'âme (Syrio)", heroId: "syrio", rarity: 2, icon: "🧩" },
+  { id: "frag_cerys", name: "Fragment d'âme (Cerys)", heroId: "cerys", rarity: 3, icon: "🧩" },
+  { id: "frag_keros", name: "Fragment d'âme (Kéros)", heroId: "keros", rarity: 3, icon: "🧩" },
   { id: "frag_orion", name: "Fragment d'âme (Orion)", heroId: "orion", rarity: 4, icon: "🧩" },
 ];
 
