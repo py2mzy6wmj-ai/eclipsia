@@ -370,6 +370,12 @@ export default function Game(){
         if(typeRoll2<0.30)dr=generateWeapon(rank2,rar2);else if(typeRoll2<0.60)dr=generateArmor(rank2,rar2);else if(typeRoll2<0.80)dr=generateAccessory(rank2,rar2);else dr=generateTalisman(rank2,rar2);
         dr.uid=uid();rE.push(dr);
       }
+      // Generate first bonus equip if first victory
+      var bt0=g.beaten||[];
+      if(bt0.indexOf(dun.ti)<0){
+        var fb0=dgDef.firstBonus;
+        if(fb0&&fb0.equip){for(var eqi=0;eqi<fb0.equip;eqi++){var lk3=dgDef.loot?dgDef.loot.ranks:[1,1];var rk3=lk3[0]+Math.floor(Math.random()*(lk3[1]-lk3[0]+1));var rw3=dgDef.loot?dgDef.loot.rarW:{1:1};var rl3=Math.random(),cm3=0,rar3=1;for(var rkk in rw3){cm3+=rw3[rkk];if(rl3<cm3){rar3=parseInt(rkk);break;}}var tr3=Math.random();var fbItem;if(tr3<0.30)fbItem=generateWeapon(rk3,rar3);else if(tr3<0.60)fbItem=generateArmor(rk3,rar3);else if(tr3<0.80)fbItem=generateAccessory(rk3,rar3);else fbItem=generateTalisman(rk3,rar3);fbItem.uid=uid();rE.push(fbItem);}}
+      }
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
       var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0)+(dgDef.reward?dgDef.reward.xp||0:0))*xm);
       setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
@@ -388,8 +394,6 @@ export default function Game(){
         bt.push(ti);
         var fb=DG[ti].firstBonus;
         if(fb){extraG=fb.gold||0;extraX=fb.xp||0;extraS=fb.scrolls||0;
-          // First bonus equip
-          if(fb.equip){for(var eqi=0;eqi<fb.equip;eqi++){var lk3=DG[ti].loot?DG[ti].loot.ranks:[1,1];var rk3=lk3[0]+Math.floor(Math.random()*(lk3[1]-lk3[0]+1));var rw3=DG[ti].loot?DG[ti].loot.rarW:{1:1};var rl3=Math.random(),cm3=0,rar3=1;for(var rkk in rw3){cm3+=rw3[rkk];if(rl3<cm3){rar3=parseInt(rkk);break;}}var tr3=Math.random();var fbItem;if(tr3<0.30)fbItem=generateWeapon(rk3,rar3);else if(tr3<0.60)fbItem=generateArmor(rk3,rar3);else if(tr3<0.80)fbItem=generateAccessory(rk3,rar3);else fbItem=generateTalisman(rk3,rar3);fbItem.uid=uid();rE.push(fbItem);}}
           // First bonus tomes
           if(fb.tomes){var nc2=Object.assign({},p.conso||{});for(var tk in fb.tomes){nc2[tk]=(nc2[tk]||0)+fb.tomes[tk];}p=Object.assign({},p,{conso:nc2});}
         }
