@@ -96,7 +96,7 @@ function mDmg(a,d,bd,el){
   return{dmg:dmg,msg:msgs.join(", "),hit:true,st:{bd:bd,wt:"magical",el:el,res:"hit",magB:magB,mavB:mavB,mult:mult,v:v,cr:cr,eRes:eRes,dmg:dmg}};
 }
 function spawn(fl,ti,isBoss,cnt){
-  var d=DG[ti],m=d.m*(1+fl*0.08);
+  var d=DG[ti],m=d.m*(1+fl*0.05);
   var pool;
   if(isBoss){
     pool=(d.bosses||[]).map(function(id){return BSS.find(function(b){return b.id===id;});}).filter(Boolean);
@@ -182,6 +182,10 @@ export default function Game(){
   var _hl=useState(null);var hl=_hl[0],setHl=_hl[1];
   var _slv=useState(false);var slv=_slv[0],setSlv=_slv[1];
   var _hs=useState(null);var hs=_hs[0],setHs=_hs[1];
+  var _tomePanel=useState(null);var tomePanel=_tomePanel[0],setTomePanel=_tomePanel[1];
+  var _tomeQty=useState({});var tomeQty=_tomeQty[0],setTomeQty=_tomeQty[1];
+  var _menuOpen=useState(false);var menuOpen=_menuOpen[0],setMenuOpen=_menuOpen[1];
+  var _patchNotes=useState(false);var patchNotes=_patchNotes[0],setPatchNotes=_patchNotes[1];
   var _cp=useState({carac:true,elem:false,degats:false,equip:false,skill:false});var cp=_cp[0],setCp=_cp[1];
   var _drag=useState(null);var drag=_drag[0],setDrag=_drag[1];
   var _floats=useState([]);var floats=_floats[0],setFloats=_floats[1];
@@ -251,16 +255,15 @@ export default function Game(){
   function doRecycle(iu,e){var it=g.inv.find(function(i){return i.uid===iu;});if(!it)return;
     var mx=e?e.clientX:200,my=e?e.clientY:100;
     var gains=[];
-    var inerteKey=it.slot+"_inerte";gains.push(it.slot.charAt(0).toUpperCase()+it.slot.slice(1)+" inerte");
-    var gChances=[[0.30,0.60,0.10],[0.25,0.65,0.10],[0.20,0.65,0.15],[0.15,0.70,0.15],[0.10,0.65,0.25]];
-    var gc=gChances[(it.rarity||1)-1]||gChances[0];var gr2=Math.random();
-    var gCount=gr2<gc[0]?0:gr2<gc[0]+gc[1]?1:2;
-    if(gCount>0)gains.push("Gabarit Rg"+(it.rank||1)+" x"+gCount);
-    var gotCata=Math.random()<0.33;
+    var inerteKey=it.slot+"_inerte";
+    var gotInerte=Math.random()<0.75;if(gotInerte)gains.push(it.slot.charAt(0).toUpperCase()+it.slot.slice(1)+" inerte");
+    var gCount=Math.random()<0.60?1:0;
+    if(gCount>0)gains.push("Gabarit Rang "+(it.rank||1));
+    var gotCata=Math.random()<0.45;
     if(gotCata)gains.push("Catalyseur "+(RA[it.rarity]||{}).s);
     setFloats(function(f){return f.concat([{uid:"ui",val:"♻️ "+gains.join(", "),color:"#4ade80",id:uid(),x:mx,y:my}]);});
     setG(function(p){
-      var nm=Object.assign({},p.mat||{});nm[inerteKey]=(nm[inerteKey]||0)+1;
+      var nm=Object.assign({},p.mat||{});if(gotInerte)nm[inerteKey]=(nm[inerteKey]||0)+1;
       if(gCount>0){var gk="gabarit_"+(it.rank||1);nm[gk]=(nm[gk]||0)+gCount;}
       if(gotCata){var ck="catalyseur_"+(it.rarity||1);nm[ck]=(nm[ck]||0)+1;}
       return Object.assign({},p,{mat:nm,inv:p.inv.filter(function(i){return i.uid!==iu;})});
@@ -358,11 +361,17 @@ export default function Game(){
     if(won&&dun.ph!=="done"){
       var rE=[].concat(dun.rE||[]);
       var dgDef=DG[dun.ti];
-      // Generate loot drops based on nbLoot
+      // Generate GUARANTEED loot drops based on nbLoot
       var nbL=dgDef.loot&&dgDef.loot.nbLoot?dgDef.loot.nbLoot:1;
-      for(var li=0;li<nbL;li++){var dr=rollLoot(dun.ti);if(dr){dr.uid=uid();rE.push(dr);}}
+      for(var li=0;li<nbL;li++){
+        var lk=dgDef.loot.ranks;var rank2=lk[0]+Math.floor(Math.random()*(lk[1]-lk[0]+1));
+        var rw2=dgDef.loot.rarW;var rl2=Math.random(),cm2=0,rar2=1;for(var rk in rw2){cm2+=rw2[rk];if(rl2<cm2){rar2=parseInt(rk);break;}}
+        var typeRoll2=Math.random();var dr;
+        if(typeRoll2<0.30)dr=generateWeapon(rank2,rar2);else if(typeRoll2<0.60)dr=generateArmor(rank2,rar2);else if(typeRoll2<0.80)dr=generateAccessory(rank2,rar2);else dr=generateTalisman(rank2,rar2);
+        dr.uid=uid();rE.push(dr);
+      }
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
-      var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0))*xm);
+      var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0)+(dgDef.reward?dgDef.reward.xp||0:0))*xm);
       setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
       setLogs(function(l){return l.concat([{t:"───────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"Or: +"+tg+" · XP: +"+tx+" · Loot: "+rE.length+" objets",tp:"info"}]);});
       return;
@@ -378,7 +387,12 @@ export default function Game(){
       if(won&&bt.indexOf(ti)<0){
         bt.push(ti);
         var fb=DG[ti].firstBonus;
-        if(fb){extraG=fb.gold||0;extraX=fb.xp||0;extraS=fb.scrolls||0;}
+        if(fb){extraG=fb.gold||0;extraX=fb.xp||0;extraS=fb.scrolls||0;
+          // First bonus equip
+          if(fb.equip){for(var eqi=0;eqi<fb.equip;eqi++){var lk3=DG[ti].loot?DG[ti].loot.ranks:[1,1];var rk3=lk3[0]+Math.floor(Math.random()*(lk3[1]-lk3[0]+1));var rw3=DG[ti].loot?DG[ti].loot.rarW:{1:1};var rl3=Math.random(),cm3=0,rar3=1;for(var rkk in rw3){cm3+=rw3[rkk];if(rl3<cm3){rar3=parseInt(rkk);break;}}var tr3=Math.random();var fbItem;if(tr3<0.30)fbItem=generateWeapon(rk3,rar3);else if(tr3<0.60)fbItem=generateArmor(rk3,rar3);else if(tr3<0.80)fbItem=generateAccessory(rk3,rar3);else fbItem=generateTalisman(rk3,rar3);fbItem.uid=uid();rE.push(fbItem);}}
+          // First bonus tomes
+          if(fb.tomes){var nc2=Object.assign({},p.conso||{});for(var tk in fb.tomes){nc2[tk]=(nc2[tk]||0)+fb.tomes[tk];}p=Object.assign({},p,{conso:nc2});}
+        }
       }
       return Object.assign({},p,{gold:p.gold+tg2+extraG,scrolls:(p.scrolls||0)+extraS,beaten:bt,roster:p.roster.map(function(h){return p.team.indexOf(h.uid)>=0?Object.assign({},h,{xp:h.xp+tx2+extraX}):h;}),inv:[].concat(p.inv,dun.rE||[])});
     });
@@ -490,6 +504,7 @@ export default function Game(){
             <div style={{height:7,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"#a855f7",transition:"width .3s"}}/></div>
             <div style={{display:"flex",gap:6}}>
               <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:14,fontWeight:canLv?800:600}}>⬆ Monter de niveau</button>
+              <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:14}}>📖 Augmenter</button>
               {(function(){var teamFull=g.team.indexOf(null)<0&&!inTeam;
                 if(teamFull)return <button className="b" disabled style={{flex:1,fontSize:14,fontWeight:700,opacity:0.3}}>Équipe complète</button>;
                 return <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>;
@@ -502,7 +517,7 @@ export default function Game(){
               <div style={{fontWeight:700,fontSize:15,color:"var(--acc)"}}>{props.label}</div>
               <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:props.open?"rotate(180deg)":"rotate(0)"}}>▼</span>
             </div>;}
-            var ww=gw(hero);var isMag=ww.wt==="magical";var mainStat=isMag?st.mag:st.str;
+            var ww=gw(hero);var isMag=ht&&ht.wt==="magical";var mainStat=isMag?st.mag:st.str;
             var dmgMin=Math.round(ww.dmg*Math.max(0.1,mainStat)*0.8);var dmgMax=Math.round(ww.dmg*Math.max(0.1,mainStat)*1.2);
             var dmgCrit=Math.round(dmgMax*3);
             var sk=SKILLS[hero.id];var skDmgMin=sk?Math.round(dmgMin*sk.mult):0;var skDmgMax=sk?Math.round(dmgMax*sk.mult):0;
@@ -512,8 +527,8 @@ export default function Game(){
                 {cp.carac&&<div>
                   <StatRow icon="🩸" label="Points de vie" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="⚔️" label="Force" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="🔮" label="Magie" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>
+                  {!isMag&&<StatRow icon="⚔️" label="Force" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>}
+                  {isMag&&<StatRow icon="🔮" label="Magie" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>}
                   <StatRow icon="💥" label="Critique" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
                   <div style={{height:6}}/>
                   <StatRow icon="🛡️" label="Vulnérabilité Physique" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
@@ -592,10 +607,40 @@ export default function Game(){
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
       <h1 style={{fontFamily:"Cinzel",fontSize:20,fontWeight:900,color:"var(--acc)",textShadow:"0 0 12px #c0392b30"}}>⚔️ ECLIPSIA</h1>
-      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}><span>💰 {g.gold.toLocaleString()}</span><span>📜 {g.scrolls||0}</span><span style={{fontSize:12,color:"var(--td)"}}>⚔️ {(g.beaten||[]).length}/{DG.length}</span></div>
+      <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}>
+        <span>💰 {g.gold.toLocaleString()}</span><span>📜 {g.scrolls||0}</span>
+        <div style={{position:"relative"}}>
+          <button onClick={function(){setMenuOpen(!menuOpen);}} style={{background:"none",border:"none",color:"var(--t)",fontSize:20,cursor:"pointer",padding:"0 4px"}}>☰</button>
+          {menuOpen&&<div style={{position:"absolute",right:0,top:30,background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:6,minWidth:200,zIndex:100,animation:"fi .2s ease"}}>
+            <div onClick={function(){setMenuOpen(false);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6,color:"var(--td)"}}>📖 Tutoriel</div>
+            <div onClick={function(){setPatchNotes(true);setMenuOpen(false);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6}}>📋 Notes de mise à jour</div>
+            <div onClick={function(){reset();setMenuOpen(false);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6,color:"var(--red)"}}>🔄 Réinitialiser</div>
+            <div onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});nc.tome_5=(nc.tome_5||0)+100;return Object.assign({},p,{gold:p.gold+100000,scrolls:(p.scrolls||0)+1000,conso:nc});});setMenuOpen(false);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6,color:"#fbbf24"}}>🎮 Cheat</div>
+          </div>}
+        </div>
+      </div>
     </div>
+    {patchNotes&&<div onClick={function(){setPatchNotes(false);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:500,maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)"}}>
+      <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12}}>Notes de mise à jour</h3>
+      <div style={{fontSize:13,color:"var(--td)",lineHeight:1.8}}>
+        <div style={{fontWeight:700,color:"var(--t)",marginBottom:4}}>v0.5</div>
+        <div>• Refonte complète de l'affichage : termes complets au lieu des abréviations</div>
+        <div>• Tomes d'expérience : obtenables via invocation (doublons) et marché</div>
+        <div>• Fragments d'âme : obtenables via doublons d'invocation</div>
+        <div>• Forgeron : nouvelle interface avec tutoriel et prévisualisation</div>
+        <div>• Marché : articles classés par catégorie, nouveaux items</div>
+        <div>• Donjons : loot garanti à la victoire, bonus XP de victoire</div>
+        <div>• Équilibrage : vulnérabilités élémentaires plus marquées</div>
+        <div>• Correction du bug d'accessoires (traits manquants)</div>
+        <div>• Statistique non pertinente masquée dans le profil</div>
+        <div>• Indicateur visuel si arme du mauvais type équipée</div>
+        <div>• Scaling d'étape réduit (5%)</div>
+        <div>• Chances de forge ajustées (courbe exponentielle)</div>
+        <div>• Recyclage : 75% inerte, 60% gabarit, 45% catalyseur</div>
+      </div>
+      <button className="b" onClick={function(){setPatchNotes(false);}} style={{marginTop:12,width:"100%"}}>Fermer</button>
+    </div></div>}
     <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>{Object.keys(TM).map(function(k){return <button key={k} className={"b "+(tab===k?"ton":"")} onClick={function(){if(!inD||k==="donjon")setTab(k);}} style={{fontSize:11,flex:"1 1 auto",minWidth:70,opacity:inD&&k!=="donjon"?.3:1}}>{TM[k]}</button>;})}
-      <button className="b" onClick={reset} style={{fontSize:10,color:"var(--red)",minWidth:36}}>🔄</button>
     </div>
     {floats.filter(function(f){return f.uid==="ui";}).length>0&&<div style={{position:"fixed",top:(floats.find(function(f){return f.uid==="ui";}).y||100)-30,left:(floats.find(function(f){return f.uid==="ui";}).x||200),zIndex:200,pointerEvents:"none"}}>
       {floats.filter(function(f){return f.uid==="ui";}).map(function(f){return <div key={f.id} style={{color:f.color,fontSize:16,fontWeight:800,textShadow:"0 2px 6px #000",animation:"floatUp 1.2s forwards",textAlign:"center",whiteSpace:"nowrap"}}>{f.val}</div>;})}
@@ -604,7 +649,7 @@ export default function Game(){
     {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
       {(function(){
         var m=g.mat||{};var flv=g.bl.forge||1;
-        function forgeChance(rank,rarity,fLv){var diff=(rank-1)*8+(rarity-1)*18;var skill=fLv*12;var ch=100-diff+skill;return Math.max(0,Math.min(100,Math.round(ch)));}
+        function forgeChance(rank,rarity,fLv){var diff=Math.pow(rank,1.4)*4+Math.pow(rarity,1.8)*12;var skill=fLv*8+Math.pow(fLv,1.3)*2;var ch=100-diff+skill;return Math.max(0,Math.min(100,Math.round(ch)));}
         var inerteKey=fs.slot+"_inerte";var gabKey="gabarit_"+fs.rank;var cataKey="catalyseur_"+fs.rar;
         var hasInerte=(m[inerteKey]||0)>0;var hasGab=(m[gabKey]||0)>0;var hasCata=(m[cataKey]||0)>0;
         var canForge=hasInerte&&hasGab&&hasCata;
@@ -638,14 +683,17 @@ export default function Game(){
         var mNextCost=mlv<5?MARCHE_COSTS[mlv+1]||null:null;
         // Shop items categorized
         var shopConso=[];var shopGab=[];var shopCata=[];
-        if(mlv>=1){shopConso.push({id:"scroll",name:"Parchemin d'invocation",cost:1000,rar:1,icon:"📜"});shopGab.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rang 1)",cost:100,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_1",name:CATA_NAMES[1],cost:500,rar:1,icon:"💎"});}
-        if(mlv>=2){shopConso.push({id:"tome_1",name:"Tome d'expérience mineur",cost:100,rar:1,icon:"📖"});shopGab.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rang 2)",cost:300,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_2",name:CATA_NAMES[2],cost:1500,rar:2,icon:"💎"});}
+        if(mlv>=1){shopConso.push({id:"scroll",name:"Parchemin d'invocation",cost:1000,rar:1,icon:"📜"});shopConso.push({id:"scroll_10",name:"Parchemin d'invocation ×10",cost:9500,rar:1,icon:"📜",qty:10});shopGab.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rang 1)",cost:100,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_1",name:CATA_NAMES[1],cost:250,rar:1,icon:"💎"});}
+        if(mlv>=2){shopConso.push({id:"tome_1",name:"Tome d'expérience mineur",cost:150,rar:1,icon:"📖"});shopGab.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rang 2)",cost:250,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_2",name:CATA_NAMES[2],cost:750,rar:2,icon:"💎"});}
+        if(mlv>=3){shopGab.push({id:"gabarit_3",name:GABARIT_NAMES[3]+" (Rang 3)",cost:600,rar:1,icon:"📐"});}
+        if(mlv>=4){shopConso.push({id:"tome_2",name:"Tome d'expérience",cost:2000,rar:2,icon:"📖"});}
         function doBuy(item){
           if(g.gold<item.cost)return;
           setFloats(function(f){return f.concat([{uid:"ui",val:"+1 "+item.name,color:"#4ade80",id:uid()}]);});
           setG(function(p){
             var np=Object.assign({},p,{gold:p.gold-item.cost});
             if(item.id==="scroll"){np.scrolls=(np.scrolls||0)+1;}
+            else if(item.id==="scroll_10"){np.scrolls=(np.scrolls||0)+10;}
             else if(item.id.indexOf("tome_")===0){var nc=Object.assign({},np.conso||{});nc[item.id]=(nc[item.id]||0)+1;np.conso=nc;}
             else{var nm=Object.assign({},np.mat||{});nm[item.id]=(nm[item.id]||0)+1;np.mat=nm;}
             return np;
@@ -781,7 +829,7 @@ export default function Game(){
               </div>
               <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
                 <div>🩸 {hst.hp}</div>
-                {(function(){var ww=gw(h);var iM=ww.wt==="magical";var ms=iM?hst.mag:hst.str;var avg=Math.round(ww.dmg*Math.max(0.1,ms));var dmgCol=ms>=1?"#4ade80":"#facc15";return <div>{iM?"🔮":"⚔️"} <span style={{color:dmgCol}}>~{avg}</span> <span style={{color:"var(--t)"}}>({iM?"Magique":"Physique"})</span></div>;})()}
+                {(function(){var ww=gw(h);var ht2=HEROES.find(function(hh){return hh.id===h.id;});var heroMag=ht2&&ht2.wt==="magical";var iM=ww.wt==="magical";var wrongType=heroMag!==iM;var ms=iM?hst.mag:hst.str;var avg=Math.round(ww.dmg*Math.max(0.1,ms));var dmgCol=wrongType?"#ef4444":ms>=1?"#4ade80":"#facc15";return <div>{iM?"🔮":"⚔️"} <span style={{color:dmgCol}}>~{avg}</span> <span style={{color:wrongType?"#ef4444":"var(--t)"}}>({iM?"Magique":"Physique"}){wrongType?" ⚠":"" }</span></div>;})()}
               </div>
             </div>:<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:120,color:"#444",fontSize:14}}>Emplacement vide</div>}
           </div>;
@@ -822,7 +870,7 @@ export default function Game(){
             </div>
             <div style={{fontSize:16,fontWeight:700,lineHeight:1.8}}>
               <div>🩸 {hst.hp}</div>
-              {(function(){var ww=gw(h);var iM=ww.wt==="magical";var ms=iM?hst.mag:hst.str;var avg=Math.round(ww.dmg*Math.max(0.1,ms));var dmgCol=ms>=1?"#4ade80":"#facc15";return <div>{iM?"🔮":"⚔️"} <span style={{color:dmgCol}}>~{avg}</span> <span style={{color:"var(--t)"}}>({iM?"Magique":"Physique"})</span></div>;})()}
+              {(function(){var ww=gw(h);var ht2=HEROES.find(function(hh){return hh.id===h.id;});var heroMag=ht2&&ht2.wt==="magical";var iM=ww.wt==="magical";var wrongType=heroMag!==iM;var ms=iM?hst.mag:hst.str;var avg=Math.round(ww.dmg*Math.max(0.1,ms));var dmgCol=wrongType?"#ef4444":ms>=1?"#4ade80":"#facc15";return <div>{iM?"🔮":"⚔️"} <span style={{color:dmgCol}}>~{avg}</span> <span style={{color:wrongType?"#ef4444":"var(--t)"}}>({iM?"Magique":"Physique"}){wrongType?" ⚠":"" }</span></div>;})()}
             </div>
           </div>;
         })}
@@ -876,7 +924,8 @@ export default function Game(){
         var consoList=[];
         consoList.push({k:"scrolls",n:"Parchemins d'invocation",v:g.scrolls||0,r:1,ic:"📜"});
         for(var ti=0;ti<TOMES.length;ti++){var tm=TOMES[ti];if((co[tm.id]||0)>0)consoList.push({k:tm.id,n:tm.name,v:co[tm.id],r:tm.rarity,ic:tm.icon});}
-        for(var fi=0;fi<FRAGMENTS.length;fi++){var fr=FRAGMENTS[fi];if((co[fr.id]||0)>0)consoList.push({k:fr.id,n:fr.name,v:co[fr.id],r:fr.rarity,ic:fr.icon});}
+        var fragList=[];
+        for(var fi=0;fi<FRAGMENTS.length;fi++){var fr=FRAGMENTS[fi];if((co[fr.id]||0)>0)fragList.push({k:fr.id,n:fr.name,v:co[fr.id],r:fr.rarity,ic:fr.icon});}
         // Matériaux: inertes, gabarits by rank, catalyseurs by rarity
         var inertes=[];
         var inerteSlots=[["weapon_inerte","Arme inerte",1,"🔩"],["armor_inerte","Armure inerte",1,"🔩"],["accessory_inerte","Accessoire inerte",1,"🔩"],["talisman_inerte","Talisman inerte",1,"🔩"]];
@@ -894,6 +943,10 @@ export default function Game(){
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Consommables</div>
             {consoList.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);})}
           </div>
+          {fragList.length>0&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Fragments d'âme</div>
+            {fragList.map(function(x){return matRow(x.k,x.n,x.v,x.r,x.ic);})}
+          </div>}
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{fontWeight:700,fontSize:15,color:"var(--acc)",marginBottom:8}}>Matériaux de forge</div>
             {inertes.length>0&&<div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:4,marginTop:4}}>Bases inertes</div>}
@@ -924,7 +977,7 @@ export default function Game(){
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Monstres :</span> {enmPool.map(function(e){return e.icon+" "+e.name;}).join(", ")}</div>
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Boss :</span> {bssPool.map(function(b){return b.icon+" "+b.name;}).join(", ")}</div>
             <div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Loot :</span> {lootInfo}</div>
-            {d.reward&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Or par victoire :</span> 💰 {d.reward.gold}</div>}
+            {d.reward&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:"var(--td)"}}>Récompenses par victoire :</span> 💰 {d.reward.gold} or · ⭐ {d.reward.xp||0} xp · 🎁 {d.loot?d.loot.nbLoot:0} équipement{d.loot&&d.loot.nbLoot>1?"s":""}</div>}
             {d.firstBonus&&!beaten&&<div style={{fontSize:12,marginBottom:8,padding:6,background:"#fbbf2410",borderRadius:6,border:"1px solid #fbbf2430"}}><span style={{color:"#fbbf24",fontWeight:700}}>Bonus de 1ère victoire :</span> 💰 {d.firstBonus.gold.toLocaleString()} or · ⭐ {d.firstBonus.xp.toLocaleString()} XP · 📜 {d.firstBonus.scrolls} parchemins</div>}
             {d.firstBonus&&beaten&&<div style={{fontSize:11,marginBottom:8,color:"#4ade80"}}>✅ Bonus de première victoire réclamé</div>}
             <button className="b bg" disabled={!team.length} onClick={function(){startDun(i);}} style={{fontSize:14,width:"100%",padding:"10px 0"}}>⚔️ Explorer</button>
