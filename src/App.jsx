@@ -182,6 +182,7 @@ export default function Game(){
   var _hl=useState(null);var hl=_hl[0],setHl=_hl[1];
   var _slv=useState(false);var slv=_slv[0],setSlv=_slv[1];
   var _hs=useState(null);var hs=_hs[0],setHs=_hs[1];
+  var _infoPopup=useState(null);var infoPopup=_infoPopup[0],setInfoPopup=_infoPopup[1];
   var _tomePanel=useState(null);var tomePanel=_tomePanel[0],setTomePanel=_tomePanel[1];
   var _tomeQty=useState({});var tomeQty=_tomeQty[0],setTomeQty=_tomeQty[1];
   var _menuOpen=useState(false);var menuOpen=_menuOpen[0],setMenuOpen=_menuOpen[1];
@@ -469,39 +470,7 @@ export default function Game(){
       var atkEl=w.el&&w.el!=="Neutre"?w.el:null;
       function mkTip(key){var arr=st._s[key];if(!arr||!arr.length)return null;var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);return arr.join("\n")+"\n= "+total;}
 
-      if(slv&&canLv){
-        var sN=cs(Object.assign({},hero,{level:hero.level+1}),g.bl);
-        return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"16px 12px",maxWidth:540,margin:"0 auto"}}><style>{css}</style>
-          <div style={{animation:"fi .3s ease",background:"var(--card)",borderRadius:14,padding:24,border:"2px solid #c0392b",textAlign:"center"}}>
-            <div style={{fontSize:36,marginBottom:8}}>⬆️</div>
-            <div style={{fontFamily:"Cinzel",fontSize:22,fontWeight:800,color:"#c0392b"}}>Niveau {hero.level} → {hero.level+1}</div>
-            <div style={{fontSize:15,color:"#8888bb",marginTop:4,marginBottom:16}}>{hero.name}</div>
-            <div style={{textAlign:"left",maxWidth:360,margin:"0 auto"}}>
-              {(function(){var rows=[];
-                function addIf(icon,label,v,nv,type){
-                  var dA,dB;
-                  if(type==="flat"){dA=String(Math.floor(v));dB=String(Math.floor(nv));if(dA===dB)return;}
-                  else if(type==="pm"||type==="pmInv"){dA=fmtPM(v);dB=fmtPM(nv);if(dA===dB)return;}
-                  else{dA=fmtPct(v);dB=fmtPct(nv);if(dA===dB)return;}
-                  rows.push({icon:icon,label:label,val:v,nv:nv,type:type});
-                }
-                addIf("🩸","Points de vie",st.hp,sN.hp,"flat");
-                addIf("⚔️","Force",st.str,sN.str,"pm");
-                addIf("🔮","Magie",st.mag,sN.mag,"pm");
-                addIf("💥","Critique",st.crit,sN.crit,"pct");
-                addIf("🛡️","Vuln. Physique",st.phv,sN.phv,"pmInv");
-                addIf("🔰","Vuln. Magique",st.mav,sN.mav,"pmInv");
-                addIf("💨","Esquive",st.dodge,sN.dodge,"pct");
-                return rows.map(function(r,i){return <StatRow key={i} icon={r.icon} label={r.label} val={r.val} nv={r.nv} type={r.type}/>;});
-              })()}
-            </div>
-            <div style={{display:"flex",gap:8,marginTop:16,justifyContent:"center"}}>
-              <button className="b bgr glow" onClick={function(){doLvUp(hero.uid);setSlv(false);}} style={{padding:"10px 28px",fontSize:15}}>✓ Confirmer</button>
-              <button className="b" onClick={function(){setSlv(false);}} style={{fontSize:13}}>Annuler</button>
-            </div>
-          </div>
-        </div>);
-      }
+      /* level up is now a popup, rendered at end of sheet */
 
       return(<div onClick={function(e){if(e.target===e.currentTarget){setSheet(null);setSlv(false);}}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:100,overflowY:"auto",padding:"16px 12px"}}><style>{css}</style>
         <div style={{maxWidth:540,margin:"0 auto",animation:"fi .3s ease"}} onClick={function(e){e.stopPropagation();}}>
@@ -520,8 +489,9 @@ export default function Game(){
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontWeight:700,fontSize:16}}>Niveau {hero.level}</span><span style={{fontSize:13,color:"#8888bb",fontFamily:"monospace"}}>XP {hero.xp}/{xn}</span></div>
             <div style={{height:7,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"#a855f7",transition:"width .3s"}}/></div>
             <div style={{display:"flex",gap:6}}>
-              <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:14,fontWeight:canLv?800:600}}>⬆ Monter de niveau</button>
-              <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:14}}>📖 Augmenter</button>
+              <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:13,fontWeight:canLv?800:600}}>⬆ Niveau</button>
+              <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:13}}>📖 Entraînement</button>
+              <button className="b" disabled style={{flex:1,fontSize:13,opacity:0.3}}>🔒 Maîtrise</button>
               {(function(){var teamFull=g.team.indexOf(null)<0&&!inTeam;
                 if(teamFull)return <button className="b" disabled style={{flex:1,fontSize:14,fontWeight:700,opacity:0.3}}>Équipe complète</button>;
                 return <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>;
@@ -530,9 +500,15 @@ export default function Game(){
           </div>
           {(function(){
             function togP(k){setCp(function(p){var o=Object.assign({},p);o[k]=!o[k];return o;});}
-            function PH(props){return <div onClick={function(){togP(props.k);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:props.open?8:0}}>
-              <div style={{fontWeight:700,fontSize:15,color:"var(--acc)"}}>{props.label}</div>
-              <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:props.open?"rotate(180deg)":"rotate(0)"}}>▼</span>
+            function PH(props){return <div style={{marginBottom:props.open?0:0}}>
+              <div onClick={function(){togP(props.k);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",padding:"2px 0"}}>
+                <div style={{fontWeight:700,fontSize:15,color:"var(--acc)"}}>{props.label}</div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  {props.info&&<div onClick={function(e){e.stopPropagation();setInfoPopup(props.k);}} style={{width:22,height:22,borderRadius:"50%",border:"1px solid var(--td)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"var(--td)",cursor:"pointer",fontWeight:700,fontStyle:"italic"}}>i</div>}
+                  <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:props.open?"rotate(180deg)":"rotate(0)"}}>▼</span>
+                </div>
+              </div>
+              {props.open&&<div style={{height:1,background:"var(--brd)",marginTop:6,marginBottom:8}}/>}
             </div>;}
             var ww=gw(hero);var isMag=ht&&ht.wt==="magical";var mainStat=isMag?st.mag:st.str;
             var dmgMin=Math.round(ww.dmg*Math.max(0.1,mainStat)*0.8);var dmgMax=Math.round(ww.dmg*Math.max(0.1,mainStat)*1.2);
@@ -540,19 +516,19 @@ export default function Game(){
             var sk=SKILLS[hero.id];var skDmgMin=sk?Math.round(dmgMin*sk.mult):0;var skDmgMax=sk?Math.round(dmgMax*sk.mult):0;
             return <div>
               <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-                <PH k="carac" label="Caractéristiques" open={cp.carac}/>
+                <PH k="carac" label="Caractéristiques" open={cp.carac} info="carac"/>
                 {cp.carac&&<div>
-                  <StatRow icon="🩸" label="Points de vie" val={st.hp} type="flat" tip={mkTip("hp")} hov={hs==="hp"} onE={function(){setHs("hp");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🩸" label="Points de vie" val={st.hp} type="flat" tip={mkTip("hp")}/>
                   <div style={{height:6}}/>
-                  {!isMag&&<StatRow icon="⚔️" label="Force" val={st.str} type="pm" tip={mkTip("str")} hov={hs==="str"} onE={function(){setHs("str");}} onL={function(){setHs(null);}}/>}
-                  {isMag&&<StatRow icon="🔮" label="Magie" val={st.mag} type="pm" tip={mkTip("mag")} hov={hs==="mag"} onE={function(){setHs("mag");}} onL={function(){setHs(null);}}/>}
-                  <StatRow icon="💥" label="Critique" val={st.crit} type="pct" tip={mkTip("crit")} hov={hs==="crit"} onE={function(){setHs("crit");}} onL={function(){setHs(null);}}/>
+                  {!isMag&&<StatRow icon="⚔️" label="Force" val={st.str} type="pm" tip={mkTip("str")}/>}
+                  {isMag&&<StatRow icon="🔮" label="Magie" val={st.mag} type="pm" tip={mkTip("mag")}/>}
+                  <StatRow icon="💥" label="Critique" val={st.crit} type="pct" tip={mkTip("crit")}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="🛡️" label="Vulnérabilité Physique" val={st.phv} type="pmInv" tip={mkTip("phv")} hov={hs==="phv"} onE={function(){setHs("phv");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="🔰" label="Vulnérabilité Magique" val={st.mav} type="pmInv" tip={mkTip("mav")} hov={hs==="mav"} onE={function(){setHs("mav");}} onL={function(){setHs(null);}}/>
-                  <StatRow icon="💨" label="Esquive" val={st.dodge} type="pct" tip={mkTip("dodge")} hov={hs==="dodge"} onE={function(){setHs("dodge");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="🛡️" label="Vulnérabilité Physique" val={st.phv} type="pmInv" tip={mkTip("phv")}/>
+                  <StatRow icon="🔰" label="Vulnérabilité Magique" val={st.mav} type="pmInv" tip={mkTip("mav")}/>
+                  <StatRow icon="💨" label="Esquive" val={st.dodge} type="pct" tip={mkTip("dodge")}/>
                   <div style={{height:6}}/>
-                  <StatRow icon="♻️" label="Récupération" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")} hov={hs==="rgHp"} onE={function(){setHs("rgHp");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="♻️" label="Récupération" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")}/>
                 </div>}
               </div>
               <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
@@ -609,12 +585,46 @@ export default function Game(){
                       <div style={{fontSize:12,color:"var(--td)"}}>{sk.desc}</div>
                     </div>
                   </div>
-                  <StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")} hov={hs==="rel"} onE={function(){setHs("rel");}} onL={function(){setHs(null);}}/>
+                  <StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")}/>
                 </div>}
               </div>}
             </div>;
           })()}
         </div>
+      {infoPopup==="carac"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des caractéristiques</h3>
+          <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
+            {["hp","str","mag","crit","phv","mav","dodge","rgHp","rel"].map(function(key){
+              var arr=st._s[key];if(!arr||!arr.length)return null;
+              var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);
+              var labels={hp:"🩸 Points de vie",str:"⚔️ Force",mag:"🔮 Magie",crit:"💥 Critique",phv:"🛡️ Vuln. Physique",mav:"🔰 Vuln. Magique",dodge:"💨 Esquive",rgHp:"♻️ Récupération",rel:"⏳ Recharge"};
+              return <div key={key} style={{marginBottom:10,padding:8,background:"#ffffff04",borderRadius:6}}>
+                <div style={{fontWeight:700,color:"var(--acc)",fontSize:13,marginBottom:4}}>{labels[key]||key}</div>
+                {arr.map(function(line,li){return <div key={li} style={{color:"#aaa"}}>{line}</div>;})}
+                <div style={{fontWeight:700,color:"var(--t)",marginTop:2}}>= {total}</div>
+              </div>;
+            }).filter(Boolean)}
+          </div>
+          <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
+        </div>
+      </div>}
+      {slv&&canLv&&(function(){var sN=cs(Object.assign({},hero,{level:hero.level+1}),g.bl);return <div onClick={function(){setSlv(false);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:4,fontSize:16,textAlign:"center"}}>⬆️ Niveau {hero.level} → {hero.level+1}</h3>
+          <div style={{fontSize:13,color:"var(--td)",textAlign:"center",marginBottom:12}}>{hero.name}</div>
+          <div style={{textAlign:"left"}}>
+            {(function(){var rows=[];
+              function addIf(icon,label,v,nv,type){var dA,dB;if(type==="flat"){dA=String(Math.floor(v));dB=String(Math.floor(nv));if(dA===dB)return;}else if(type==="pm"||type==="pmInv"){dA=fmtPM(v);dB=fmtPM(nv);if(dA===dB)return;}else{dA=fmtPct(v);dB=fmtPct(nv);if(dA===dB)return;}rows.push({icon:icon,label:label,val:v,nv:nv,type:type});}
+              addIf("🩸","Points de vie",st.hp,sN.hp,"flat");addIf("⚔️","Force",st.str,sN.str,"pm");addIf("🔮","Magie",st.mag,sN.mag,"pm");addIf("💥","Critique",st.crit,sN.crit,"pct");addIf("🛡️","Vuln. Physique",st.phv,sN.phv,"pmInv");addIf("🔰","Vuln. Magique",st.mav,sN.mav,"pmInv");addIf("💨","Esquive",st.dodge,sN.dodge,"pct");
+              return rows.map(function(r,i){return <StatRow key={i} icon={r.icon} label={r.label} val={r.val} nv={r.nv} type={r.type}/>;});})()}
+          </div>
+          <div style={{display:"flex",gap:8,marginTop:12}}>
+            <button className="b bgr glow" onClick={function(){doLvUp(hero.uid);setSlv(false);}} style={{flex:1,fontSize:14}}>✓ Confirmer</button>
+            <button className="b" onClick={function(){setSlv(false);}} style={{flex:1,fontSize:14}}>Annuler</button>
+          </div>
+        </div>
+      </div>;})()}
       {tomePanel===hero.uid&&<div onClick={function(){setTomePanel(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>📖 Utiliser des Tomes</h3>
@@ -744,15 +754,21 @@ export default function Game(){
             <button className="b bg" disabled={g.gold<si.cost} onClick={function(){doBuy(si);}} style={{fontSize:12,padding:"4px 12px"}}>Acheter</button>
           </div>
         </div>;}
-        function PnlH(props){var isOpen=vp===props.k;return <div onClick={props.onClick} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:isOpen?"12px 12px 0 0":"12px",marginBottom:isOpen?0:6}}>
-          <div><span style={{fontSize:20,marginRight:8}}>{props.icon}</span><span style={{fontWeight:700,fontSize:14}}>{props.name}</span>{props.lv!=null&&<span style={{fontSize:11,color:"var(--acc)",marginLeft:6}}>Nv.{props.lv}</span>}</div>
-          <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>▼</span>
+        var BUILDING_INFO={forge:"Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.",marche:"Le marché propose divers composants et consommables à l'achat. Améliorer le marché débloque de nouveaux articles.",alchimiste:"L'alchimiste pourra transformer et améliorer vos consommables et matériaux. (Bientôt disponible)"};
+        function PnlH(props){var isOpen=vp===props.k;return <div style={{marginBottom:isOpen?0:6}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:isOpen?"12px 12px 0 0":"12px"}} onClick={props.onClick}>
+            <div><span style={{fontSize:20,marginRight:8}}>{props.icon}</span><span style={{fontWeight:700,fontSize:14}}>{props.name}</span>{props.lv!=null&&<span style={{fontSize:11,color:"var(--acc)",marginLeft:6}}>Nv.{props.lv}</span>}</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              {BUILDING_INFO[props.k]&&<div onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+props.k);}} style={{width:22,height:22,borderRadius:"50%",border:"1px solid var(--td)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"var(--td)",cursor:"pointer",fontWeight:700,fontStyle:"italic"}}>i</div>}
+              <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>▼</span>
+            </div>
+          </div>
         </div>;}
         return <div>
           {/* FORGERON */}
           <PnlH k="forge" name="Forgeron" icon="🔨" lv={flv} onClick={function(){setVp(vp==="forge"?"none":"forge");}}/>
           {vp==="forge"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-            <div style={{fontSize:12,color:"var(--td)",fontStyle:"italic",lineHeight:1.6,marginBottom:12,padding:10,background:"#ffffff04",borderRadius:8}}>Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.</div>
+
             {/* 3 lines: Type, Rang, Rareté — show item names */}
             <div style={{marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
@@ -831,6 +847,18 @@ export default function Game(){
                 <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Marché au niveau {mlv+1}</span>
                 <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||1)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{mNextCost.toLocaleString()} or</button>
               </div>}
+            </div>
+          </div>}
+
+          {/* ALCHIMISTE */}
+          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" onClick={function(){}}/>
+
+          {/* Building info popup */}
+          {infoPopup&&infoPopup.indexOf("bld_")===0&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+            <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+              <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>{(function(){var k=infoPopup.slice(4);return k==="forge"?"🔨 Forgeron":k==="marche"?"🏪 Marché":k==="alchimiste"?"⚗️ Alchimiste":"Info";})()}</h3>
+              <div style={{fontSize:13,color:"var(--td)",lineHeight:1.8,fontStyle:"italic"}}>{BUILDING_INFO[infoPopup.slice(4)]||"Informations à venir."}</div>
+              <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:12,width:"100%"}}>Fermer</button>
             </div>
           </div>}
 
