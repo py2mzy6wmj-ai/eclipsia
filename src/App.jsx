@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+var supabase = createClient("https://xidrfbtcgvnbnrtyjquc.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpZHJmYnRjZ3ZuYm5ydHlqcXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTA1NjEsImV4cCI6MjA5MDAyNjU2MX0.-7dAj-wesiY8SgEQbDrT4MbKmoTB8EXSgBYrN491gFI");
 import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS, TOMES, FRAGMENTS } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
@@ -194,8 +197,77 @@ function StatRow(props){
 
 var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},conso:{},bl:{forge:1,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0,marche:1,alchimiste:1}};
 
+function AuthScreen(props){
+  var _m=useState("login");var mode=_m[0],setMode=_m[1];
+  var _e=useState("");var email=_e[0],setEmail=_e[1];
+  var _p=useState("");var pw=_p[0],setPw=_p[1];
+  var _err=useState(null);var err=_err[0],setErr=_err[1];
+  var _ld=useState(false);var ld=_ld[0],setLd=_ld[1];
+  var css='@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#0e0d0d;--bg2:#141313;--card:#1c1a1a;--brd:#3a2828;--t:#e0d8d0;--td:#8a7e76;--acc:#c0392b;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--t);font-family:"DM Sans",sans-serif}';
+  function doAuth(){
+    setErr(null);setLd(true);
+    if(mode==="login"){
+      supabase.auth.signInWithPassword({email:email,password:pw}).then(function(res){
+        setLd(false);if(res.error)setErr(res.error.message);
+      });
+    }else{
+      supabase.auth.signUp({email:email,password:pw}).then(function(res){
+        setLd(false);
+        if(res.error)setErr(res.error.message);
+        else if(res.data&&res.data.user&&!res.data.session)setErr("Vérifiez votre email pour confirmer votre compte.");
+      });
+    }
+  }
+  return(<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}><style>{css}</style>
+    <div style={{maxWidth:380,width:"100%",animation:"fi .4s ease"}}>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <h1 style={{fontFamily:"Cinzel",fontSize:32,fontWeight:900,color:"var(--acc)",textShadow:"0 0 20px #c0392b40"}}>ECLIPSIA</h1>
+        <div style={{fontSize:13,color:"var(--td)",marginTop:4}}>JRPG Roguelite</div>
+      </div>
+      <div style={{background:"var(--card)",borderRadius:14,padding:24,border:"1px solid var(--brd)"}}>
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          <button onClick={function(){setMode("login");setErr(null);}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700,background:mode==="login"?"var(--acc)":"transparent",color:mode==="login"?"#fff":"var(--td)"}}>Connexion</button>
+          <button onClick={function(){setMode("register");setErr(null);}} style={{flex:1,padding:"8px 0",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:14,fontWeight:700,background:mode==="register"?"var(--acc)":"transparent",color:mode==="register"?"#fff":"var(--td)"}}>Inscription</button>
+        </div>
+        <input value={email} onChange={function(e){setEmail(e.target.value);}} placeholder="Email" type="email" style={{width:"100%",padding:"10px 14px",borderRadius:8,border:"1px solid var(--brd)",background:"var(--bg)",color:"var(--t)",fontFamily:"inherit",fontSize:14,marginBottom:8,outline:"none"}}/>
+        <input value={pw} onChange={function(e){setPw(e.target.value);}} placeholder="Mot de passe" type="password" onKeyDown={function(e){if(e.key==="Enter")doAuth();}} style={{width:"100%",padding:"10px 14px",borderRadius:8,border:"1px solid var(--brd)",background:"var(--bg)",color:"var(--t)",fontFamily:"inherit",fontSize:14,marginBottom:12,outline:"none"}}/>
+        {err&&<div style={{fontSize:12,color:err.indexOf("rifi")>=0?"#4ade80":"var(--red)",marginBottom:8,padding:8,background:"#ffffff06",borderRadius:6}}>{err}</div>}
+        <button disabled={ld||!email||!pw} onClick={doAuth} style={{width:"100%",padding:"10px 0",borderRadius:8,border:"none",cursor:ld?"wait":"pointer",fontFamily:"inherit",fontSize:15,fontWeight:700,background:"linear-gradient(135deg,#c0392b,#962d22)",color:"#fff",opacity:ld?.5:1}}>{ld?"...":(mode==="login"?"Se connecter":"Créer un compte")}</button>
+      </div>
+    </div>
+  </div>);
+}
+
 export default function Game(){
-  var _g=useState(function(){try{var x=localStorage.getItem("ecl8");return x?JSON.parse(x):INIT;}catch(e){return INIT;}});var g=_g[0],setG=_g[1];
+  var _user=useState(null);var user=_user[0],setUser=_user[1];
+  var _authReady=useState(false);var authReady=_authReady[0],setAuthReady=_authReady[1];
+  var _saving=useState(false);var saving=_saving[0],setSaving=_saving[1];
+
+  // Auth listener
+  useEffect(function(){
+    supabase.auth.getSession().then(function(res){
+      if(res.data.session)setUser(res.data.session.user);
+      setAuthReady(true);
+    });
+    var sub=supabase.auth.onAuthStateChange(function(ev,session){
+      setUser(session?session.user:null);
+    });
+    return function(){sub.data.subscription.unsubscribe();};
+  },[]);
+
+  var _g=useState(INIT);var g=_g[0],setG=_g[1];
+  var _loaded=useState(false);var loaded=_loaded[0],setLoaded=_loaded[1];
+
+  // Load save from Supabase when user logs in
+  useEffect(function(){
+    if(!user)return;
+    supabase.from("saves").select("game_state").eq("user_id",user.id).single().then(function(res){
+      if(res.data&&res.data.game_state){
+        setG(res.data.game_state);
+      }
+      setLoaded(true);
+    }).catch(function(){setLoaded(true);});
+  },[user]);
   var _tab=useState("base");var tab=_tab[0],setTab=_tab[1];
   var _dun=useState(null);var dun=_dun[0],setDun=_dun[1];
   var _logs=useState([]);var logs=_logs[0],setLogs=_logs[1];
@@ -222,7 +294,16 @@ export default function Game(){
   var _fResult=useState(null);var fResult=_fResult[0],setFResult=_fResult[1];
   var lr=useRef(null);
 
-  useEffect(function(){var t=setTimeout(function(){try{localStorage.setItem("ecl8",JSON.stringify(g));}catch(e){}},500);return function(){clearTimeout(t);};},[g]);
+  // Save to Supabase (debounced 2s) + localStorage backup
+  useEffect(function(){
+    if(!user||!loaded)return;
+    localStorage.setItem("ecl8",JSON.stringify(g));
+    var t=setTimeout(function(){
+      setSaving(true);
+      supabase.from("saves").upsert({user_id:user.id,game_state:g},{onConflict:"user_id"}).then(function(){setSaving(false);});
+    },2000);
+    return function(){clearTimeout(t);};
+  },[g,user,loaded]);
   useEffect(function(){if(lr.current)lr.current.scrollTop=lr.current.scrollHeight;},[logs]);
 
   var team=useMemo(function(){return g.team.map(function(u){return u?g.roster.find(function(h){return h.uid===u;}):null;}).filter(Boolean);},[g.team,g.roster]);
@@ -455,7 +536,7 @@ export default function Game(){
   useEffect(function(){if(!dun||!au)return;if(dun.ph==="result"||dun.ph==="done"){setAu(false);return;}if(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore"){var t=setTimeout(nxtFl,3000);return function(){clearTimeout(t);};};},[au,dun&&dun.ph,dun&&dun.fl]);
   // Clean floating damage numbers after 1s
   useEffect(function(){if(!floats.length)return;var t=setTimeout(function(){setFloats([]);},400);return function(){clearTimeout(t);};},[floats.length]);
-  function reset(){localStorage.removeItem("ecl8");setG(INIT);setDun(null);setLogs([]);setTab("base");setAu(false);setSheet(null);setFloats([]);}
+  function reset(){localStorage.removeItem("ecl8");setG(INIT);setDun(null);setLogs([]);setTab("base");setAu(false);setSheet(null);setFloats([]);if(user)supabase.from("saves").upsert({user_id:user.id,game_state:INIT},{onConflict:"user_id"});}
 
   var css='@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#0e0d0d;--bg2:#141313;--card:#1c1a1a;--brd:#3a2828;--t:#e0d8d0;--td:#8a7e76;--acc:#c0392b;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);background-image:url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'60\' height=\'60\' fill=\'%230e0d0d\'/%3E%3Crect x=\'0\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'12\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'36\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3C/svg%3E");color:var(--t);font-family:"DM Sans",sans-serif;font-size:14px}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes gw{0%,100%{box-shadow:0 0 6px #c0392b20}50%{box-shadow:0 0 18px #c0392b50}}@keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes glw{0%,100%{box-shadow:0 0 4px #22c55e40}50%{box-shadow:0 0 16px #22c55e90}}@keyframes arr{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}.b{padding:8px 16px;border:1px solid var(--brd);border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;transition:all .15s;background:var(--card);color:var(--t)}.b:hover{background:#2a2222;transform:translateY(-1px)}.b:active{transform:translateY(0)}.b:disabled{opacity:.3;cursor:not-allowed;transform:none}.bg{background:linear-gradient(135deg,#c0392b,#962d22);color:#fff;border:none;font-weight:700}.bg:hover{background:linear-gradient(135deg,#d44637,#b03426)}.br{background:linear-gradient(135deg,#8b1a1a,#6b1414);color:#fff;border:none}.bgr{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none}.ton{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}.glow{animation:glw 1.5s infinite}@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}';
 
@@ -730,6 +811,11 @@ export default function Game(){
 
   var TM={base:"🏰 Ville",roster:"👥 Héros",equip:"⚙️ Équipement",inventaire:"📦 Inventaire",donjon:"⚔️ Donjon",invocation:"🎲 Invocation"};
 
+  // Auth guard
+  if(!authReady)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#c0392b",fontFamily:"Cinzel",fontSize:20}}>Chargement...</div>;
+  if(!user)return <AuthScreen/>;
+  if(!loaded)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#c0392b",fontFamily:"Cinzel",fontSize:16}}>Chargement de la sauvegarde...</div>;
+
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
       <h1 style={{fontFamily:"Cinzel",fontSize:20,fontWeight:900,color:"var(--acc)",textShadow:"0 0 12px #c0392b30"}}>⚔️ ECLIPSIA</h1>
@@ -742,6 +828,11 @@ export default function Game(){
             <div onClick={function(){setPatchNotes(true);setMenuOpen(false);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6}}>📋 Notes de mise à jour</div>
             <div onClick={function(){reset();setMenuOpen(false);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6,color:"var(--red)"}}>🔄 Réinitialiser</div>
             <div onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});nc.tome_5=(nc.tome_5||0)+100;return Object.assign({},p,{gold:p.gold+100000,scrolls:(p.scrolls||0)+1000,conso:nc});});setMenuOpen(false);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6,color:"#fbbf24"}}>🎮 Cheat</div>
+            <div style={{borderTop:"1px solid var(--brd)",marginTop:4,paddingTop:4}}>
+              <div style={{padding:"6px 12px",fontSize:11,color:"var(--td)"}}>{user?user.email:""}</div>
+              {saving&&<div style={{padding:"4px 12px",fontSize:11,color:"#fbbf24"}}>💾 Sauvegarde...</div>}
+              <div onClick={function(){supabase.auth.signOut();setMenuOpen(false);setLoaded(false);setG(INIT);}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,borderRadius:6,color:"var(--td)"}}>🚪 Déconnexion</div>
+            </div>
           </div>}
         </div>
       </div>
