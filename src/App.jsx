@@ -26,11 +26,17 @@ function cs(hero,bl){
   if(!t)return{hp:1,rel:8,str:1,mag:1,crit:0,phv:1,mav:1,dodge:0,rgHp:0,relBonus:0,er:defER(),_s:{}};
   var lv=hero.level||1;
   function L(k){var v1=t.lv1[k],v100=t.lv100[k];if(v1==null)return 0;if(v100==null)return v1;return lerp100(v1,v100,lv);}
+  var mast=hero.mastery||0;
   var bHp=Math.floor(L("hp"));
   var bRel=Math.round(L("rel"));
   var bStr=L("str");var bMag=L("mag");var bCrit=L("crit");
   var bPhv=L("phv");var bMav=L("mav");var bDodge=L("dodge");var bRgHp=L("rgHp");
   var _s={hp:["Nv."+lv+": "+bHp],rel:["Base: "+bRel+" tours"],str:["Nv."+lv+": "+fmtPM(bStr)],mag:["Nv."+lv+": "+fmtPM(bMag)],crit:["Nv."+lv+": "+fmtPct(bCrit)],phv:["Nv."+lv+": "+fmtPM(bPhv)],mav:["Nv."+lv+": "+fmtPM(bMav)],dodge:["Nv."+lv+": "+fmtPct(bDodge)],rgHp:[]};
+  if(mast>0){
+    bHp=Math.floor(bHp*(1+mast*0.10));
+    function mB(v){var d=Math.abs(v-1);if(d<0.001)return v;return v>1?1+d*(1+mast*0.10):1-d*(1+mast*0.10);}
+    bStr=mB(bStr);bMag=mB(bMag);bCrit=bCrit*(1+mast*0.10);bPhv=mB(bPhv);bMav=mB(bMav);bDodge=bDodge*(1+mast*0.10);bRgHp=bRgHp*(1+mast*0.10);
+  }
   var s={hp:bHp,rel:bRel,str:bStr,mag:bMag,crit:bCrit,phv:bPhv,mav:bMav,dodge:bDodge,rgHp:bRgHp,relBonus:0,er:Object.assign({},t.er||defER()),_s:_s};
   if(bRgHp>0)_s.rgHp.push("Nv."+lv+": "+fmtPct(bRgHp));
   if(bl){
@@ -156,7 +162,7 @@ function StatRow(props){
     var better=type==="pmInv"?nv<val:nv>val;nxt=" → "+nd;var nc=better?"#4ade80":"#facc15";
   }
   return(
-    <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #ffffff08",position:"relative",cursor:tip?"help":"default"}} onMouseEnter={onE} onMouseLeave={onL}>
+    <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #ffffff08",position:"relative",cursor:"default"}} onMouseEnter={onE} onMouseLeave={onL}>
       <span style={{color:"#8888bb",fontSize:14}}>{props.icon} {props.label}</span>
       <span style={{fontFamily:"monospace",fontWeight:600,fontSize:14,color:col}}>{display}{suf}{nxt&&<span style={{marginLeft:6,color:nc}}>{nxt}</span>}</span>
       {hov&&tip&&(<div style={{position:"absolute",top:0,left:0,background:"#1a1818f0",border:"1px solid #c0392b60",borderRadius:8,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",zIndex:50,transform:"translateY(-100%)",whiteSpace:"pre-line",minWidth:220,maxWidth:350}}>{tip}</div>)}
@@ -491,7 +497,7 @@ export default function Game(){
             <div style={{display:"flex",gap:6}}>
               <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:13,fontWeight:canLv?800:600}}>⬆ Niveau</button>
               <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:13}}>📖 Entraînement</button>
-              <button className="b" disabled style={{flex:1,fontSize:13,opacity:0.3}}>🔒 Maîtrise</button>
+              <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{flex:1,fontSize:13}}>⭐ Maîtrise</button>
               {(function(){var teamFull=g.team.indexOf(null)<0&&!inTeam;
                 if(teamFull)return <button className="b" disabled style={{flex:1,fontSize:14,fontWeight:700,opacity:0.3}}>Équipe complète</button>;
                 return <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>;
@@ -504,7 +510,7 @@ export default function Game(){
               <div onClick={function(){togP(props.k);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",padding:"2px 0"}}>
                 <div style={{fontWeight:700,fontSize:15,color:"var(--acc)"}}>{props.label}</div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  {props.info&&<div onClick={function(e){e.stopPropagation();setInfoPopup(props.k);}} style={{width:22,height:22,borderRadius:"50%",border:"1px solid var(--td)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"var(--td)",cursor:"pointer",fontWeight:700,fontStyle:"italic"}}>i</div>}
+                  {props.info&&<button onClick={function(e){e.stopPropagation();setInfoPopup(props.k);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button>}
                   <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:props.open?"rotate(180deg)":"rotate(0)"}}>▼</span>
                 </div>
               </div>
@@ -532,7 +538,7 @@ export default function Game(){
                 </div>}
               </div>
               <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-                <PH k="elem" label="Sensibilités Élémentaires" open={cp.elem}/>
+                <PH k="elem" label="Sensibilités Élémentaires" open={cp.elem} info="elem"/>
                 {cp.elem&&<div>
                   <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🗡️ Attaque</div>
                   <div style={{padding:"5px 0",fontSize:14,borderBottom:"1px solid #ffffff08",marginBottom:8}}>
@@ -609,6 +615,43 @@ export default function Game(){
           <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
         </div>
       </div>}
+      {infoPopup==="maitrise"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:4,fontSize:16,textAlign:"center"}}>⭐ Maîtrise</h3>
+          <div style={{fontSize:13,color:"var(--td)",textAlign:"center",marginBottom:12}}>{hero.name}</div>
+          {(function(){
+            var mLv=hero.mastery||0;
+            var frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});
+            var fragCount=frag?(g.conso||{})[frag.id]||0:0;
+            var canUp=mLv<10&&fragCount>=10;
+            var bonusPct=mLv*10;
+            return <div>
+              <div style={{fontSize:13,color:"var(--td)",textAlign:"center",marginBottom:8}}>Niveau de maîtrise {mLv} : caractéristiques de base augmentées de {bonusPct}%</div>
+              <div style={{position:"relative",height:20,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:12}}>
+                <div style={{width:(mLv*10)+"%",height:"100%",background:"linear-gradient(90deg,#c0392b,#e67e22)",borderRadius:4,transition:"width .3s"}}/>
+                <div style={{position:"absolute",inset:0,display:"flex"}}>{[1,2,3,4,5,6,7,8,9].map(function(i){return <div key={i} style={{position:"absolute",left:(i*10)+"%",top:0,bottom:0,width:1,background:"#ffffff20"}}/>;})}</div>
+                <span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",textShadow:"0 1px 2px #000",fontFamily:"monospace"}}>{mLv}/10</span>
+              </div>
+              {frag&&<div style={{textAlign:"center",marginBottom:8}}>
+                <div style={{fontSize:13}}>{frag.icon} {frag.name}</div>
+                <div style={{fontSize:12,color:"var(--td)"}}>{fragCount} en stock · Coût : 10 fragments</div>
+              </div>}
+              {mLv>=10&&<div style={{textAlign:"center",color:"#4ade80",fontWeight:700,fontSize:14,marginBottom:8}}>Maîtrise maximale atteinte !</div>}
+              <div style={{display:"flex",gap:8}}>
+                <button className="b bgr" disabled={!canUp} onClick={function(){if(!canUp||!frag)return;setG(function(p){var nc=Object.assign({},p.conso||{});nc[frag.id]=(nc[frag.id]||0)-10;return Object.assign({},p,{conso:nc,roster:p.roster.map(function(r){return r.uid===hero.uid?Object.assign({},r,{mastery:(r.mastery||0)+1}):r;})});});}} style={{flex:1,fontSize:14}}>Augmenter</button>
+                <button className="b" onClick={function(){setInfoPopup(null);}} style={{flex:1,fontSize:14}}>Fermer</button>
+              </div>
+            </div>;
+          })()}
+        </div>
+      </div>}
+      {infoPopup==="elem"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Sensibilités Élémentaires</h3>
+          <div style={{fontSize:13,color:"var(--td)",lineHeight:1.8,fontStyle:"italic",marginBottom:12}}>Chaque héros possède des affinités élémentaires innées. Une valeur inférieure à 100% indique une résistance, une valeur supérieure une vulnérabilité. L'immunité (0%) annule les dégâts de l'élément. Les talismans modifient ces vulnérabilités.</div>
+          <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
+        </div>
+      </div>}
       {slv&&canLv&&(function(){var sN=cs(Object.assign({},hero,{level:hero.level+1}),g.bl);return <div onClick={function(){setSlv(false);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:4,fontSize:16,textAlign:"center"}}>⬆️ Niveau {hero.level} → {hero.level+1}</h3>
@@ -630,7 +673,7 @@ export default function Game(){
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>📖 Utiliser des Tomes</h3>
           <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Sélectionnez les tomes à utiliser pour {hero.name}</div>
           {(function(){var co=g.conso||{};var totalXp=0;var rows=TOMES.map(function(tm){var qty=tomeQty[tm.id]||0;var have=co[tm.id]||0;if(have<=0&&qty<=0)return null;totalXp+=qty*tm.xp;var trc=(RA[tm.rarity]||{}).c;return <div key={tm.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #ffffff08"}}>
-            <div><span style={{color:trc,fontWeight:600,fontSize:13}}>{tm.icon} {tm.name}</span><span style={{fontSize:11,color:"var(--td)",marginLeft:6}}>({have} dispo · +{tm.xp} xp)</span></div>
+            <div><div style={{color:trc,fontWeight:600,fontSize:13}}>{tm.icon} {tm.name}</div><div style={{fontSize:11,color:"var(--td)"}}>+{tm.xp} points d'expérience · {have} en stock</div></div>
             <div style={{display:"flex",alignItems:"center",gap:4}}>
               <button className="b" style={{padding:"2px 8px",fontSize:14}} disabled={qty<=0} onClick={function(){setTomeQty(function(p){var o=Object.assign({},p);o[tm.id]=Math.max(0,(o[tm.id]||0)-1);return o;});}}>-</button>
               <span style={{minWidth:24,textAlign:"center",fontWeight:700,fontSize:14}}>{qty}</span>
@@ -759,7 +802,7 @@ export default function Game(){
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:isOpen?"12px 12px 0 0":"12px"}} onClick={props.onClick}>
             <div><span style={{fontSize:20,marginRight:8}}>{props.icon}</span><span style={{fontWeight:700,fontSize:14}}>{props.name}</span>{props.lv!=null&&<span style={{fontSize:11,color:"var(--acc)",marginLeft:6}}>Nv.{props.lv}</span>}</div>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
-              {BUILDING_INFO[props.k]&&<div onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+props.k);}} style={{width:22,height:22,borderRadius:"50%",border:"1px solid var(--td)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"var(--td)",cursor:"pointer",fontWeight:700,fontStyle:"italic"}}>i</div>}
+              {BUILDING_INFO[props.k]&&<button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+props.k);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button>}
               <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0)"}}>▼</span>
             </div>
           </div>
@@ -851,7 +894,15 @@ export default function Game(){
           </div>}
 
           {/* ALCHIMISTE */}
-          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" onClick={function(){}}/>
+          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" onClick={function(){setVp(vp==="alchimiste"?"none":"alchimiste");}}/>
+          {vp==="alchimiste"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
+            {(function(){var cata1=m.catalyseur_1||0;var canAlch=cata1>=10;
+              return <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0"}}>
+                <div><div style={{fontSize:13,fontWeight:600}}>Transmutation de catalyseurs</div><div style={{fontSize:11,color:"var(--td)"}}>10× {CATA_NAMES[1]} → 1× {CATA_NAMES[2]}</div><div style={{fontSize:11,color:canAlch?"#4ade80":"#ef4444"}}>{cata1} en stock</div></div>
+                <button className="b bg" disabled={!canAlch} onClick={function(){setG(function(p){var nm=Object.assign({},p.mat||{});nm.catalyseur_1=(nm.catalyseur_1||0)-10;nm.catalyseur_2=(nm.catalyseur_2||0)+1;return Object.assign({},p,{mat:nm});});}} style={{fontSize:12,padding:"6px 14px"}}>⚗️ Transmuter</button>
+              </div>;
+            })()}
+          </div>}
 
           {/* Building info popup */}
           {infoPopup&&infoPopup.indexOf("bld_")===0&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
