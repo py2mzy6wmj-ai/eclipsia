@@ -27,38 +27,58 @@ function cs(hero,bl){
   var lv=hero.level||1;
   function L(k){var v1=t.lv1[k],v100=t.lv100[k];if(v1==null)return 0;if(v100==null)return v1;return lerp100(v1,v100,lv);}
   var mast=hero.mastery||0;
+  var rar=hero.rarity||1;
+  // Rarity bonus: +5% per rank above 1 (on deviation from 100%)
+  // Mastery bonus: +10% per mastery level (on deviation from 100%)
+  // Combined multiplier on deviation
+  var rmBonus=(rar-1)*0.05+mast*0.10;
   var bHp=Math.floor(L("hp"));
   var bRel=Math.round(L("rel"));
   var bStr=L("str");var bMag=L("mag");var bCrit=L("crit");
   var bPhv=L("phv");var bMav=L("mav");var bDodge=L("dodge");var bRgHp=L("rgHp");
   var _s={hp:["Nv."+lv+": "+bHp],rel:["Base: "+bRel+" tours"],str:["Nv."+lv+": "+fmtPM(bStr)],mag:["Nv."+lv+": "+fmtPM(bMag)],crit:["Nv."+lv+": "+fmtPct(bCrit)],phv:["Nv."+lv+": "+fmtPM(bPhv)],mav:["Nv."+lv+": "+fmtPM(bMav)],dodge:["Nv."+lv+": "+fmtPct(bDodge)],rgHp:[]};
-  if(mast>0){
-    bHp=Math.floor(bHp*(1+mast*0.10));
-    function mB(v){var d=Math.abs(v-1);if(d<0.001)return v;return v>1?1+d*(1+mast*0.10):1-d*(1+mast*0.10);}
-    bStr=mB(bStr);bMag=mB(bMag);bCrit=bCrit*(1+mast*0.10);bPhv=mB(bPhv);bMav=mB(bMav);bDodge=bDodge*(1+mast*0.10);bRgHp=bRgHp*(1+mast*0.10);
-  }
-  var s={hp:bHp,rel:bRel,str:bStr,mag:bMag,crit:bCrit,phv:bPhv,mav:bMav,dodge:bDodge,rgHp:bRgHp,relBonus:0,er:Object.assign({},t.er||defER()),_s:_s};
   if(bRgHp>0)_s.rgHp.push("Nv."+lv+": "+fmtPct(bRgHp));
-  if(bl){
-    // Old passive bonuses removed — buildings now have different functions
-  }
+  // Step 1: accumulate equipment bonuses (additive on deviation)
+  var eqStr=0,eqMag=0,eqCrit=0,eqPhv=0,eqMav=0,eqDodge=0,eqRgHp=0,eqHp=0,eqPvPct=0,eqRel=0;
   var eq=hero.equipment||{};
   var slots=["weapon","armor","accessory","talisman"];
+  var s={er:Object.assign({},t.er||defER()),_s:_s};
   for(var si=0;si<slots.length;si++){var it=eq[slots[si]];if(!it||!it.bon)continue;var b=it.bon;
-    if(b.hp){s.hp+=b.hp;_s.hp.push(it.name+": +"+b.hp);}
-    if(b.pvPct){var pvB=Math.floor(s.hp*b.pvPct);s.hp+=pvB;_s.hp.push(it.name+": +"+fmtPct(b.pvPct)+" (+"+pvB+")");}
-    if(b.str){s.str+=b.str;_s.str.push(it.name+": "+fmtB(b.str));}
-    if(b.mag){s.mag+=b.mag;_s.mag.push(it.name+": "+fmtB(b.mag));}
-    if(b.crit){s.crit+=b.crit;_s.crit.push(it.name+": +"+fmtPct(b.crit));}
-    if(b.crt){s.crit+=b.crt;_s.crit.push(it.name+": "+fmtB(b.crt));}
-    if(b.phv){s.phv+=b.phv;_s.phv.push(it.name+": "+fmtB(b.phv));}
-    if(b.mav){s.mav+=b.mav;_s.mav.push(it.name+": "+fmtB(b.mav));}
-    if(b.dodge){s.dodge+=b.dodge;_s.dodge.push(it.name+": +"+fmtPct(b.dodge));}
-    if(b.rgHp){s.rgHp+=b.rgHp;_s.rgHp.push(it.name+": +"+fmtPct(b.rgHp));}
-    if(b.rel){s.relBonus+=b.rel;_s.rel.push(it.name+": "+b.rel+" tours");}
+    if(b.hp){eqHp+=b.hp;_s.hp.push(it.name+": +"+b.hp);}
+    if(b.pvPct){eqPvPct+=b.pvPct;_s.hp.push(it.name+": +"+fmtPct(b.pvPct));}
+    if(b.str){eqStr+=b.str;_s.str.push(it.name+": "+fmtB(b.str));}
+    if(b.mag){eqMag+=b.mag;_s.mag.push(it.name+": "+fmtB(b.mag));}
+    if(b.crit){eqCrit+=b.crit;_s.crit.push(it.name+": +"+fmtPct(b.crit));}
+    if(b.crt){eqCrit+=b.crt;_s.crit.push(it.name+": "+fmtB(b.crt));}
+    if(b.phv){eqPhv+=b.phv;_s.phv.push(it.name+": "+fmtB(b.phv));}
+    if(b.mav){eqMav+=b.mav;_s.mav.push(it.name+": "+fmtB(b.mav));}
+    if(b.dodge){eqDodge+=b.dodge;_s.dodge.push(it.name+": +"+fmtPct(b.dodge));}
+    if(b.rgHp){eqRgHp+=b.rgHp;_s.rgHp.push(it.name+": +"+fmtPct(b.rgHp));}
+    if(b.rel){eqRel+=b.rel;_s.rel.push(it.name+": "+b.rel+" tours");}
     if(b.er)for(var ek in b.er)s.er[ek]=(s.er[ek]||1)+b.er[ek];
   }
-  s.rel=Math.max(1,s.rel+s.relBonus);
+  // Step 2: apply formula (base + equip) × (1 + rarity_bonus + mastery_bonus)
+  // For multiplier stats (str/mag/phv/mav): work on deviation from 1
+  var rmMult=1+rmBonus;
+  function applyRM(base,eqB){var dev=(base-1)+eqB;return 1+dev*rmMult;}
+  s.hp=Math.floor((bHp+eqHp)*(1+rmBonus));if(eqPvPct>0){var pvB=Math.floor(s.hp*eqPvPct);s.hp+=pvB;}
+  s.str=applyRM(bStr,eqStr);
+  s.mag=applyRM(bMag,eqMag);
+  s.crit=(bCrit+eqCrit)*rmMult;
+  s.phv=applyRM(bPhv,eqPhv);
+  s.mav=applyRM(bMav,eqMav);
+  s.dodge=(bDodge+eqDodge)*rmMult;
+  s.rgHp=(bRgHp+eqRgHp)*rmMult;
+  s.rel=Math.max(1,bRel+eqRel);
+  s.relBonus=eqRel;
+  // Add multiplier info to tooltips
+  if(rmBonus>0){
+    var rmLabel="";if(rar>1)rmLabel+="Rareté +"+Math.round((rar-1)*5)+"%";if(mast>0)rmLabel+=(rmLabel?" + ":"")+"Maîtrise +"+Math.round(mast*10)+"%";
+    rmLabel+=" → ×"+rmMult.toFixed(2);
+    _s.hp.push(rmLabel);_s.str.push(rmLabel);_s.mag.push(rmLabel);_s.crit.push(rmLabel);_s.phv.push(rmLabel);_s.mav.push(rmLabel);_s.dodge.push(rmLabel);if(bRgHp+eqRgHp>0)_s.rgHp.push(rmLabel);
+  }
+  // Final values in tooltips
+  _s.hp.push("= "+s.hp);_s.str.push("= "+fmtPM(s.str));_s.mag.push("= "+fmtPM(s.mag));_s.crit.push("= "+fmtPct(s.crit));_s.phv.push("= "+fmtPM(s.phv));_s.mav.push("= "+fmtPM(s.mav));_s.dodge.push("= "+fmtPct(s.dodge));if(s.rgHp>0)_s.rgHp.push("= "+fmtPct(s.rgHp));
   s.crit=clamp(s.crit,0,.8);s.dodge=clamp(s.dodge,0,.5);
   for(var ei=0;ei<EL.length;ei++){var ek2=EL[ei];s.er[ek2]=Math.max(0,s.er[ek2]||1);}
   return s;
