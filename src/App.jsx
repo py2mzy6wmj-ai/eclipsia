@@ -752,16 +752,22 @@ export default function Game(){
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des vulnérabilités</h3>
           <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
             {EL.map(function(el){
-              var baseV=t.er&&t.er[el]!=null?t.er[el]:1;
-              var eqV=0;var eqDetails=[];
+              var baseV=ht&&ht.er&&ht.er[el]!=null?ht.er[el]:1;
+              var eqLines=[];var eqTotal=0;
               var eq2=hero.equipment||{};
-              ["weapon","armor","accessory","talisman"].forEach(function(sl){var it=eq2[sl];if(it&&it.bon&&it.bon.er&&it.bon.er[el]){eqV+=it.bon.er[el];eqDetails.push(it.name+": "+fmtEV(it.bon.er[el]));}});
-              var finalV=Math.max(0,baseV+eqV);
+              ["weapon","armor","accessory","talisman"].forEach(function(sl){
+                var it2=eq2[sl];if(it2&&it2.bon&&it2.bon.er&&it2.bon.er[el]!=null){
+                  var v=it2.bon.er[el];eqTotal+=v;
+                  eqLines.push({name:it2.name,val:v});
+                }
+              });
+              var finalV=Math.max(0,baseV+eqTotal);
+              var c=erc(finalV);
               return <div key={el} style={{marginBottom:8,padding:8,background:"#ffffff04",borderRadius:6}}>
-                <div style={{fontWeight:700,color:(EM[el]||{}).c,fontSize:13,marginBottom:4}}>{(EM[el]||{}).i} {el}</div>
+                <div style={{fontWeight:700,color:(EM[el]||{}).c||"#ccc",fontSize:13,marginBottom:4}}>{(EM[el]||{}).i||""} {el}</div>
                 <div style={{color:"#aaa"}}>Base : {fmtEV(baseV)}</div>
-                {eqDetails.map(function(d,i){return <div key={i} style={{color:"#aaa"}}>{d}</div>;})}
-                <div style={{fontWeight:700,color:erc(finalV),marginTop:2}}>= {fmtEV(finalV)}</div>
+                {eqLines.map(function(d,i){return <div key={i} style={{color:"#aaa"}}>{d.name} : {(d.val>0?"+":"")+Math.round(d.val*100)+"%"}</div>;})}
+                <div style={{fontWeight:700,color:c,marginTop:2}}>= {fmtEV(finalV)}</div>
               </div>;
             })}
           </div>
@@ -1253,17 +1259,17 @@ export default function Game(){
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
           </div>
         </div>
-        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:360,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>{dun&&DG[dun.ti]&&DG[dun.ti].bg&&<div style={{position:"absolute",inset:0,backgroundImage:"url("+DG[dun.ti].bg+")",backgroundSize:"cover",backgroundPosition:"center",opacity:0.2,pointerEvents:"none"}}/>}
-          {dun.ph==="combat"&&<div style={{width:"100%"}}>
+        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:360,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>{dun&&DG[dun.ti]&&DG[dun.ti].bg&&<div style={{position:"absolute",inset:0,backgroundImage:"url("+DG[dun.ti].bg+")",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15,pointerEvents:"none"}}/>}
+          {dun.ph==="combat"&&<div style={{width:"100%",position:"relative",zIndex:1}}>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>{dun.en.map(function(e){return <Unit key={e.uid} u={e} isE act={dun.tO[dun.tI%dun.tO.length]===e.uid} sel={tgt===e.uid} onClick={e.hp>0?function(){setTgt(e.uid);}:undefined}/>;})}</div>
             <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginTop:8}}>{dun.team.map(function(h){return <Unit key={h.uid} u={h} act={dun.tO[dun.tI%dun.tO.length]===h.uid}/>;})}</div>
           </div>}
-          {dun.ph==="result"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)",marginBottom:8}}>💀 Défaite</div><div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {(dun.rE||[]).length} objets récupérés</div><button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:4}}>Retour</button></div>}
-          {dun.ph==="event"&&<div style={{textAlign:"center"}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
-          {dun.ph==="victory"&&<div style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
-          {dun.ph==="explore"&&<div style={{textAlign:"center"}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
-          {dun.ph==="done"&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div>
+          {dun.ph==="result"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)",marginBottom:8}}>💀 Défaite</div><div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {(dun.rE||[]).length} objets récupérés</div><button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:4}}>Retour</button></div>}
+          {dun.ph==="event"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
+          {dun.ph==="victory"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
+          {dun.ph==="explore"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
+          {dun.ph==="done"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div>
             {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:6,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}{fb.equip?" · 🎁 "+fb.equip:""}{fb.tomes?" · 📖 "+Object.keys(fb.tomes).map(function(tk){var tm=TOMES.find(function(t){return t.id===tk;});return fb.tomes[tk]+"× "+(tm?tm.name:tk);}).join(", "):""}</div>;return null;})()}
             <button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
         </div>
@@ -1275,7 +1281,7 @@ export default function Game(){
           })()}
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
-        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
+        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")?<button className="b bg" disabled={au} onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14,opacity:au?0.3:1}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>:(dun.ph==="combat"?<div style={{height:42,marginBottom:6}}/>:null)}
         <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
           {logs.map(function(l,i){var txt=l.t||"";var tp=l.tp||"";
             var col;
