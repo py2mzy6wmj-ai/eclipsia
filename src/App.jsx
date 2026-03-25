@@ -1281,7 +1281,7 @@ export default function Game(){
           })()}
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
-        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")?<button className="b bg" disabled={au} onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14,opacity:au?0.3:1}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>:(dun.ph==="combat"?<div style={{height:42,marginBottom:6}}/>:null)}
+        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&<button className="b" disabled={au} onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14,opacity:au?0.3:1}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
         <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
           {logs.map(function(l,i){var txt=l.t||"";var tp=l.tp||"";
             var col;
