@@ -165,7 +165,7 @@ function StatRow(props){
 }
 
 
-var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},conso:{},bl:{forge:0,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0}};
+var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},conso:{},bl:{forge:1,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0,marche:1}};
 
 export default function Game(){
   var _g=useState(function(){try{var x=localStorage.getItem("ecl8");return x?JSON.parse(x):INIT;}catch(e){return INIT;}});var g=_g[0],setG=_g[1];
@@ -687,7 +687,7 @@ export default function Game(){
     {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
       {(function(){
         var m=g.mat||{};var flv=g.bl.forge||1;
-        function forgeChance(rank,rarity,fLv){var diff=Math.pow(rank,1.4)*4+Math.pow(rarity,1.8)*12;var skill=fLv*8+Math.pow(fLv,1.3)*2;var ch=100-diff+skill;return Math.max(0,Math.min(100,Math.round(ch)));}
+        function forgeChance(rank,rarity,fLv){var diff=Math.max(0,(rank-2)*12+Math.max(0,(rarity-2))*20+Math.max(0,(rank-3))*(rarity-1)*5);var skill=fLv*10;var ch=100-diff+skill;return Math.max(2,Math.min(100,Math.round(ch)));}
         var inerteKey=fs.slot+"_inerte";var gabKey="gabarit_"+fs.rank;var cataKey="catalyseur_"+fs.rar;
         var hasInerte=(m[inerteKey]||0)>0;var hasGab=(m[gabKey]||0)>0;var hasCata=(m[cataKey]||0)>0;
         var canForge=hasInerte&&hasGab&&hasCata;
@@ -800,7 +800,7 @@ export default function Game(){
             {/* Bottom upgrade bandeau */}
             {fNextCost!=null&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:10,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Forgeron au niveau {flv+1}</span>
-              <button className="b bg" disabled={g.gold<fNextCost} onClick={function(){if(g.gold<fNextCost)return;setG(function(p){var bl=Object.assign({},p.bl);bl.forge=(bl.forge||0)+1;return Object.assign({},p,{gold:p.gold-fNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{fNextCost.toLocaleString()} or</button>
+              <button className="b bg" disabled={g.gold<fNextCost} onClick={function(){if(g.gold<fNextCost)return;setG(function(p){var bl=Object.assign({},p.bl);bl.forge=(bl.forge||1)+1;return Object.assign({},p,{gold:p.gold-fNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{fNextCost.toLocaleString()} or</button>
             </div>}
           </div>}
 
@@ -829,7 +829,7 @@ export default function Game(){
               {/* Bottom upgrade bandeau */}
               {mNextCost!=null&&mlv<5&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:4,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Marché au niveau {mlv+1}</span>
-                <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||0)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{mNextCost.toLocaleString()} or</button>
+                <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||1)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{mNextCost.toLocaleString()} or</button>
               </div>}
             </div>
           </div>}
