@@ -1,0 +1,22 @@
+{
+  "name": "ECLIPSIA",
+  "short_name": "Eclipsia",
+  "description": "JRPG Roguelite",
+  "start_url": "/eclipsia/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0d0d",
+  "theme_color": "#c0392b",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
