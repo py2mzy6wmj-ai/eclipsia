@@ -28,10 +28,10 @@ function cs(hero,bl){
   function L(k){var v1=t.lv1[k],v100=t.lv100[k];if(v1==null)return 0;if(v100==null)return v1;return lerp100(v1,v100,lv);}
   var mast=hero.mastery||0;
   var rar=hero.rarity||1;
-  // Rarity bonus: +5% per rank above 1 (on deviation from 100%)
-  // Mastery bonus: +10% per mastery level (on deviation from 100%)
-  // Combined multiplier on deviation
-  var rmBonus=(rar-1)*0.05+mast*0.10;
+  // Rarity bonus: 10% per rank (commun=10%, inhabituel=20%, etc.)
+  // Mastery bonus: 5% per mastery level (0-10, so 0%-50%)
+  // Combined: max 50%+50% = 100%
+  var rmBonus=rar*0.10+mast*0.05;
   var bHp=Math.floor(L("hp"));
   var bRel=Math.round(L("rel"));
   var bStr=L("str");var bMag=L("mag");var bCrit=L("crit");
@@ -58,12 +58,13 @@ function cs(hero,bl){
     if(b.er)for(var ek in b.er)s.er[ek]=(s.er[ek]||1)+b.er[ek];
   }
   // Step 2: apply formula (base + equip) × (1 + rarity_bonus + mastery_bonus)
-  // For multiplier stats (str/mag/phv/mav): work on deviation from 1
+  // Non-pertinent stat (mag for PHY, str for MAG) stays fixed at base (0.10), not multiplied
+  var isMagHero=t.wt==="magical";
   var rmMult=1+rmBonus;
   function applyRM(base,eqB){var dev=(base-1)+eqB;return 1+dev*rmMult;}
   s.hp=Math.floor((bHp+eqHp)*(1+rmBonus));if(eqPvPct>0){var pvB=Math.floor(s.hp*eqPvPct);s.hp+=pvB;}
-  s.str=applyRM(bStr,eqStr);
-  s.mag=applyRM(bMag,eqMag);
+  s.str=isMagHero?bStr:applyRM(bStr,eqStr);
+  s.mag=isMagHero?applyRM(bMag,eqMag):bMag;
   s.crit=(bCrit+eqCrit)*rmMult;
   s.phv=applyRM(bPhv,eqPhv);
   s.mav=applyRM(bMav,eqMav);
@@ -71,14 +72,14 @@ function cs(hero,bl){
   s.rgHp=(bRgHp+eqRgHp)*rmMult;
   s.rel=Math.max(1,bRel+eqRel);
   s.relBonus=eqRel;
-  // Add multiplier info to tooltips
+  // Add multiplier info to tooltips (exclude non-pertinent stat)
   if(rmBonus>0){
-    var rmLabel="";if(rar>1)rmLabel+="Rareté +"+Math.round((rar-1)*5)+"%";if(mast>0)rmLabel+=(rmLabel?" + ":"")+"Maîtrise +"+Math.round(mast*10)+"%";
-    rmLabel+=" → ×"+rmMult.toFixed(2);
-    _s.hp.push(rmLabel);_s.str.push(rmLabel);_s.mag.push(rmLabel);_s.crit.push(rmLabel);_s.phv.push(rmLabel);_s.mav.push(rmLabel);_s.dodge.push(rmLabel);if(bRgHp+eqRgHp>0)_s.rgHp.push(rmLabel);
+    var rmLabel="";if(rar>=1)rmLabel+="Rareté +"+Math.round(rar*10)+"%";if(mast>0)rmLabel+=(rmLabel?" + ":"")+"Maîtrise +"+Math.round(mast*5)+"%";
+    rmLabel+=" \u2192 \u00d7"+rmMult.toFixed(2);
+    _s.hp.push(rmLabel);if(!isMagHero)_s.str.push(rmLabel);if(isMagHero)_s.mag.push(rmLabel);_s.crit.push(rmLabel);_s.phv.push(rmLabel);_s.mav.push(rmLabel);_s.dodge.push(rmLabel);if(bRgHp+eqRgHp>0)_s.rgHp.push(rmLabel);
   }
-  // Final values in tooltips
-  _s.hp.push("= "+s.hp);_s.str.push("= "+fmtPM(s.str));_s.mag.push("= "+fmtPM(s.mag));_s.crit.push("= "+fmtPct(s.crit));_s.phv.push("= "+fmtPM(s.phv));_s.mav.push("= "+fmtPM(s.mav));_s.dodge.push("= "+fmtPct(s.dodge));if(s.rgHp>0)_s.rgHp.push("= "+fmtPct(s.rgHp));
+  // Final values in tooltips (exclude non-pertinent stat)
+  _s.hp.push("= "+s.hp);if(!isMagHero)_s.str.push("= "+fmtPM(s.str));if(isMagHero)_s.mag.push("= "+fmtPM(s.mag));_s.crit.push("= "+fmtPct(s.crit));_s.phv.push("= "+fmtPM(s.phv));_s.mav.push("= "+fmtPM(s.mav));_s.dodge.push("= "+fmtPct(s.dodge));if(s.rgHp>0)_s.rgHp.push("= "+fmtPct(s.rgHp));
   s.crit=clamp(s.crit,0,.8);s.dodge=clamp(s.dodge,0,.5);
   for(var ei=0;ei<EL.length;ei++){var ek2=EL[ei];s.er[ek2]=Math.max(0,s.er[ek2]||1);}
   return s;
@@ -191,7 +192,7 @@ function StatRow(props){
 }
 
 
-var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},conso:{},bl:{forge:1,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0,marche:1}};
+var INIT={gold:STARTING_GOLD,scrolls:5,floors:0,beaten:[],roster:[],team:[null,null,null,null],inv:[],mat:{},conso:{},bl:{forge:1,rempart:0,autel:0,tour:0,ecole:0,mine:0,oracle:0,taverne:0,marche:1,alchimiste:1}};
 
 export default function Game(){
   var _g=useState(function(){try{var x=localStorage.getItem("ecl8");return x?JSON.parse(x):INIT;}catch(e){return INIT;}});var g=_g[0],setG=_g[1];
@@ -515,9 +516,9 @@ export default function Game(){
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontWeight:700,fontSize:16}}>Niveau {hero.level}</span><span style={{fontSize:13,color:"#8888bb",fontFamily:"monospace"}}>XP {hero.xp}/{xn}</span></div>
             <div style={{height:7,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"#a855f7",transition:"width .3s"}}/></div>
             <div style={{display:"flex",gap:6}}>
-              <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:13,fontWeight:canLv?800:600}}>⬆ Niveau</button>
-              <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:13}}>📖 Entraînement</button>
-              <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{flex:1,fontSize:13}}>⭐ Maîtrise</button>
+              <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:13,fontWeight:canLv?800:600}}>Gain de niveau</button>
+              <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:13}}>Entraînement</button>
+              <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{flex:1,fontSize:13}}>Maîtrise</button>
               {(function(){var teamFull=g.team.indexOf(null)<0&&!inTeam;
                 if(teamFull)return <button className="b" disabled style={{flex:1,fontSize:14,fontWeight:700,opacity:0.3}}>Équipe complète</button>;
                 return <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>;
@@ -621,7 +622,7 @@ export default function Game(){
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des caractéristiques</h3>
           <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
-            {["hp","str","mag","crit","phv","mav","dodge","rgHp","rel"].map(function(key){
+            {(function(){var heroWt=ht?ht.wt:"physical";return ["hp","str","mag","crit","phv","mav","dodge","rgHp","rel"].filter(function(k){if(k==="str"&&heroWt==="magical")return false;if(k==="mag"&&heroWt==="physical")return false;return true;});})().map(function(key){
               var arr=st._s[key];if(!arr||!arr.length)return null;
               var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);
               var labels={hp:"🩸 Points de vie",str:"⚔️ Force",mag:"🔮 Magie",crit:"💥 Critique",phv:"🛡️ Vuln. Physique",mav:"🔰 Vuln. Magique",dodge:"💨 Esquive",rgHp:"♻️ Récupération",rel:"⏳ Recharge"};
@@ -644,13 +645,13 @@ export default function Game(){
             var frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});
             var fragCount=frag?(g.conso||{})[frag.id]||0:0;
             var canUp=mLv<10&&fragCount>=10;
-            var bonusPct=mLv*10;
+            var bonusPct=mLv*5;
             return <div>
-              <div style={{fontSize:13,color:"var(--td)",textAlign:"center",marginBottom:8}}>Niveau de maîtrise {mLv} : caractéristiques de base augmentées de {bonusPct}%</div>
+              <div style={{fontSize:18,fontWeight:700,color:"var(--t)",textAlign:"center",marginBottom:4}}>Niveau de maîtrise {mLv}</div><div style={{fontSize:13,color:"var(--td)",textAlign:"center",marginBottom:4}}>Caractéristiques de base augmentées de {bonusPct}%</div><div style={{fontSize:13,color:"#fbbf24",textAlign:"center",marginBottom:8}}>Niveau de compétence +{mLv}</div>
               <div style={{position:"relative",height:20,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:12}}>
                 <div style={{width:(mLv*10)+"%",height:"100%",background:"linear-gradient(90deg,#c0392b,#e67e22)",borderRadius:4,transition:"width .3s"}}/>
                 <div style={{position:"absolute",inset:0,display:"flex"}}>{[1,2,3,4,5,6,7,8,9].map(function(i){return <div key={i} style={{position:"absolute",left:(i*10)+"%",top:0,bottom:0,width:1,background:"#ffffff20"}}/>;})}</div>
-                <span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",textShadow:"0 1px 2px #000",fontFamily:"monospace"}}>{mLv}/10</span>
+                
               </div>
               {frag&&<div style={{textAlign:"center",marginBottom:8}}>
                 <div style={{fontSize:13}}>{frag.icon} {frag.name}</div>
@@ -667,8 +668,22 @@ export default function Game(){
       </div>}
       {infoPopup==="elem"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Sensibilités Élémentaires</h3>
-          <div style={{fontSize:13,color:"var(--td)",lineHeight:1.8,fontStyle:"italic",marginBottom:12}}>Chaque héros possède des affinités élémentaires innées. Une valeur inférieure à 100% indique une résistance, une valeur supérieure une vulnérabilité. L'immunité (0%) annule les dégâts de l'élément. Les talismans modifient ces vulnérabilités.</div>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des vulnérabilités</h3>
+          <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
+            {EL.map(function(el){
+              var baseV=t.er&&t.er[el]!=null?t.er[el]:1;
+              var eqV=0;var eqDetails=[];
+              var eq2=hero.equipment||{};
+              ["weapon","armor","accessory","talisman"].forEach(function(sl){var it=eq2[sl];if(it&&it.bon&&it.bon.er&&it.bon.er[el]){eqV+=it.bon.er[el];eqDetails.push(it.name+": "+fmtEV(it.bon.er[el]));}});
+              var finalV=Math.max(0,baseV+eqV);
+              return <div key={el} style={{marginBottom:8,padding:8,background:"#ffffff04",borderRadius:6}}>
+                <div style={{fontWeight:700,color:(EM[el]||{}).c,fontSize:13,marginBottom:4}}>{(EM[el]||{}).i} {el}</div>
+                <div style={{color:"#aaa"}}>Base : {fmtEV(baseV)}</div>
+                {eqDetails.map(function(d,i){return <div key={i} style={{color:"#aaa"}}>{d}</div>;})}
+                <div style={{fontWeight:700,color:erc(finalV),marginTop:2}}>= {fmtEV(finalV)}</div>
+              </div>;
+            })}
+          </div>
           <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
         </div>
       </div>}
@@ -683,7 +698,7 @@ export default function Game(){
               return rows.map(function(r,i){return <StatRow key={i} icon={r.icon} label={r.label} val={r.val} nv={r.nv} type={r.type}/>;});})()}
           </div>
           <div style={{display:"flex",gap:8,marginTop:12}}>
-            <button className="b bgr glow" onClick={function(){doLvUp(hero.uid);setSlv(false);}} style={{flex:1,fontSize:14}}>✓ Confirmer</button>
+            <button className="b bgr glow" onClick={function(){doLvUp(hero.uid);}} style={{flex:1,fontSize:14}}>✓ Confirmer</button>
             <button className="b" onClick={function(){setSlv(false);}} style={{flex:1,fontSize:14}}>Annuler</button>
           </div>
         </div>
@@ -817,7 +832,7 @@ export default function Game(){
             <button className="b bg" disabled={g.gold<si.cost} onClick={function(){doBuy(si);}} style={{fontSize:12,padding:"4px 12px"}}>Acheter</button>
           </div>
         </div>;}
-        var BUILDING_INFO={forge:"Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.",marche:"Le marché propose divers composants et consommables à l'achat. Améliorer le marché débloque de nouveaux articles.",alchimiste:"L'alchimiste pourra transformer et améliorer vos consommables et matériaux. (Bientôt disponible)"};
+        var BUILDING_INFO={forge:"Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.",marche:"Le marché propose divers composants et consommables à l'achat. Améliorer le marché débloque de nouveaux articles.",alchimiste:"L'alchimiste permet de transmuter des matériaux en composants de rang ou de rareté supérieur. 10 composants du même type sont nécessaires pour obtenir 1 composant du rang suivant. Améliorer l'alchimiste débloque des recettes de rang supérieur."};
         function PnlH(props){var isOpen=vp===props.k;return <div style={{marginBottom:isOpen?0:6}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,cursor:"pointer",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:isOpen?"12px 12px 0 0":"12px"}} onClick={props.onClick}>
             <div><span style={{fontSize:20,marginRight:8}}>{props.icon}</span><span style={{fontWeight:700,fontSize:14}}>{props.name}</span>{props.lv!=null&&<span style={{fontSize:11,color:"var(--acc)",marginLeft:6}}>Nv.{props.lv}</span>}</div>
@@ -914,12 +929,29 @@ export default function Game(){
           </div>}
 
           {/* ALCHIMISTE */}
-          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" onClick={function(){setVp(vp==="alchimiste"?"none":"alchimiste");}}/>
+          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" lv={g.bl.alchimiste||1} onClick={function(){setVp(vp==="alchimiste"?"none":"alchimiste");}}/>
           {vp==="alchimiste"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-            {(function(){var cata1=m.catalyseur_1||0;var canAlch=cata1>=10;
-              return <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0"}}>
-                <div><div style={{fontSize:13,fontWeight:600}}>Transmutation de catalyseurs</div><div style={{fontSize:11,color:"var(--td)"}}>10× {CATA_NAMES[1]} → 1× {CATA_NAMES[2]}</div><div style={{fontSize:11,color:canAlch?"#4ade80":"#ef4444"}}>{cata1} en stock</div></div>
-                <button className="b bg" disabled={!canAlch} onClick={function(){setG(function(p){var nm=Object.assign({},p.mat||{});nm.catalyseur_1=(nm.catalyseur_1||0)-10;nm.catalyseur_2=(nm.catalyseur_2||0)+1;return Object.assign({},p,{mat:nm});});}} style={{fontSize:12,padding:"6px 14px"}}>⚗️ Transmuter</button>
+            {(function(){var alv=g.bl.alchimiste||1;
+              var ALCH_COSTS={2:3000,3:10000,4:30000,5:80000};
+              var aNextCost=alv<5?ALCH_COSTS[alv+1]||null:null;
+              function doTransmute(fromKey,toKey,qty){setG(function(p){var nm=Object.assign({},p.mat||{});if((nm[fromKey]||0)<qty)return p;nm[fromKey]=(nm[fromKey]||0)-qty;nm[toKey]=(nm[toKey]||0)+1;return Object.assign({},p,{mat:nm});});}
+              function RecipeCard(rp){var have=m[rp.from]||0;var canDo=have>=rp.qty;return <div style={{background:(canDo?"#4ade80":"#888")+"08",border:"1px solid "+(canDo?"#4ade80":"#888")+"30",borderRadius:10,padding:10}}>
+                <div style={{fontWeight:700,fontSize:13,color:canDo?"var(--t)":"#666"}}>{rp.name}</div>
+                <div style={{fontSize:11,color:"var(--td)"}}>{rp.qty}× {rp.fromName} → 1× {rp.toName}</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
+                  <span style={{fontSize:11,color:canDo?"#4ade80":"#ef4444"}}>{have} en stock</span>
+                  <button className="b bg" disabled={!canDo} onClick={function(){doTransmute(rp.from,rp.to,rp.qty);}} style={{fontSize:11,padding:"4px 10px"}}>⚗️ Transmuter</button>
+                </div>
+              </div>;}
+              var cataRecipes=[];var gabRecipes=[];
+              if(alv>=1){cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],name:"Catalyseur ★ → ★★"});}
+              if(alv>=2){cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],name:"Catalyseur ★★ → ★★★"});}
+              if(alv>=3){cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:10,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],name:"Catalyseur ★★★ → ★★★★"});}
+              if(alv>=1){for(var gi=1;gi<=14;gi++){var gFrom="gabarit_"+gi;var gTo="gabarit_"+(gi+1);if(alv>=1&&gi<=3)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=2&&gi<=6)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=3&&gi<=9)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=4&&gi<=12)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=5)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});}}
+              return <div>
+                {cataRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Catalyseurs</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{cataRecipes.map(function(r){return <RecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} name={r.name}/>;})}</div></div>}
+                {gabRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Gabarits</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{gabRecipes.map(function(r){return <RecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} name={r.name}/>;})}</div></div>}
+                {aNextCost!=null&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:4,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer l'Alchimiste au niveau {alv+1}</span><button className="b bg" disabled={g.gold<aNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.alchimiste=(bl.alchimiste||1)+1;return Object.assign({},p,{gold:p.gold-aNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{aNextCost.toLocaleString()} or</button></div>}
               </div>;
             })()}
           </div>}
@@ -1063,6 +1095,7 @@ export default function Game(){
         for(var ti=0;ti<TOMES.length;ti++){var tm=TOMES[ti];if((co[tm.id]||0)>0)consoList.push({k:tm.id,n:tm.name,v:co[tm.id],r:tm.rarity,ic:tm.icon});}
         var fragList=[];
         for(var fi=0;fi<FRAGMENTS.length;fi++){var fr=FRAGMENTS[fi];if((co[fr.id]||0)>0)fragList.push({k:fr.id,n:fr.name,v:co[fr.id],r:fr.rarity,ic:fr.icon});}
+        fragList.sort(function(a,b){return a.r-b.r;});
         // Matériaux: inertes, gabarits by rank, catalyseurs by rarity
         var inertes=[];
         var inerteSlots=[["weapon_inerte","Arme inerte",1,"🔩"],["armor_inerte","Armure inerte",1,"🔩"],["accessory_inerte","Accessoire inerte",1,"🔩"],["talisman_inerte","Talisman inerte",1,"🔩"]];
@@ -1129,7 +1162,7 @@ export default function Game(){
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
           </div>
         </div>
-        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:360,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:360,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>{dun&&DG[dun.ti]&&DG[dun.ti].bg&&<div style={{position:"absolute",inset:0,backgroundImage:"url("+DG[dun.ti].bg+")",backgroundSize:"cover",backgroundPosition:"center",opacity:0.2,pointerEvents:"none"}}/>}
           {dun.ph==="combat"&&<div style={{width:"100%"}}>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>{dun.en.map(function(e){return <Unit key={e.uid} u={e} isE act={dun.tO[dun.tI%dun.tO.length]===e.uid} sel={tgt===e.uid} onClick={e.hp>0?function(){setTgt(e.uid);}:undefined}/>;})}</div>
             <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
@@ -1151,7 +1184,7 @@ export default function Game(){
           })()}
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
-        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&!au&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
+        {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&<button className="b bg" onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
         <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
           {logs.map(function(l,i){var txt=l.t||"";var tp=l.tp||"";
             var col;
