@@ -1301,7 +1301,7 @@ export default function Game(){
             else if(txt.indexOf("───")>=0)col="#444"; // separator
             else col="#ddddf4";
             return <div key={i} style={{color:col,position:"relative",cursor:l.st?"help":"default",padding:"1px 0"}}
-              onMouseEnter={function(){if(l.st)setHl(i);}} onMouseLeave={function(){setHl(null);}}>
+              onClick={function(){if(l.st)setHl(hl===i?null:i);}}>
               {txt}
             </div>;
           })}
