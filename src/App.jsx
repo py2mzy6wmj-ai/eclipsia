@@ -1349,7 +1349,7 @@ export default function Game(){
             </div>
             <button className="b" onClick={function(){setHl(null);}} style={{marginTop:10,width:"100%",fontSize:13}}>Fermer</button>
           </div>
-        </div></div>}
+        </div>}
       </div>}
     </div>}
 
