@@ -488,7 +488,7 @@ export default function Game(){
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
       var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0)+(dgDef.reward?dgDef.reward.xp||0:0))*xm);
       setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
-      var logMsgs=[{t:"───────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"Or: +"+tg+" · XP: +"+tx+" · Loot: "+rE.length+" objets",tp:"info"}];
+      var logMsgs=[{t:"───────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"Récompenses totales : "+tg+" or, "+tx+" xp, "+rE.length+" équipement"+(rE.length>1?"s":""),tp:"info"}];
       if(bt0.indexOf(dun.ti)<0){
         var fb0Log=dgDef.firstBonus;
         if(fb0Log){
@@ -707,16 +707,33 @@ export default function Game(){
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des caractéristiques</h3>
           <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
-            {(function(){var heroWt=ht?ht.wt:"physical";return ["hp","str","mag","crit","phv","mav","dodge","rgHp","rel"].filter(function(k){if(k==="str"&&heroWt==="magical")return false;if(k==="mag"&&heroWt==="physical")return false;return true;});})().map(function(key){
-              var arr=st._s[key];if(!arr||!arr.length)return null;
-              var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);
-              var labels={hp:"🩸 Points de vie",str:"⚔️ Force",mag:"🔮 Magie",crit:"💥 Critique",phv:"🛡️ Vuln. Physique",mav:"🔰 Vuln. Magique",dodge:"💨 Esquive",rgHp:"♻️ Récupération",rel:"⏳ Recharge"};
-              return <div key={key} style={{marginBottom:10,padding:8,background:"#ffffff04",borderRadius:6}}>
-                <div style={{fontWeight:700,color:"var(--acc)",fontSize:13,marginBottom:4}}>{labels[key]||key}</div>
-                {arr.map(function(line,li){return <div key={li} style={{color:"#aaa"}}>{line}</div>;})}
-                <div style={{fontWeight:700,color:"var(--t)",marginTop:2}}>= {total}</div>
-              </div>;
-            }).filter(Boolean)}
+            {(function(){
+              var heroWt=ht?ht.wt:"physical";
+              var rar2=hero.rarity||1;var mast2=hero.mastery||0;
+              var rmBonus2=rar2*0.10+mast2*0.05;var rmMult2=1+rmBonus2;
+              var hasRM=rmBonus2>0;
+              var affectedByRM={hp:true,str:heroWt==="physical",mag:heroWt==="magical",phv:true,mav:true};
+              return ["hp","str","mag","crit","phv","mav","dodge","rgHp","rel"].filter(function(k){
+                if(k==="str"&&heroWt==="magical")return false;
+                if(k==="mag"&&heroWt==="physical")return false;
+                return true;
+              }).map(function(key){
+                var arr=st._s[key];if(!arr||!arr.length)return null;
+                var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);
+                var totalCol=(key==="phv"||key==="mav")?(st[key]<1?"#4ade80":st[key]>1?"#facc15":"#ddddf4"):(key==="hp"||key==="rel"?"#ddddf4":(st[key]>0.001?"#4ade80":"#ddddf4"));
+                var labels={hp:"🩸 Points de vie",str:"⚔️ Force",mag:"🔮 Magie",crit:"💥 Critique",phv:"🛡️ Vuln. Physique",mav:"🔰 Vuln. Magique",dodge:"💨 Esquive",rgHp:"♻️ Récupération",rel:"⏳ Recharge"};
+                // Filter out any "= " or "Rareté" lines from arr (legacy cleanup)
+                var cleanArr=arr.filter(function(line){return line.indexOf("= ")<0&&line.indexOf("Rareté")<0&&line.indexOf("Maîtrise")<0;});
+                var showRM=hasRM&&affectedByRM[key];
+                return <div key={key} style={{marginBottom:10,padding:8,background:"#ffffff04",borderRadius:6}}>
+                  <div style={{fontWeight:700,color:"var(--acc)",fontSize:13,marginBottom:4}}>{labels[key]||key}</div>
+                  {cleanArr.map(function(line,li){return <div key={li} style={{color:"#aaa"}}>{line}</div>;})}
+                  {showRM&&cleanArr.length>1&&<div style={{color:"#8888bb",marginTop:2}}>Sous-total = {key==="hp"?cleanArr.reduce(function(a,l){var m2=l.match(/\+\s*(\d+)/);return a+(m2?parseInt(m2[1]):0);},0)||"...":key==="crit"||key==="dodge"||key==="rgHp"?"...":fmtPM(1+cleanArr.reduce(function(a,l){var m2=l.match(/([+-]\d+)%/);return a+(m2?parseInt(m2[1])/100:0);},0))}</div>}
+                  {showRM&&<div style={{color:"#8888bb"}}>{rar2>=1?"Bonus de rareté : ×"+(1+rar2*0.10).toFixed(2):"" }{mast2>0?" + Bonus de maîtrise : ×"+(1+mast2*0.05).toFixed(2):""}{(rar2>=1||mast2>0)?" = ×"+rmMult2.toFixed(2):""}</div>}
+                  <div style={{fontWeight:700,color:totalCol,marginTop:4,fontSize:13}}>Total = {total}</div>
+                </div>;
+              }).filter(Boolean);
+            })()}
           </div>
           <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
         </div>
@@ -1255,7 +1272,7 @@ export default function Game(){
           </div>}
         </div>;})}
       </div>}
-      {dun&&<div>
+      {dun&&<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 120px)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -1263,7 +1280,7 @@ export default function Game(){
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
           </div>
         </div>
-        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:360,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>{dun&&DG[dun.ti]&&DG[dun.ti].bg&&<div style={{position:"absolute",inset:0,backgroundImage:"url("+DG[dun.ti].bg+")",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15,pointerEvents:"none"}}/>}
+        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",flex:"0 0 auto",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>{dun&&DG[dun.ti]&&DG[dun.ti].bg&&<div style={{position:"absolute",inset:0,backgroundImage:"url("+DG[dun.ti].bg+")",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15,pointerEvents:"none"}}/>}
           {dun.ph==="combat"&&<div style={{width:"100%",position:"relative",zIndex:1}}>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>{dun.en.map(function(e){return <Unit key={e.uid} u={e} isE act={dun.tO[dun.tI%dun.tO.length]===e.uid} sel={tgt===e.uid} onClick={e.hp>0?function(){setTgt(e.uid);}:undefined}/>;})}</div>
             <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
@@ -1275,7 +1292,13 @@ export default function Game(){
           {dun.ph==="explore"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
           {dun.ph==="done"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div>
             {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:4,marginBottom:8,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}{fb.equip?" · 🎁 "+fb.equip:""}{fb.tomes?" · 📖 "+Object.keys(fb.tomes).map(function(tk){var tm=TOMES.find(function(t){return t.id===tk;});return fb.tomes[tk]+"× "+(tm?tm.name:tk);}).join(", "):""}</div>;return null;})()}
-            <div style={{fontSize:14,fontWeight:600,color:"var(--t)",marginTop:4,padding:8,background:"#ffffff06",borderRadius:6}}>Récompenses totales : 💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div>
+            <div style={{fontSize:13,color:"var(--t)",marginTop:4,padding:8,background:"#ffffff06",borderRadius:6,textAlign:"left"}}>
+              <div style={{fontWeight:700,marginBottom:4,textAlign:"center"}}>Récompenses totales</div>
+              <div>💰 {dun.rG.toLocaleString()} pièces d'or</div>
+              <div>⭐ {dun.rX.toLocaleString()} points d'expérience</div>
+              <div>🎁 {dun.rE.length} pièce{dun.rE.length>1?"s":""} d'équipement</div>
+              {(function(){var bt2=g.beaten||[];var fb2=DG[dun.ti]&&DG[dun.ti].firstBonus;if(!fb2||bt2.indexOf(dun.ti)>=0)return null;return <div>{fb2.scrolls?<div>📜 {fb2.scrolls} parchemin{fb2.scrolls>1?"s":""} d'invocation</div>:null}{fb2.tomes?Object.keys(fb2.tomes).map(function(tk){var tm2=TOMES.find(function(t){return t.id===tk;});return <div key={tk}>📖 {fb2.tomes[tk]}× {tm2?tm2.name:tk}</div>;}):null}</div>;})()}
+            </div>
             <button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
         </div>
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>
@@ -1287,7 +1310,7 @@ export default function Game(){
           <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
         </div>}
         {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&<button className="b" disabled={au} onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14,opacity:au?0.3:1}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
-        <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:200,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
+        <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,flex:1,overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
           {logs.map(function(l,i){var txt=l.t||"";var tp=l.tp||"";
             var col;
             if(tp==="heroAtk")col="#90ee90"; // hero attack = light green
@@ -1300,29 +1323,34 @@ export default function Game(){
             else if(tp==="info")col="#ddddf4"; // info = white
             else if(txt.indexOf("───")>=0)col="#444"; // separator
             else col="#ddddf4";
-            return <div key={i} style={{color:col,position:"relative",cursor:l.st?"help":"default",padding:"1px 0"}}
+            return <div key={i} style={{color:col,position:"relative",cursor:l.st?"pointer":"default",padding:"1px 0"}}
               onClick={function(){if(l.st)setHl(hl===i?null:i);}}>
               {txt}
             </div>;
           })}
         </div>
-        {hl!=null&&logs[hl]&&logs[hl].st&&<div style={{background:"#1a1818f8",border:"1px solid #c0392b60",borderRadius:10,padding:10,fontSize:12,fontFamily:"monospace",color:"#ccc",whiteSpace:"pre-line",boxShadow:"0 4px 20px rgba(0,0,0,0.8)",marginTop:4}}>
-          <div style={{fontWeight:700,color:"#c0392b",marginBottom:6,fontSize:13}}>Détail du calcul</div>
-          {logs[hl].st.res==="miss"&&"Précision "+Math.round((logs[hl].st.prec||.95)*100)+"% → Raté !"}
-          {logs[hl].st.res==="dodged"&&"Esquive "+Math.round((logs[hl].st.dg||0)*100)+"% → Esquivé !"}
-          {logs[hl].st.res==="hit"&&<div>
-            {"Dégâts "+(logs[hl].st.wt==="magical"?"du sort":"de l'arme")+" : "+logs[hl].st.bd+" ("+(logs[hl].st.wt==="magical"?"magique":"physique")+")\n"}
-            {logs[hl].st.strB!=null&&"Force attaquant : "+fmtPM(logs[hl].st.strB+1)+"\n"}
-            {logs[hl].st.magB!=null&&"Magie attaquant : "+fmtPM(logs[hl].st.magB+1)+"\n"}
-            {logs[hl].st.phvB!=null&&"Vuln. Physique cible : "+fmtPM(logs[hl].st.phvB+1)+"\n"}
-            {logs[hl].st.mavB!=null&&"Vuln. Magique cible : "+fmtPM(logs[hl].st.mavB+1)+"\n"}
-            {"Multiplicateur combiné : "+fmtPM(logs[hl].st.mult)+"\n"}
-            {logs[hl].st.v!=null&&"Variance : "+Math.round(logs[hl].st.v*100)+"%\n"}
-            {logs[hl].st.cr&&"Critique : ×3\n"}
-            {logs[hl].st.eRes!=null&&logs[hl].st.eRes!==1&&("Vuln. élém. ("+logs[hl].st.el+") : "+fmtEV(logs[hl].st.eRes)+"\n")}
-            {"= "+logs[hl].st.dmg+" dégâts"}
-          </div>}
-        </div>}
+        {hl!=null&&logs[hl]&&logs[hl].st&&<div onClick={function(){setHl(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:380,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+            <div style={{fontWeight:700,color:"#c0392b",marginBottom:8,fontSize:14,fontFamily:"Cinzel"}}>Détail du calcul</div>
+            <div style={{fontSize:13,fontFamily:"monospace",color:"#ccc",lineHeight:2}}>
+              {logs[hl].st.res==="miss"&&<div>Précision {Math.round((logs[hl].st.prec||.95)*100)}% \u2192 Raté !</div>}
+              {logs[hl].st.res==="dodged"&&<div>Esquive {Math.round((logs[hl].st.dg||0)*100)}% \u2192 Esquivé !</div>}
+              {logs[hl].st.res==="hit"&&<div>
+                <div>Dégâts de base : {logs[hl].st.bd} ({logs[hl].st.wt==="magical"?"magique":"physique"})</div>
+                {logs[hl].st.strB!=null&&Math.abs(logs[hl].st.strB)>0.005&&<div>Force attaquant : {fmtPM(logs[hl].st.strB+1)}</div>}
+                {logs[hl].st.magB!=null&&Math.abs(logs[hl].st.magB)>0.005&&<div>Magie attaquant : {fmtPM(logs[hl].st.magB+1)}</div>}
+                {logs[hl].st.phvB!=null&&Math.abs(logs[hl].st.phvB)>0.005&&<div>Vuln. Physique cible : {fmtPM(logs[hl].st.phvB+1)}</div>}
+                {logs[hl].st.mavB!=null&&Math.abs(logs[hl].st.mavB)>0.005&&<div>Vuln. Magique cible : {fmtPM(logs[hl].st.mavB+1)}</div>}
+                <div>Multiplicateur : {fmtPM(logs[hl].st.mult)}</div>
+                {logs[hl].st.v!=null&&<div>Variance : {Math.round(logs[hl].st.v*100)}%</div>}
+                {logs[hl].st.cr&&<div style={{color:"#fbbf24"}}>Critique : \u00d73</div>}
+                {logs[hl].st.eRes!=null&&logs[hl].st.eRes!==1&&<div>Vuln. élém. ({logs[hl].st.el}) : {fmtEV(logs[hl].st.eRes)}</div>}
+                <div style={{fontWeight:700,marginTop:4,color:"var(--t)"}}>= {logs[hl].st.dmg} dégâts</div>
+              </div>}
+            </div>
+            <button className="b" onClick={function(){setHl(null);}} style={{marginTop:10,width:"100%",fontSize:13}}>Fermer</button>
+          </div>
+        </div></div>}
       </div>}
     </div>}
 
