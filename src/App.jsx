@@ -68,21 +68,21 @@ function cs(hero,bl){
   s.hp=Math.floor((bHp+eqHp)*(1+rmBonus));if(eqPvPct>0){var pvB=Math.floor(s.hp*eqPvPct);s.hp+=pvB;}
   s.str=isMagHero?bStr:applyRM(bStr,eqStr);
   s.mag=isMagHero?applyRM(bMag,eqMag):bMag;
-  s.crit=(bCrit+eqCrit)*rmMult;
+  s.crit=bCrit+eqCrit;
   s.phv=applyRM(bPhv,eqPhv);
   s.mav=applyRM(bMav,eqMav);
-  s.dodge=(bDodge+eqDodge)*rmMult;
-  s.rgHp=(bRgHp+eqRgHp)*rmMult;
+  s.dodge=bDodge+eqDodge;
+  s.rgHp=bRgHp+eqRgHp;
   s.rel=Math.max(1,bRel+eqRel);
   s.relBonus=eqRel;
   // Add multiplier info to tooltips (exclude non-pertinent stat)
   if(rmBonus>0){
     var rmLabel="";if(rar>=1)rmLabel+="Rareté +"+Math.round(rar*10)+"%";if(mast>0)rmLabel+=(rmLabel?" + ":"")+"Maîtrise +"+Math.round(mast*5)+"%";
     rmLabel+=" \u2192 \u00d7"+rmMult.toFixed(2);
-    _s.hp.push(rmLabel);if(!isMagHero)_s.str.push(rmLabel);if(isMagHero)_s.mag.push(rmLabel);_s.crit.push(rmLabel);_s.phv.push(rmLabel);_s.mav.push(rmLabel);_s.dodge.push(rmLabel);if(bRgHp+eqRgHp>0)_s.rgHp.push(rmLabel);
+    _s.hp.push(rmLabel);if(!isMagHero)_s.str.push(rmLabel);if(isMagHero)_s.mag.push(rmLabel);_s.phv.push(rmLabel);_s.mav.push(rmLabel);
   }
   // Final values in tooltips (exclude non-pertinent stat)
-  _s.hp.push("= "+s.hp);if(!isMagHero)_s.str.push("= "+fmtPM(s.str));if(isMagHero)_s.mag.push("= "+fmtPM(s.mag));_s.crit.push("= "+fmtPct(s.crit));_s.phv.push("= "+fmtPM(s.phv));_s.mav.push("= "+fmtPM(s.mav));_s.dodge.push("= "+fmtPct(s.dodge));if(s.rgHp>0)_s.rgHp.push("= "+fmtPct(s.rgHp));
+  if(_s.hp.length>1)_s.hp.push("= "+s.hp);if(!isMagHero&&_s.str.length>1)_s.str.push("= "+fmtPM(s.str));if(isMagHero&&_s.mag.length>1)_s.mag.push("= "+fmtPM(s.mag));if(_s.crit.length>1)_s.crit.push("= "+fmtPct(s.crit));if(_s.phv.length>1)_s.phv.push("= "+fmtPM(s.phv));if(_s.mav.length>1)_s.mav.push("= "+fmtPM(s.mav));if(_s.dodge.length>1)_s.dodge.push("= "+fmtPct(s.dodge));if(s.rgHp>0&&_s.rgHp.length>1)_s.rgHp.push("= "+fmtPct(s.rgHp));
   s.crit=clamp(s.crit,0,.8);s.dodge=clamp(s.dodge,0,.5);
   for(var ei=0;ei<EL.length;ei++){var ek2=EL[ei];s.er[ek2]=Math.max(0,s.er[ek2]||1);}
   return s;
@@ -596,14 +596,18 @@ export default function Game(){
           <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontWeight:700,fontSize:16}}>Niveau {hero.level}</span><span style={{fontSize:13,color:"#8888bb",fontFamily:"monospace"}}>XP {hero.xp}/{xn}</span></div>
             <div style={{height:7,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"#a855f7",transition:"width .3s"}}/></div>
-            <div style={{display:"flex",gap:6}}>
-              <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:13,fontWeight:canLv?800:600}}>Gain de niveau</button>
-              <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:13}}>Entraînement</button>
-              <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{flex:1,fontSize:13}}>Maîtrise</button>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <div style={{display:"flex",gap:6}}>
+                <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:13,fontWeight:canLv?800:600}}>Gain de niveau</button>
+                <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:13}}>Entraînement</button>
+                <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{flex:1,fontSize:13}}>Maîtrise</button>
+              </div>
+              <div style={{display:"flex",gap:6}}>
               {(function(){var teamFull=g.team.indexOf(null)<0&&!inTeam;
                 if(teamFull)return <button className="b" disabled style={{flex:1,fontSize:14,fontWeight:700,opacity:0.3}}>Équipe complète</button>;
-                return <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:14,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>;
+                return <button className={"b "+(inTeam?"br":"bgr")} onClick={function(){doTogTeam(hero.uid);setSheet(null);}} style={{flex:1,fontSize:13,fontWeight:700}}>{inTeam?"▼ Retirer":"▲ Ajouter"}</button>;
               })()}
+              </div>
             </div>
           </div>
           {(function(){
@@ -947,31 +951,31 @@ export default function Game(){
             {/* 3 lines: Type, Rang, Rareté — show item names */}
             <div style={{marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
-                <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Type</span>
+                <span style={{fontSize:12,color:"var(--td)",minWidth:45}}>Type</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i-1+4)%4]}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:130,textAlign:"center",fontSize:13,fontWeight:600}}>{SLOT_NAMES[fs.slot]+" inerte"}</div>
+                  <div style={{minWidth:80,textAlign:"center",fontSize:12,fontWeight:600}}>{SLOT_NAMES[fs.slot]+" inerte"}</div>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i+1)%4]}));setFResult(null);}}>▶</button>
                 </div>
-                <span style={{fontSize:11,color:hasInerte?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[inerteKey]||0} en stock</span>
+                <span style={{fontSize:11,color:hasInerte?"#4ade80":"#ef4444",minWidth:50,textAlign:"right",fontSize:10}}>{m[inerteKey]||0}</span>
               </div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
-                <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Rang</span>
+                <span style={{fontSize:12,color:"var(--td)",minWidth:45}}>Rang</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.max(1,fs.rank-1)}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:130,textAlign:"center",fontSize:13,fontWeight:600}}>{GABARIT_NAMES[fs.rank]+" (Rang "+fs.rank+")"}</div>
+                  <div style={{minWidth:80,textAlign:"center",fontSize:11,fontWeight:600}}>{GABARIT_NAMES[fs.rank]}</div>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.min(15,fs.rank+1)}));setFResult(null);}}>▶</button>
                 </div>
-                <span style={{fontSize:11,color:hasGab?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[gabKey]||0} en stock</span>
+                <span style={{fontSize:11,color:hasGab?"#4ade80":"#ef4444",minWidth:50,textAlign:"right",fontSize:10}}>{m[gabKey]||0}</span>
               </div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0"}}>
-                <span style={{fontSize:13,color:"var(--td)",minWidth:60}}>Rareté</span>
+                <span style={{fontSize:12,color:"var(--td)",minWidth:45}}>Rareté</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.max(1,fs.rar-1)}));setFResult(null);}}>◀</button>
-                  <div style={{minWidth:130,textAlign:"center",fontSize:13,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{CATA_NAMES[fs.rar]}</div>
+                  <div style={{minWidth:80,textAlign:"center",fontSize:12,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s}</div>
                   <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.min(5,fs.rar+1)}));setFResult(null);}}>▶</button>
                 </div>
-                <span style={{fontSize:11,color:hasCata?"#4ade80":"#ef4444",minWidth:80,textAlign:"right"}}>{m[cataKey]||0} en stock</span>
+                <span style={{fontSize:11,color:hasCata?"#4ade80":"#ef4444",minWidth:50,textAlign:"right",fontSize:10}}>{m[cataKey]||0}</span>
               </div>
             </div>
             {/* Live preview */}
@@ -1253,7 +1257,7 @@ export default function Game(){
       </div>}
       {dun&&<div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
+          <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             {au&&<div style={{padding:"6px 12px",borderRadius:10,background:"#c0392b",color:"#fff",fontSize:12,fontWeight:800,opacity:1,animation:"blink 2s ease-in-out infinite"}}>AUTO</div>}
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
@@ -1269,8 +1273,9 @@ export default function Game(){
           {dun.ph==="event"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:16,fontWeight:700,color:"#c0392b"}}>✨ Victoire !</div></div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
-          {dun.ph==="done"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div><div style={{fontSize:13,color:"var(--td)"}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div>
-            {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:6,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}{fb.equip?" · 🎁 "+fb.equip:""}{fb.tomes?" · 📖 "+Object.keys(fb.tomes).map(function(tk){var tm=TOMES.find(function(t){return t.id===tk;});return fb.tomes[tk]+"× "+(tm?tm.name:tk);}).join(", "):""}</div>;return null;})()}
+          {dun.ph==="done"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div>
+            {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:4,marginBottom:8,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}{fb.equip?" · 🎁 "+fb.equip:""}{fb.tomes?" · 📖 "+Object.keys(fb.tomes).map(function(tk){var tm=TOMES.find(function(t){return t.id===tk;});return fb.tomes[tk]+"× "+(tm?tm.name:tk);}).join(", "):""}</div>;return null;})()}
+            <div style={{fontSize:14,fontWeight:600,color:"var(--t)",marginTop:4,padding:8,background:"#ffffff06",borderRadius:6}}>Récompenses totales : 💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {dun.rE.length} objets</div>
             <button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
         </div>
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>
