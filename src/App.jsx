@@ -82,8 +82,7 @@ function cs(hero,bl){
     _s.hp.push(rmLabel);if(!isMagHero)_s.str.push(rmLabel);if(isMagHero)_s.mag.push(rmLabel);_s.phv.push(rmLabel);_s.mav.push(rmLabel);
   }
   // Final values in tooltips (exclude non-pertinent stat)
-  if(_s.hp.length>1)_s.hp.push("= "+s.hp);if(!isMagHero&&_s.str.length>1)_s.str.push("= "+fmtPM(s.str));if(isMagHero&&_s.mag.length>1)_s.mag.push("= "+fmtPM(s.mag));if(_s.crit.length>1)_s.crit.push("= "+fmtPct(s.crit));if(_s.phv.length>1)_s.phv.push("= "+fmtPM(s.phv));if(_s.mav.length>1)_s.mav.push("= "+fmtPM(s.mav));if(_s.dodge.length>1)_s.dodge.push("= "+fmtPct(s.dodge));if(s.rgHp>0&&_s.rgHp.length>1)_s.rgHp.push("= "+fmtPct(s.rgHp));
-  s.crit=clamp(s.crit,0,.8);s.dodge=clamp(s.dodge,0,.5);
+  var _sub={};function subPM(b,e){return 1+(b-1)+e;}_sub.hp=bHp+eqHp;_sub.str=subPM(bStr,eqStr);_sub.mag=subPM(bMag,eqMag);_sub.crit=bCrit+eqCrit;_sub.phv=subPM(bPhv,eqPhv);_sub.mav=subPM(bMav,eqMav);_sub.dodge=bDodge+eqDodge;_sub.rgHp=bRgHp+eqRgHp;s._sub=_sub;
   for(var ei=0;ei<EL.length;ei++){var ek2=EL[ei];s.er[ek2]=Math.max(0,s.er[ek2]||1);}
   return s;
 }
@@ -728,7 +727,7 @@ export default function Game(){
                 return <div key={key} style={{marginBottom:10,padding:8,background:"#ffffff04",borderRadius:6}}>
                   <div style={{fontWeight:700,color:"var(--acc)",fontSize:13,marginBottom:4}}>{labels[key]||key}</div>
                   {cleanArr.map(function(line,li){return <div key={li} style={{color:"#aaa"}}>{line}</div>;})}
-                  {showRM&&cleanArr.length>1&&<div style={{color:"#8888bb",marginTop:2}}>Sous-total = {key==="hp"?cleanArr.reduce(function(a,l){var m2=l.match(/\+\s*(\d+)/);return a+(m2?parseInt(m2[1]):0);},0)||"...":key==="crit"||key==="dodge"||key==="rgHp"?"...":fmtPM(1+cleanArr.reduce(function(a,l){var m2=l.match(/([+-]\d+)%/);return a+(m2?parseInt(m2[1])/100:0);},0))}</div>}
+                  {showRM&&cleanArr.length>1&&<div style={{color:"#8888bb",marginTop:2}}>Sous-total = {key==="hp"?st._sub[key]:(key==="crit"||key==="dodge"||key==="rgHp"?fmtPct(st._sub[key]):fmtPM(st._sub[key]))}</div>}
                   {showRM&&<div style={{color:"#8888bb"}}>{rar2>=1?"Bonus de rareté : ×"+(1+rar2*0.10).toFixed(2):"" }{mast2>0?" + Bonus de maîtrise : ×"+(1+mast2*0.05).toFixed(2):""}{(rar2>=1||mast2>0)?" = ×"+rmMult2.toFixed(2):""}</div>}
                   <div style={{fontWeight:700,color:totalCol,marginTop:4,fontSize:13}}>Total = {total}</div>
                 </div>;
