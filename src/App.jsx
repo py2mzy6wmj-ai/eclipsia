@@ -810,11 +810,10 @@ export default function Game(){
                     <button style={{fontSize:9,padding:"2px 5px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer"}} onClick={function(e){doSell(it.uid,e);}}>💰</button>
                   </div>
                 </div>
-                <div style={{fontSize:11,marginTop:4,display:"flex",gap:10}}>
-                  {(hpDiff!==0||dmgDiff!==0)&&<span style={{display:"contents"}}>{hpDiff!==0&&<span style={{color:hpDiff>0?"#4ade80":"#ef4444"}}>🩸 {hpDiff>0?"+":""}{hpDiff}</span>}
+                {(hpDiff!==0||dmgDiff!==0)&&<div style={{fontSize:11,marginTop:4,display:"flex",gap:10}}>
+                  {hpDiff!==0&&<span style={{color:hpDiff>0?"#4ade80":"#ef4444"}}>🩸 {hpDiff>0?"+":""}{hpDiff}</span>}
                   {dmgDiff!==0&&<span style={{color:dmgDiff>0?"#4ade80":"#ef4444"}}>{iM3?"🔮":"⚔️"} {dmgDiff>0?"+":""}{dmgDiff}</span>}
-                  
-                </div>
+                </div>}
               </div>;
             })}
             {!compatible.length&&<div style={{textAlign:"center",padding:16,color:"#444",fontSize:12}}>Aucun {slotLabel.toLowerCase()} disponible</div>}
