@@ -583,90 +583,47 @@ export default function Game(){
 
       /* level up is now a popup, rendered at end of sheet */
 
-      return(<div style={{position:"fixed",inset:0,background:"var(--bg)",zIndex:100,overflowY:"auto"}}><style>{css}</style>
-        <div style={{maxWidth:540,margin:"0 auto",padding:"12px 12px 24px"}}>
-          {/* TOP BAR: back + nav arrows */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{fontSize:13}}>\u2190 Retour</button>
-            <div style={{display:"flex",gap:6}}>
-              <button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{fontSize:18,padding:"8px 16px",fontWeight:900}}>\u25c0</button>
-              <button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{fontSize:18,padding:"8px 16px",fontWeight:900}}>\u25b6</button>
+      return(<div style={{position:"fixed",inset:0,background:"var(--bg)",zIndex:100,display:"flex",flexDirection:"column"}}><style>{css}</style>
+        <div style={{flex:1,overflowY:"auto",maxWidth:540,margin:"0 auto",width:"100%",padding:"10px 12px 16px",display:"flex",flexDirection:"column"}}>
+          <div style={{marginBottom:8}}><button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{fontSize:13}}>← Retour</button></div>
+          <div style={{background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"50",borderRadius:16,padding:14,marginBottom:8,position:"relative"}}>
+            <div style={{position:"absolute",top:12,right:16,fontSize:28,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>{hero.level}</div>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <Portrait id={hero.id} size={64} fs={32} icon={hero.icon}/>
+              <div style={{flex:1}}><div style={{fontSize:18,fontWeight:800,fontFamily:"Cinzel"}}>{hero.name}</div><div style={{fontSize:11,color:"#8888bb"}}>{ht?ht.title:""}</div><div style={{fontSize:12,color:rc,fontWeight:700}}>{(RA[hero.rarity]||{}).s} {(RA[hero.rarity]||{}).n}</div><div style={{fontSize:11,color:"var(--td)",marginTop:2}}>Maîtrise {hero.mastery||0}/10</div></div>
             </div>
+            <div style={{height:4,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginTop:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"var(--acc)",transition:"width .3s"}}/></div>
+            <div style={{fontSize:10,color:"var(--td)",marginTop:3,textAlign:"right"}}>XP {hero.xp}/{xn}</div>
           </div>
-
-          {/* HERO CARD: portrait + name + rarity + level + mastery */}
-          <div style={{background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"50",borderRadius:16,padding:16,marginBottom:12}}>
-            <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <Portrait id={hero.id} size={72} fs={36} icon={hero.icon}/>
-              <div style={{flex:1}}>
-                <div style={{fontSize:20,fontWeight:800,fontFamily:"Cinzel"}}>{hero.name}</div>
-                <div style={{fontSize:12,color:"#8888bb"}}>{ht?ht.title:""}</div>
-                <div style={{fontSize:13,color:rc,fontWeight:700}}>{(RA[hero.rarity]||{}).s} {(RA[hero.rarity]||{}).n}</div>
-                <div style={{display:"flex",gap:12,fontSize:12,color:"var(--td)",marginTop:4}}>
-                  <span>Nv. {hero.level}</span>
-                  <span>Ma\u00eetrise {hero.mastery||0}/10</span>
-                </div>
-              </div>
-            </div>
-            <div style={{height:5,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginTop:10}}>
-              <div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"var(--acc)",transition:"width .3s"}}/>
-            </div>
-            <div style={{fontSize:11,color:"var(--td)",marginTop:4,textAlign:"right"}}>XP {hero.xp}/{xn}</div>
+          {(function(){var isMag2=ht&&ht.wt==="magical";var ms2=isMag2?st.mag:st.str;var dmgAvg=Math.round(w.dmg*Math.max(0.1,ms2));var wrongType2=isMag2!==(w.wt==="magical");var dmgCol=wrongType2?"#ef4444":ms2>=1?"#4ade80":"#facc15";
+            return <div style={{background:"var(--card)",borderRadius:12,padding:12,marginBottom:8,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-around",alignItems:"center"}}>
+              <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800}}>🩸 {st.hp}</div><div style={{fontSize:10,color:"var(--td)"}}>Points de vie</div></div>
+              <div style={{width:1,height:36,background:"var(--brd)"}}/>
+              <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:dmgCol}}>{isMag2?"🔮":"⚔️"} ~{dmgAvg}</div><div style={{fontSize:10,color:"var(--td)"}}>Dégâts {isMag2?"magiques":"physiques"}{wrongType2?" ⚠":""}</div></div>
+            </div>;})()}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+            {["weapon","armor","accessory","talisman"].map(function(sl){var it2=hero.equipment?hero.equipment[sl]:null;var slIcons={weapon:"🗡️ Arme",armor:"🛡️ Armure",accessory:"💍 Accessoire",talisman:"🔮 Talisman"};
+              return <div key={sl} onClick={function(){setInfoPopup("equip_"+sl);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,cursor:"pointer",minHeight:56}}>
+                <div style={{fontSize:11,color:"var(--td)",fontWeight:600,marginBottom:3}}>{slIcons[sl]}</div>
+                {it2?<div><div style={{fontSize:12,color:(RA[it2.rarity]||{}).c||"var(--t)",fontWeight:700}}>{it2.name}</div>
+                  {it2.bon&&<div style={{fontSize:10,color:"var(--td)",marginTop:2}}>{Object.keys(it2.bon).filter(function(k){return k!=="er"&&it2.bon[k];}).map(function(k){var v=it2.bon[k];var labels={hp:"PV",str:"Force",mag:"Magie",crit:"Crit",phv:"V.Phy",mav:"V.Mag",dodge:"Esq",rgHp:"Récup",rel:"Rech",pvPct:"PV%"};if(typeof v==="number"){if(k==="hp")return labels[k]+"+"+v;if(k==="rel")return labels[k]+(v>0?"+":"")+v;return labels[k]||k;}return null;}).filter(Boolean).join(" · ")}</div>}
+                </div>:<div style={{fontSize:11,color:"#555",fontStyle:"italic"}}>Vide</div>}
+              </div>;})}
           </div>
-
-          {/* STATS + EQUIP ROW */}
-          <div style={{display:"flex",gap:10,marginBottom:12}}>
-            {/* LEFT: PV + Dégâts */}
-            <div style={{flex:1,background:"var(--card)",borderRadius:12,padding:14,border:"1px solid var(--brd)",display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
-              {(function(){
-                var isMag2=ht&&ht.wt==="magical";var ms2=isMag2?st.mag:st.str;
-                var dmgAvg=Math.round(w.dmg*Math.max(0.1,ms2));
-                var wrongType2=isMag2!==(w.wt==="magical");
-                return <div>
-                  <div style={{fontSize:24,fontWeight:800}}>\ud83e\ude78 {st.hp}</div>
-                  <div style={{fontSize:10,color:"var(--td)"}}>Points de vie</div>
-                  <div style={{fontSize:24,fontWeight:800,marginTop:8,color:wrongType2?"#ef4444":ms2>=1?"#4ade80":"#facc15"}}>{isMag2?"\ud83d\udd2e":"\u2694\ufe0f"} ~{dmgAvg}</div>
-                  <div style={{fontSize:10,color:"var(--td)"}}>{isMag2?"Magique":"Physique"}{wrongType2?" \u26a0":""}</div>
-                </div>;
-              })()}
-            </div>
-            {/* RIGHT: 4 equipment slots */}
-            <div style={{flex:1,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              {["weapon","armor","accessory","talisman"].map(function(sl){
-                var it2=hero.equipment?hero.equipment[sl]:null;
-                var icons={weapon:"\ud83d\udde1\ufe0f",armor:"\ud83d\udee1\ufe0f",accessory:"\ud83d\udc8d",talisman:"\ud83d\udd2e"};
-                var names={weapon:"Arme",armor:"Armure",accessory:"Accessoire",talisman:"Talisman"};
-                return <div key={sl} onClick={function(){setInfoPopup("equip_"+sl);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:8,cursor:"pointer",textAlign:"center",minHeight:60,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                  <div style={{fontSize:16}}>{icons[sl]}</div>
-                  {it2?<div style={{fontSize:9,color:(RA[it2.rarity]||{}).c||"var(--t)",fontWeight:600,lineHeight:1.2,marginTop:2}}>{it2.name}</div>
-                  :<div style={{fontSize:9,color:"#444",marginTop:2}}>{names[sl]}</div>}
-                </div>;
-              })}
-            </div>
-          </div>
-
-          {/* ACTION BUTTONS: 2 rows of 3 */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
             <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{padding:"12px 0",fontSize:12,fontWeight:canLv?800:600}}>Gain de niveau</button>
-            <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entra\u00eenement</button>
-            <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12}}>Ma\u00eetrise</button>
+            <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entraînement</button>
+            <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12}}>Maîtrise</button>
             <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
-            <button className="b" onClick={function(){setCp(function(p){return Object.assign({},p,{skill:!p.skill});});}} style={{padding:"12px 0",fontSize:12}}>Comp\u00e9tence</button>
-            <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bient\u00f4t</button>
+            <button className="b" onClick={function(){setCp(function(p){return Object.assign({},p,{skill:!p.skill});});}} style={{padding:"12px 0",fontSize:12}}>Compétence</button>
+            <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bientôt</button>
           </div>
-
-          {/* SKILL PANEL (expandable, shown below buttons if toggled) */}
-          {cp.skill&&(function(){var sk2=SKILLS[hero.id];if(!sk2)return null;return <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-              <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>\u26a1</div>
-              <div>
-                <div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{sk2.name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {sk2.lvl+(hero.mastery||0)}</span></div>
-                <div style={{fontSize:12,color:"var(--td)"}}>{sk2.desc}</div>
-              </div>
-            </div>
-            <StatRow icon="\u23f3" label="Recharge" val={st.rel} type="flat" suf=" tours"/>
-          </div>;})()}
-
+          {cp.skill&&(function(){var sk2=SKILLS[hero.id];if(!sk2)return null;return <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:8,border:"1px solid var(--brd)"}}><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}><div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div><div><div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{sk2.name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {sk2.lvl+(hero.mastery||0)}</span></div><div style={{fontSize:12,color:"var(--td)"}}>{sk2.desc}</div></div></div><StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours"/></div>;})()}
+          <div style={{flex:1}}/>
+          <div style={{display:"flex",gap:8}}>
+            <button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{flex:1,fontSize:28,padding:"16px 0",fontWeight:900}}>◀</button>
+            <button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{flex:1,fontSize:28,padding:"16px 0",fontWeight:900}}>▶</button>
+          </div>
         </div>
       {infoPopup==="carac"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
