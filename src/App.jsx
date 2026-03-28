@@ -635,6 +635,7 @@ export default function Game(){
             {(function(){var _frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});var _fragC=_frag?(g.conso||{})[_frag.id]||0:0;var _canM=_fragC>=10&&(hero.mastery||0)<10;return <button className={"b "+(_canM?"bgr glow":"")} onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12,fontWeight:_canM?800:400}}>Maîtrise</button>;})()}            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
             <button className="b" onClick={function(){setInfoPopup("skill");}} style={{padding:"12px 0",fontSize:12}}>Compétences</button>
             <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bientôt</button>
+          </div>
 
           <div style={{flex:1}}/>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
