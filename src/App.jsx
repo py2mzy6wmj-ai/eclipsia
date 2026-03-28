@@ -613,8 +613,7 @@ export default function Game(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
             <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{padding:"12px 0",fontSize:12,fontWeight:canLv?800:600}}>Gain de niveau</button>
             <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entraînement</button>
-            (function(){var _frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});var _fragC=_frag?(g.conso||{})[_frag.id]||0:0;var _canM=_fragC>=10&&(hero.mastery||0)<10;return <button className={"b "+(_canM?"bgr glow":"")} onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12,fontWeight:_canM?800:400}}>Maîtrise</button>;})()
-            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
+            {(function(){var _frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});var _fragC=_frag?(g.conso||{})[_frag.id]||0:0;var _canM=_fragC>=10&&(hero.mastery||0)<10;return <button className={"b "+(_canM?"bgr glow":"")} onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12,fontWeight:_canM?800:400}}>Maîtrise</button>;})()}            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
             <button className="b" onClick={function(){setInfoPopup("skill");}} style={{padding:"12px 0",fontSize:12}}>Compétences</button>
             <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bientôt</button>
           </div>
@@ -625,7 +624,7 @@ export default function Game(){
               <span style={{fontWeight:600,color:p.col||"var(--t)"}}>{p.val}</span>
             </div>;}
             return <div style={{background:"var(--card)",borderRadius:12,padding:12,marginBottom:8,border:"1px solid var(--brd)"}}>
-              {!isMag3&&<SR2 icon="💪🏻" label="Force" val={fmtPM(st.str)} col={st.str>=1?"#4ade80":"#facc15"}/>}
+              {!isMag3&&<SR2 icon="💪" label="Force" val={fmtPM(st.str)} col={st.str>=1?"#4ade80":"#facc15"}/>}
               {isMag3&&<SR2 icon="💫" label="Magie" val={fmtPM(st.mag)} col={st.mag>=1?"#4ade80":"#facc15"}/>}
               <SR2 icon="💥" label="Critique" val={fmtPct(st.crit)}/>
               <SR2 icon="🛡️" label="Vuln. Physique" val={fmtPM(st.phv)} col={st.phv<1?"#4ade80":st.phv>1?"#facc15":"var(--t)"}/>
@@ -659,7 +658,7 @@ export default function Game(){
                 var arr=st._s[key];if(!arr||!arr.length)return null;
                 var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);
                 var totalCol=(key==="phv"||key==="mav")?(st[key]<1?"#4ade80":st[key]>1?"#facc15":"#ddddf4"):(key==="hp"||key==="rel"?"#ddddf4":(st[key]>0.001?"#4ade80":"#ddddf4"));
-                var labels={hp:"🩸 Points de vie",str:"💪🏻 Force",mag:"💫 Magie",crit:"💥 Critique",phv:"🛡️ Vuln. Physique",mav:"🔰 Vuln. Magique",dodge:"💨 Esquive",rgHp:"♻️ Récupération",rel:"⏳ Recharge"};
+                var labels={hp:"🩸 Points de vie",str:"💪 Force",mag:"💫 Magie",crit:"💥 Critique",phv:"🛡️ Vuln. Physique",mav:"🔰 Vuln. Magique",dodge:"💨 Esquive",rgHp:"♻️ Récupération",rel:"⏳ Recharge"};
                 // Filter out any "= " or "Rareté" lines from arr (legacy cleanup)
                 var cleanArr=arr.filter(function(line){return line.indexOf("= ")<0&&line.indexOf("Rareté")<0&&line.indexOf("Maîtrise")<0;});
                 var showRM=hasRM&&affectedByRM[key];
