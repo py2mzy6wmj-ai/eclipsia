@@ -147,27 +147,25 @@ function erc(v){return v===0?"#60a5fa":v<.99?"#4ade80":v>1.01?"#facc15":"#ddddf4
 
 function ItemInfo(props){
   var it=props.item;if(!it)return null;var rc=(RA[it.rarity]||{}).c||"#888";
-  var parts=[];var b=it.bon||{};
-  if(b.str)parts.push("Force "+fmtB(b.str));if(b.mag)parts.push("Magie "+fmtB(b.mag));
-  if(b.crt)parts.push("Critique "+fmtB(b.crt));if(b.crit)parts.push("Critique +"+fmtPct(b.crit));
-  if(b.pvPct)parts.push("Points de vie +"+fmtPct(b.pvPct));
-  if(b.rel)parts.push("Recharge "+b.rel+" tour"+(Math.abs(b.rel)>1?"s":""));
-  if(b.phv)parts.push("Vuln. Physique "+fmtB(b.phv));if(b.mav)parts.push("Vuln. Magique "+fmtB(b.mav));
-  if(b.dodge)parts.push("Esquive +"+fmtPct(b.dodge));if(b.rgHp)parts.push("Récupération +"+fmtPct(b.rgHp));
-  if(b.er){for(var ek in b.er){var rv=b.er[ek];var pct=Math.round(Math.abs(rv)*100);parts.push("Vuln. "+((EM[ek]||{}).i||"")+" "+ek+" "+(rv<0?"-":"+")+pct+"%");}}
-  // Header line: slot · Rang X · ★★
+  var b=it.bon||{};
+  var stats=[];
+  if(b.str)stats.push("Force "+fmtB(b.str));if(b.mag)stats.push("Magie "+fmtB(b.mag));
+  if(b.crt)stats.push("Crit "+fmtB(b.crt));if(b.crit)stats.push("Crit +"+fmtPct(b.crit));
+  if(b.pvPct)stats.push("PV +"+fmtPct(b.pvPct));
+  if(b.rel)stats.push("Recharge "+b.rel);
+  if(b.phv)stats.push("V.Phy "+fmtB(b.phv));if(b.mav)stats.push("V.Mag "+fmtB(b.mav));
+  if(b.dodge)stats.push("Esquive +"+fmtPct(b.dodge));if(b.rgHp)stats.push("Récup +"+fmtPct(b.rgHp));
+  if(it.slot==="weapon"&&it.el&&it.el!=="Neutre")stats.push("Attaque "+((EM[it.el]||{}).i||"")+it.el);
+  if(b.er){for(var ek in b.er){var rv=b.er[ek];var pct=Math.round(Math.abs(rv)*100);stats.push(((EM[ek]||{}).i||"")+ek+" "+(rv<0?"-":"+")+pct+"%");}}
   var slotName=it.slot==="weapon"?"Arme":it.slot==="armor"?"Armure":it.slot==="accessory"?"Accessoire":"Talisman";
-  var header=slotName;
-  if(it.rank)header+=" · Rang "+it.rank;
-  // Name line with damage for weapons, HP for armor
-  var line2=it.name;
-  if(it.slot==="weapon"&&it.dmg!=null){line2+=" ("+it.dmg+" "+(it.wt==="magical"?"Magique":"Physique");if(it.el&&it.el!=="Neutre")line2+=", "+((EM[it.el]||{}).i||"")+" "+it.el;line2+=")";}
-  if(it.slot==="armor"&&b.hp){line2+=" ("+b.hp+" points de vie)";}
+  var header=slotName;if(it.rank)header+=" \u00b7 Rang "+it.rank;
   var fs=props.fs||14;
   return(<div>
-    <div style={{fontSize:fs-2,color:rc}}>{header} · {(RA[it.rarity]||{}).s}</div>
-    <div style={{fontWeight:600,fontSize:fs,color:rc}}>{line2}</div>
-    {parts.length>0&&<div style={{fontSize:fs-2,color:"#4ade80",marginTop:1}}>{parts.join(", ")}</div>}
+    <div style={{fontSize:fs-2,color:rc}}>{header} \u00b7 {(RA[it.rarity]||{}).s}</div>
+    <div style={{fontWeight:600,fontSize:fs,color:rc}}>{it.name}</div>
+    {it.slot==="weapon"&&it.dmg!=null&&<div style={{fontSize:fs,fontWeight:700}}>{it.wt==="magical"?"\U0001f4ab":"\u2694\ufe0f"} {it.dmg} {it.wt==="magical"?"Magique":"Physique"}</div>}
+    {it.slot==="armor"&&b.hp&&<div style={{fontSize:fs,fontWeight:700}}>\U0001fa78 +{b.hp} points de vie</div>}
+    {stats.length>0&&<div style={{fontSize:fs-3,color:"#4ade80",marginTop:1}}>{stats.join(", ")}</div>}
   </div>);
 }
 
@@ -625,22 +623,22 @@ export default function Game(){
                   {it2?<span style={{fontSize:12,color:(RA[it2.rarity]||{}).c||"var(--t)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it2.name}</span>
                   :<span style={{fontSize:11,color:"#555",fontStyle:"italic"}}>Vide</span>}
                 </div>
-                <span style={{color:"var(--td)",fontSize:11,marginLeft:6}}>▶</span>
+                <span style={{color:"var(--td)",fontSize:11,marginLeft:6}}>►</span>
               </div>;})}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
             <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{padding:"12px 0",fontSize:12,fontWeight:canLv?800:600}}>Gain de niveau</button>
             <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entraînement</button>
-            {(function(){var _frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});var _fragC=_frag?(g.conso||{})[_frag.id]||0:0;var _canM=_fragC>=10&&(hero.mastery||0)<10;return <button className={"b "+(_canM?"bgr glow":"")} onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12,fontWeight:_canM?800:400}}>Maîtrise</button>;})()}            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
+            {(function(){var _frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});var _fragC=_frag?(g.conso||{})[_frag.id]||0:0;var _canM=_fragC>=10&&(hero.mastery||0)<10;return <button className={"b "+(_canM?"bgr glow":"")} onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12,fontWeight:_canM?800:600}}>Maîtrise</button>;})()}            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
             <button className="b" onClick={function(){setInfoPopup("skill");}} style={{padding:"12px 0",fontSize:12}}>Compétences</button>
             <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bientôt</button>
           </div>
 
           <div style={{flex:1}}/>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{flex:1,fontSize:28,padding:"14px 0",fontWeight:900}}>◀</button>
-            <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{flex:"0 0 auto",fontSize:12,padding:"14px 16px"}}>Retour</button>
-            <button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{flex:1,fontSize:28,padding:"14px 0",fontWeight:900}}>▶</button>
+          <div style={{display:"flex",gap:6}}>
+            <button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{flex:1,fontSize:22,padding:"14px 0",fontWeight:900}}>◄</button>
+            <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{flex:1,fontSize:13,padding:"14px 0"}}>Retour</button>
+            <button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{flex:1,fontSize:22,padding:"14px 0",fontWeight:900}}>►</button>
           </div>
         </div>
       {infoPopup==="carac"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -730,12 +728,10 @@ export default function Game(){
               <span>🩸 {curSt.hp}</span>
               <span>{(function(){var ww=gw(hero);var iM2=ht&&ht.wt==="magical";var ms2=iM2?curSt.mag:curSt.str;return (iM2?"💫":"⚔️")+" ~"+Math.round(ww.dmg*Math.max(0.1,ms2));})()}</span>
             </div>
-            {curItem&&<div style={{padding:10,background:"var(--acc)12",border:"1px solid var(--acc)40",borderRadius:10,marginBottom:6}}>
+            {curItem&&<div style={{padding:10,background:"#ffffff06",border:"1px solid var(--brd)",borderRadius:10,marginBottom:6}}>
               <div style={{fontSize:11,color:"var(--acc)",fontWeight:700,marginBottom:4}}>Équipé actuellement</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <ItemInfo item={curItem} fs={13}/>
-                <button className="b br" style={{fontSize:10,padding:"4px 8px"}} onClick={function(){doUneq(hero.uid,eqSlot);}}>Retirer</button>
-              </div>
+              <ItemInfo item={curItem} fs={13}/>
+              <button className="b" style={{fontSize:11,padding:"6px 0",marginTop:6,width:"100%"}} onClick={function(){doUneq(hero.uid,eqSlot);}}>Retirer</button>
             </div>}
             {!curItem&&<div style={{padding:8,textAlign:"center",color:"#444",fontSize:12,marginBottom:6}}>Aucun {slotLabel.toLowerCase()} équipé</div>}
             {compatible.length>0&&<div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:6}}>Disponibles ({compatible.length})</div>}
@@ -744,19 +740,17 @@ export default function Game(){
               var iM3=ht&&ht.wt==="magical";var ms3=iM3?pSt.mag:pSt.str;var pDmg=Math.round(ww2.dmg*Math.max(0.1,ms3));
               var hpDiff=pSt.hp-curSt.hp;var wCur=gw(hero);var msCur=iM3?curSt.mag:curSt.str;var curDmg=Math.round(wCur.dmg*Math.max(0.1,msCur));var dmgDiff=pDmg-curDmg;
               return <div key={it.uid} style={{padding:8,background:"#ffffff04",border:"1px solid var(--brd)",borderRadius:8,marginBottom:4}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div style={{flex:1}}><ItemInfo item={it} fs={12}/></div>
-                  <button className="b bgr" style={{fontSize:11,padding:"6px 12px",marginLeft:8}} onClick={function(){doEquip(hero.uid,it.uid);setInfoPopup(null);}}>Équiper</button>
-                </div>
+                <ItemInfo item={it} fs={12}/>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4}}>
-                  {(hpDiff!==0||dmgDiff!==0)?<div style={{fontSize:11,display:"flex",gap:8,alignItems:"center"}}>
-                    <span style={{color:"var(--td)",fontSize:10}}>Si équipé :</span>
-                    {hpDiff!==0&&<span style={{color:hpDiff>0?"#4ade80":"#ef4444"}}>🩸 {hpDiff>0?"+":""}{hpDiff}</span>}
-                    {dmgDiff!==0&&<span style={{color:dmgDiff>0?"#4ade80":"#ef4444"}}>{iM3?"💫":"⚔️"} {dmgDiff>0?"+":""}{dmgDiff}</span>}
-                  </div>:<div/>}
+                  <div style={{fontSize:11,display:"flex",gap:8,alignItems:"center"}}>
+                    {(hpDiff!==0||dmgDiff!==0)&&<span style={{color:"var(--td)",fontSize:10}}>Si équipé :</span>}
+                    {hpDiff!==0&&<span style={{color:hpDiff>0?"#4ade80":"#ef4444"}}>🩸{hpDiff>0?"+":""}{hpDiff}</span>}
+                    {dmgDiff!==0&&<span style={{color:dmgDiff>0?"#4ade80":"#ef4444"}}>{iM3?"💫":"⚔️"}{dmgDiff>0?"+":""}{dmgDiff}</span>}
+                  </div>
                   <div style={{display:"flex",gap:4}}>
-                    <button style={{fontSize:10,padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)",background:"#152a15",color:"#4ade80",cursor:"pointer",fontWeight:600}} onClick={function(e){doRecycle(it.uid,e);}}>♻️ Recycler</button>
-                    <button style={{fontSize:10,padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer",fontWeight:600}} onClick={function(e){doSell(it.uid,e);}}>💰 Vendre</button>
+                    <button className="b bgr" style={{fontSize:11,padding:"5px 10px"}} onClick={function(){doEquip(hero.uid,it.uid);setInfoPopup(null);}}>\u00c9quiper</button>
+                    <button style={{fontSize:14,padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)",background:"#152a15",color:"#4ade80",cursor:"pointer"}} onClick={function(e){doRecycle(it.uid,e);}}>\u267b\ufe0f</button>
+                    <button style={{fontSize:14,padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer"}} onClick={function(e){doSell(it.uid,e);}}>\ud83d\udcb0</button>
                   </div>
                 </div>
               </div>;
@@ -984,27 +978,27 @@ export default function Game(){
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
                 <span style={{fontSize:12,color:"var(--td)",minWidth:45}}>Type</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i-1+4)%4]}));setFResult(null);}}>◀</button>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i-1+4)%4]}));setFResult(null);}}>◄</button>
                   <div style={{minWidth:80,textAlign:"center",fontSize:12,fontWeight:600}}>{SLOT_NAMES[fs.slot]+" inerte"}</div>
-                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i+1)%4]}));setFResult(null);}}>▶</button>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){var i=SLOT_KEYS.indexOf(fs.slot);setFs(Object.assign({},fs,{slot:SLOT_KEYS[(i+1)%4]}));setFResult(null);}}>►</button>
                 </div>
                 <span style={{fontSize:11,color:hasInerte?"#4ade80":"#ef4444",minWidth:50,textAlign:"right",fontSize:10}}>{m[inerteKey]||0}</span>
               </div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #ffffff08"}}>
                 <span style={{fontSize:12,color:"var(--td)",minWidth:45}}>Rang</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.max(1,fs.rank-1)}));setFResult(null);}}>◀</button>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.max(1,fs.rank-1)}));setFResult(null);}}>◄</button>
                   <div style={{minWidth:80,textAlign:"center",fontSize:11,fontWeight:600}}>{GABARIT_NAMES[fs.rank]}</div>
-                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.min(15,fs.rank+1)}));setFResult(null);}}>▶</button>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rank:Math.min(15,fs.rank+1)}));setFResult(null);}}>►</button>
                 </div>
                 <span style={{fontSize:11,color:hasGab?"#4ade80":"#ef4444",minWidth:50,textAlign:"right",fontSize:10}}>{m[gabKey]||0}</span>
               </div>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0"}}>
                 <span style={{fontSize:12,color:"var(--td)",minWidth:45}}>Rareté</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.max(1,fs.rar-1)}));setFResult(null);}}>◀</button>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.max(1,fs.rar-1)}));setFResult(null);}}>◄</button>
                   <div style={{minWidth:80,textAlign:"center",fontSize:12,fontWeight:600,color:(RA[fs.rar]||{}).c}}>{(RA[fs.rar]||{}).s}</div>
-                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.min(5,fs.rar+1)}));setFResult(null);}}>▶</button>
+                  <button className="b" style={{padding:"4px 10px",fontSize:14}} onClick={function(){setFs(Object.assign({},fs,{rar:Math.min(5,fs.rar+1)}));setFResult(null);}}>►</button>
                 </div>
                 <span style={{fontSize:11,color:hasCata?"#4ade80":"#ef4444",minWidth:50,textAlign:"right",fontSize:10}}>{m[cataKey]||0}</span>
               </div>
@@ -1111,7 +1105,7 @@ export default function Game(){
       <div style={{display:"flex",gap:4,marginBottom:10}}>
         {[["team","Équipe"],["rarity","Rareté"],["level","Niveau"],["dmg","Dégâts"]].map(function(s){return <button key={s[0]} className={"b "+(heroSort===s[0]?"ton":"")} onClick={function(){setHeroSort(s[0]);}} style={{flex:1,fontSize:11}}>{s[1]}</button>;})}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
         {(function(){
           var sorted=[].concat(g.roster);
           if(heroSort==="rarity")sorted.sort(function(a,b){return b.rarity-a.rarity||b.level-a.level;});
@@ -1124,7 +1118,7 @@ export default function Game(){
             var ww2=gw(h);var iM=ww2.wt==="magical";var ms=iM?hst.mag:hst.str;
             var avg=Math.round(ww.dmg*Math.max(0.1,ms));
             var canLv=h.xp>=xpN(h.level,h.rarity);
-            return <div key={h.uid} onClick={function(){setSheet(h.uid);}} style={{display:"flex",alignItems:"center",gap:10,padding:10,background:"var(--card)",border:"1px solid "+rc+"40",borderRadius:12,cursor:"pointer"}}>
+            return <div key={h.uid} onClick={function(){setSheet(h.uid);}} style={{padding:8,background:"var(--card)",border:"1px solid "+rc+"40",borderRadius:12,cursor:"pointer",textAlign:"center",position:"relative"}}>
               <Portrait id={h.id} size={44} fs={22} icon={h.icon} canLv={canLv}/>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -1221,33 +1215,42 @@ export default function Game(){
         <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:15,marginBottom:10}}>Sélection d'équipe</h3>
           <div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe : {team.length}/4 — {DG[teamPick]?DG[teamPick].name:""}</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:10}}>
             {[0,1,2,3].map(function(i){
               var h=g.team[i]?g.roster.find(function(r){return r.uid===g.team[i];}):null;
               if(!h)return <div key={i} style={{padding:12,borderRadius:10,border:"2px dashed #ffffff15",textAlign:"center",color:"#444",fontSize:12}}>Slot {i+1}</div>;
               var hst=cs(h,g.bl);var rc=(RA[h.rarity]||{}).c;
               var ww2=gw(h);var ht3=HEROES.find(function(hh){return hh.id===h.id;});var iM3=ww2.wt==="magical";var ms3=iM3?hst.mag:hst.str;var avg3=Math.round(ww2.dmg*Math.max(0.1,ms3));
               return <div key={i} style={{padding:10,borderRadius:12,background:rc+"12",border:"1px solid "+rc+"40",position:"relative"}}>
-                <button onClick={function(){doTogTeam(h.uid);}} style={{position:"absolute",top:4,right:4,fontSize:10,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer"}}>✕</button>
+
                 <div style={{fontWeight:700,fontSize:13}}>{h.name} <span style={{fontSize:11,color:"var(--td)"}}>Nv.{h.level}</span></div>
                 <div style={{fontSize:10,color:rc,marginBottom:4}}>{(RA[h.rarity]||{}).s}</div>
                 <div style={{display:"flex",gap:10,fontSize:12}}>
                   <span>🩸 {hst.hp}</span>
                   <span>{iM3?"💫":"⚔️"} ~{avg3}</span>
                 </div>
-                <button onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} className="b" style={{fontSize:9,padding:"2px 6px",marginTop:4,width:"100%"}}>Profil</button>
+                <div style={{display:"flex",gap:3,marginTop:4}}>
+                  <button onClick={function(){doTogTeam(h.uid);}} className="b" style={{flex:1,fontSize:9,padding:"3px 0"}}>Retirer</button>
+                  <button onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} className="b" style={{flex:1,fontSize:9,padding:"3px 0"}}>Profil</button>
+                </div>
               </div>;
             })}
           </div>
           <div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:6}}>Réserve</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:12}}>
             {g.roster.filter(function(h){return g.team.indexOf(h.uid)<0;}).map(function(h){
               var rc=(RA[h.rarity]||{}).c;var full=g.team.indexOf(null)<0;
               var hst4=cs(h,g.bl);var ww4=gw(h);var ht4=HEROES.find(function(hh){return hh.id===h.id;});var iM4=ww4.wt==="magical";var ms4=iM4?hst4.mag:hst4.str;var avg4=Math.round(ww4.dmg*Math.max(0.1,ms4));
-              return <div key={h.uid} onClick={function(){if(!full)doTogTeam(h.uid);}} style={{padding:8,borderRadius:10,background:"#ffffff04",border:"1px solid var(--brd)",cursor:full?"default":"pointer",opacity:full?0.4:1}}>
-                <div style={{fontWeight:700,fontSize:12}}>{h.name} <span style={{fontSize:10,color:"var(--td)"}}>Nv.{h.level}</span></div>
-                <div style={{fontSize:10,color:rc,marginBottom:2}}>{(RA[h.rarity]||{}).s}</div>
-                <div style={{display:"flex",gap:8,fontSize:11}}><span>🩸 {hst4.hp}</span><span>{iM4?"💫":"⚔️"} ~{avg4}</span></div>
+              return <div key={h.uid} style={{padding:6,borderRadius:10,background:"#ffffff04",border:"1px solid var(--brd)",opacity:full?0.4:1,textAlign:"center",position:"relative"}}>
+                <div style={{position:"absolute",top:3,right:5,fontSize:12,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>{h.level}</div>
+                <Portrait id={h.id} size={32} fs={16} icon={h.icon}/>
+                <div style={{fontSize:10,fontWeight:700,marginTop:2}}>{h.name}</div>
+                <div style={{fontSize:9,color:rc}}>{(RA[h.rarity]||{}).s}</div>
+                <div style={{fontSize:9,color:"var(--td)"}}>🩸{hst4.hp} {iM4?"💫":"⚔️"}~{avg4}</div>
+                <div style={{display:"flex",gap:3,marginTop:4}}>
+                  <button className="b" disabled={full} onClick={function(){if(!full)doTogTeam(h.uid);}} style={{flex:1,fontSize:9,padding:"3px 0"}}>Ajouter</button>
+                  <button className="b" onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} style={{flex:1,fontSize:9,padding:"3px 0"}}>Profil</button>
+                </div>
               </div>;
             })}
           </div>
@@ -1292,7 +1295,7 @@ export default function Game(){
             if(ready)return <button className="b" onClick={doTurn} style={{flex:1,fontSize:15,fontWeight:900,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",color:"#fff",border:"2px solid #fbbf24",animation:"gw 1.5s infinite",textShadow:"0 0 8px #fbbf2480"}}>⚡ {sk.name}</button>;
             return <button className="b bg" onClick={doTurn} style={{flex:1,fontSize:14}}>⚔️ Attaque</button>;
           })()}
-          <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"▶️ Auto"}</button>
+          <button className={"b "+(au?"br":"")} onClick={function(){setAu(!au);}} style={{flex:1,fontSize:14}}>{au?"⏸ Stop":"►️ Auto"}</button>
         </div>}
         {(dun.ph==="victory"||dun.ph==="event"||dun.ph==="explore")&&<button className="b" disabled={au} onClick={nxtFl} style={{width:"100%",marginBottom:6,fontSize:14,opacity:au?0.3:1}}>➡️ {dun.ph==="explore"?"Commencer":"Continuer"}</button>}
         <div ref={lr} style={{background:"#050510",borderRadius:10,padding:8,maxHeight:"min(200px, calc(100vh - 580px))",overflowY:"auto",fontFamily:"monospace",fontSize:12,lineHeight:1.6,border:"1px solid var(--brd)",position:"relative"}}>
