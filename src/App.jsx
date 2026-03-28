@@ -583,123 +583,90 @@ export default function Game(){
 
       /* level up is now a popup, rendered at end of sheet */
 
-      return(<div onClick={function(e){if(e.target===e.currentTarget){setSheet(null);setSlv(false);}}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:100,overflowY:"auto",padding:"16px 12px"}}><style>{css}</style>
-        <div style={{maxWidth:540,margin:"0 auto",animation:"fi .3s ease"}} onClick={function(e){e.stopPropagation();}}>
+      return(<div style={{position:"fixed",inset:0,background:"var(--bg)",zIndex:100,overflowY:"auto"}}><style>{css}</style>
+        <div style={{maxWidth:540,margin:"0 auto",padding:"12px 12px 24px"}}>
+          {/* TOP BAR: back + nav arrows */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{fontSize:13}}>← Retour</button>
-            <div style={{display:"flex",gap:6}}><button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{fontSize:15,padding:"6px 14px"}}>◀</button><button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{fontSize:15,padding:"6px 14px"}}>▶</button></div>
-          </div>
-          <div style={{background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"50",borderRadius:16,padding:18,marginBottom:12}}>
-            <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <Portrait id={hero.id} size={80} fs={40} icon={hero.icon}/>
-              <div><div style={{fontSize:22,fontWeight:800,fontFamily:"Cinzel"}}>{hero.name}</div><div style={{fontSize:13,color:"#8888bb"}}>{ht?ht.title:""}</div><span style={{fontSize:13,color:rc,fontWeight:700}}>{(RA[hero.rarity]||{}).s} {(RA[hero.rarity]||{}).n}</span></div>
-            </div>
-            {ht&&ht.lore&&<div style={{fontSize:12,color:"#7777aa",marginTop:10,fontStyle:"italic",lineHeight:1.6}}>{ht.lore}</div>}
-          </div>
-          <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontWeight:700,fontSize:16}}>Niveau {hero.level}</span><span style={{fontSize:13,color:"#8888bb",fontFamily:"monospace"}}>XP {hero.xp}/{xn}</span></div>
-            <div style={{height:7,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"#a855f7",transition:"width .3s"}}/></div>
+            <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{fontSize:13}}>\u2190 Retour</button>
             <div style={{display:"flex",gap:6}}>
-              <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{flex:1,fontSize:12,fontWeight:canLv?800:600}}>Gain de niveau</button>
-              <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{flex:1,fontSize:12}}>Entraînement</button>
-              <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{flex:1,fontSize:12}}>Maîtrise</button>
+              <button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{fontSize:18,padding:"8px 16px",fontWeight:900}}>\u25c0</button>
+              <button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{fontSize:18,padding:"8px 16px",fontWeight:900}}>\u25b6</button>
             </div>
           </div>
-          {(function(){
-            function togP(k){setCp(function(p){var o=Object.assign({},p);o[k]=!o[k];return o;});}
-            function PH(props){return <div style={{marginBottom:props.open?0:0}}>
-              <div onClick={function(){togP(props.k);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",padding:"2px 0"}}>
-                <div style={{fontWeight:700,fontSize:15,color:"var(--acc)"}}>{props.label}</div>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  {props.info&&<button onClick={function(e){e.stopPropagation();setInfoPopup(props.k);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button>}
-                  <span style={{fontSize:14,color:"var(--td)",transition:"transform .2s",transform:props.open?"rotate(180deg)":"rotate(0)"}}>▼</span>
+
+          {/* HERO CARD: portrait + name + rarity + level + mastery */}
+          <div style={{background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"50",borderRadius:16,padding:16,marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <Portrait id={hero.id} size={72} fs={36} icon={hero.icon}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:20,fontWeight:800,fontFamily:"Cinzel"}}>{hero.name}</div>
+                <div style={{fontSize:12,color:"#8888bb"}}>{ht?ht.title:""}</div>
+                <div style={{fontSize:13,color:rc,fontWeight:700}}>{(RA[hero.rarity]||{}).s} {(RA[hero.rarity]||{}).n}</div>
+                <div style={{display:"flex",gap:12,fontSize:12,color:"var(--td)",marginTop:4}}>
+                  <span>Nv. {hero.level}</span>
+                  <span>Ma\u00eetrise {hero.mastery||0}/10</span>
                 </div>
               </div>
-              {props.open&&<div style={{height:1,background:"var(--brd)",marginTop:6,marginBottom:8}}/>}
-            </div>;}
-            var ww=gw(hero);var isMag=ht&&ht.wt==="magical";var mainStat=isMag?st.mag:st.str;
-            var dmgMin=Math.round(ww.dmg*Math.max(0.1,mainStat)*0.8);var dmgMax=Math.round(ww.dmg*Math.max(0.1,mainStat)*1.2);
-            var dmgCrit=Math.round(dmgMax*3);
-            var sk=SKILLS[hero.id];var skDmgMin=sk?Math.round(dmgMin*sk.mult):0;var skDmgMax=sk?Math.round(dmgMax*sk.mult):0;
-            return <div>
-              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-                <PH k="carac" label="Caractéristiques" open={cp.carac} info="carac"/>
-                {cp.carac&&<div>
-                  <StatRow icon="🩸" label="Points de vie" val={st.hp} type="flat" tip={mkTip("hp")}/>
-                  <div style={{height:6}}/>
-                  {!isMag&&<StatRow icon="⚔️" label="Force" val={st.str} type="pm" tip={mkTip("str")}/>}
-                  {isMag&&<StatRow icon="🔮" label="Magie" val={st.mag} type="pm" tip={mkTip("mag")}/>}
-                  <StatRow icon="💥" label="Critique" val={st.crit} type="pct" tip={mkTip("crit")}/>
-                  <div style={{height:6}}/>
-                  <StatRow icon="🛡️" label="Vulnérabilité Physique" val={st.phv} type="pmInv" tip={mkTip("phv")}/>
-                  <StatRow icon="🔰" label="Vulnérabilité Magique" val={st.mav} type="pmInv" tip={mkTip("mav")}/>
-                  <StatRow icon="💨" label="Esquive" val={st.dodge} type="pct" tip={mkTip("dodge")}/>
-                  <div style={{height:6}}/>
-                  <StatRow icon="♻️" label="Récupération" val={st.rgHp} type="pct" suf="/tour" tip={mkTip("rgHp")}/>
-                </div>}
+            </div>
+            <div style={{height:5,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginTop:10}}>
+              <div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"var(--acc)",transition:"width .3s"}}/>
+            </div>
+            <div style={{fontSize:11,color:"var(--td)",marginTop:4,textAlign:"right"}}>XP {hero.xp}/{xn}</div>
+          </div>
+
+          {/* STATS + EQUIP ROW */}
+          <div style={{display:"flex",gap:10,marginBottom:12}}>
+            {/* LEFT: PV + Dégâts */}
+            <div style={{flex:1,background:"var(--card)",borderRadius:12,padding:14,border:"1px solid var(--brd)",display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
+              {(function(){
+                var isMag2=ht&&ht.wt==="magical";var ms2=isMag2?st.mag:st.str;
+                var dmgAvg=Math.round(w.dmg*Math.max(0.1,ms2));
+                var wrongType2=isMag2!==(w.wt==="magical");
+                return <div>
+                  <div style={{fontSize:24,fontWeight:800}}>\ud83e\ude78 {st.hp}</div>
+                  <div style={{fontSize:10,color:"var(--td)"}}>Points de vie</div>
+                  <div style={{fontSize:24,fontWeight:800,marginTop:8,color:wrongType2?"#ef4444":ms2>=1?"#4ade80":"#facc15"}}>{isMag2?"\ud83d\udd2e":"\u2694\ufe0f"} ~{dmgAvg}</div>
+                  <div style={{fontSize:10,color:"var(--td)"}}>{isMag2?"Magique":"Physique"}{wrongType2?" \u26a0":""}</div>
+                </div>;
+              })()}
+            </div>
+            {/* RIGHT: 4 equipment slots */}
+            <div style={{flex:1,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              {["weapon","armor","accessory","talisman"].map(function(sl){
+                var it2=hero.equipment?hero.equipment[sl]:null;
+                var icons={weapon:"\ud83d\udde1\ufe0f",armor:"\ud83d\udee1\ufe0f",accessory:"\ud83d\udc8d",talisman:"\ud83d\udd2e"};
+                var names={weapon:"Arme",armor:"Armure",accessory:"Accessoire",talisman:"Talisman"};
+                return <div key={sl} onClick={function(){setInfoPopup("equip_"+sl);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:8,cursor:"pointer",textAlign:"center",minHeight:60,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                  <div style={{fontSize:16}}>{icons[sl]}</div>
+                  {it2?<div style={{fontSize:9,color:(RA[it2.rarity]||{}).c||"var(--t)",fontWeight:600,lineHeight:1.2,marginTop:2}}>{it2.name}</div>
+                  :<div style={{fontSize:9,color:"#444",marginTop:2}}>{names[sl]}</div>}
+                </div>;
+              })}
+            </div>
+          </div>
+
+          {/* ACTION BUTTONS: 2 rows of 3 */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
+            <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{padding:"12px 0",fontSize:12,fontWeight:canLv?800:600}}>Gain de niveau</button>
+            <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entra\u00eenement</button>
+            <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12}}>Ma\u00eetrise</button>
+            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
+            <button className="b" onClick={function(){setCp(function(p){return Object.assign({},p,{skill:!p.skill});});}} style={{padding:"12px 0",fontSize:12}}>Comp\u00e9tence</button>
+            <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bient\u00f4t</button>
+          </div>
+
+          {/* SKILL PANEL (expandable, shown below buttons if toggled) */}
+          {cp.skill&&(function(){var sk2=SKILLS[hero.id];if(!sk2)return null;return <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>\u26a1</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{sk2.name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {sk2.lvl+(hero.mastery||0)}</span></div>
+                <div style={{fontSize:12,color:"var(--td)"}}>{sk2.desc}</div>
               </div>
-              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-                <PH k="elem" label="Sensibilités Élémentaires" open={cp.elem} info="elem"/>
-                {cp.elem&&<div>
-                  <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🗡️ Attaque</div>
-                  <div style={{padding:"5px 0",fontSize:14,borderBottom:"1px solid #ffffff08",marginBottom:8}}>
-                    Élément : {atkEl?<span style={{color:(EM[atkEl]||{}).c,fontWeight:700}}>{(EM[atkEl]||{}).i} {atkEl}</span>:<span style={{color:"#666"}}>Neutre</span>}
-                    <span style={{fontSize:12,color:"#666",marginLeft:6}}>({ww.name})</span>
-                  </div>
-                  <div style={{fontSize:13,color:"#8888bb",fontWeight:600,marginBottom:4}}>🛡️ Vulnérabilités</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 16px"}}>
-                    {EL.map(function(el){var v=st.er[el]!=null?st.er[el]:1;var c=erc(v);
-                      return <div key={el} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:14}}>
-                        <span style={{color:"#8888bb"}}>{(EM[el]||{}).i} {el}</span>
-                        <span style={{fontFamily:"monospace",fontWeight:600,color:c}}>{fmtEV(v)}</span>
-                      </div>;
-                    })}
-                  </div>
-                </div>}
-              </div>
-              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-                <PH k="degats" label="Dégâts" open={cp.degats}/>
-                {cp.degats&&<div>
-                  <div style={{fontSize:13,marginBottom:6}}>
-                    <span style={{color:"#8888bb"}}>Arme :</span> <span style={{fontWeight:600}}>{ww.name}</span> <span style={{color:"var(--td)"}}>({ww.dmg} {isMag?"Magique":"Physique"})</span>
-                  </div>
-                  <div style={{fontSize:13,marginBottom:4}}>
-                    <span style={{color:"#8888bb"}}>{isMag?"Magie":"Force"} :</span> <span style={{fontWeight:600,color:mainStat>=1?"#4ade80":"#facc15"}}>{fmtPM(mainStat)}</span>
-                  </div>
-                  <div style={{fontSize:13,marginBottom:4}}>
-                    <span style={{color:"#8888bb"}}>Formule :</span> <span style={{color:"var(--td)"}}>Arme × {isMag?"Magie":"Force"} × variance(0.8-1.2)</span>
-                  </div>
-                  <div style={{background:"#ffffff06",borderRadius:8,padding:10,marginTop:6}}>
-                    <div style={{fontSize:15,fontWeight:700}}><span style={{color:dmgMin>0?"#4ade80":"#facc15"}}>{dmgMin} — {dmgMax}</span> <span style={{color:"var(--t)"}}>{isMag?"Magique":"Physique"}</span></div>
-                  </div>
-                </div>}
-              </div>
-              <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-                <PH k="equip" label="Équipement" open={cp.equip}/>
-                {cp.equip&&<div>
-                  {["weapon","armor","accessory","talisman"].map(function(sl){var it=hero.equipment?hero.equipment[sl]:null;var lb=sl==="weapon"?"🗡️ Arme":sl==="armor"?"🛡️ Armure":sl==="accessory"?"💍 Accessoire":"🔮 Talisman";
-                    return <div key={sl} onClick={function(){setInfoPopup("equip_"+sl);}} style={{padding:"8px 6px",borderBottom:"1px solid #ffffff08",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div><span style={{fontSize:13,color:"#8888bb"}}>{lb}: </span>{it?<ItemInfo item={it} fs={13}/>:<span style={{fontSize:13,color:"#444"}}>— vide —</span>}</div>
-                      <span style={{color:"var(--td)",fontSize:12}}>▶</span>
-                    </div>;
-                  })}
-                </div>}
-              </div>
-              {sk&&<div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-                <PH k="skill" label="Compétence" open={cp.skill}/>
-                {cp.skill&&<div>
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                    <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div>
-                    <div>
-                      <div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{sk.name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {sk.lvl}</span></div>
-                      <div style={{fontSize:12,color:"var(--td)"}}>{sk.desc}</div>
-                    </div>
-                  </div>
-                  <StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours" tip={mkTip("rel")}/>
-                </div>}
-              </div>}
-            </div>;
-          })()}
+            </div>
+            <StatRow icon="\u23f3" label="Recharge" val={st.rel} type="flat" suf=" tours"/>
+          </div>;})()}
+
         </div>
       {infoPopup==="carac"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
