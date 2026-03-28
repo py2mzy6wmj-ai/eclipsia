@@ -628,7 +628,6 @@ export default function Game(){
                 <span style={{color:"var(--td)",fontSize:11,marginLeft:6}}>▶</span>
               </div>;})}
           </div>
-          </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
             <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{padding:"12px 0",fontSize:12,fontWeight:canLv?800:600}}>Gain de niveau</button>
             <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entraînement</button>
@@ -643,7 +642,6 @@ export default function Game(){
             <button className="b" onClick={function(){setSheet(null);setSlv(false);}} style={{flex:"0 0 auto",fontSize:12,padding:"14px 16px"}}>Retour</button>
             <button className="b" onClick={function(){navSheet(1);}} disabled={sR.length<=1} style={{flex:1,fontSize:28,padding:"14px 0",fontWeight:900}}>▶</button>
           </div>
-        </div>
         </div>
       {infoPopup==="carac"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
