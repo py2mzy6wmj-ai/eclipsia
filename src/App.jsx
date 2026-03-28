@@ -602,12 +602,12 @@ export default function Game(){
               <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:dmgCol}}>{isMag2?"🔮":"⚔️"} ~{dmgAvg}</div><div style={{fontSize:10,color:"var(--td)"}}>Dégâts {isMag2?"magiques":"physiques"}{wrongType2?" ⚠":""}</div></div>
             </div>;})()}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
-            {["weapon","armor","accessory","talisman"].map(function(sl){var it2=hero.equipment?hero.equipment[sl]:null;var slIcons={weapon:"🗡️ Arme",armor:"🛡️ Armure",accessory:"💍 Accessoire",talisman:"🔮 Talisman"};
-              return <div key={sl} onClick={function(){setInfoPopup("equip_"+sl);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,cursor:"pointer",minHeight:56}}>
-                <div style={{fontSize:11,color:"var(--td)",fontWeight:600,marginBottom:3}}>{slIcons[sl]}</div>
-                {it2?<div><div style={{fontSize:12,color:(RA[it2.rarity]||{}).c||"var(--t)",fontWeight:700}}>{it2.name}</div>
-                  {it2.bon&&<div style={{fontSize:10,color:"var(--td)",marginTop:2}}>{Object.keys(it2.bon).filter(function(k){return k!=="er"&&it2.bon[k];}).map(function(k){var v=it2.bon[k];var labels={hp:"PV",str:"Force",mag:"Magie",crit:"Crit",phv:"V.Phy",mav:"V.Mag",dodge:"Esq",rgHp:"Récup",rel:"Rech",pvPct:"PV%"};if(typeof v==="number"){if(k==="hp")return labels[k]+"+"+v;if(k==="rel")return labels[k]+(v>0?"+":"")+v;return labels[k]||k;}return null;}).filter(Boolean).join(" · ")}</div>}
-                </div>:<div style={{fontSize:11,color:"#555",fontStyle:"italic"}}>Vide</div>}
+            {["weapon","armor","accessory","talisman"].map(function(sl){var it2=hero.equipment?hero.equipment[sl]:null;var slNames={weapon:"🗡️ Arme",armor:"🛡️ Armure",accessory:"💍 Accessoire",talisman:"🔮 Talisman"};
+              return <div key={sl} onClick={function(){setInfoPopup("equip_"+sl);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:10,padding:10,cursor:"pointer",minHeight:56,position:"relative"}}>
+                <div style={{fontSize:11,color:"var(--td)",fontWeight:600,marginBottom:4}}>{slNames[sl]}</div>
+                {it2?<div><ItemInfo item={it2} fs={12}/></div>
+                :<div style={{fontSize:11,color:"#555",fontStyle:"italic"}}>Vide</div>}
+                <div style={{position:"absolute",top:10,right:10,color:"var(--td)",fontSize:12}}>▶</div>
               </div>;})}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -615,10 +615,26 @@ export default function Game(){
             <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entraînement</button>
             <button className="b" onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12}}>Maîtrise</button>
             <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
-            <button className="b" onClick={function(){setCp(function(p){return Object.assign({},p,{skill:!p.skill});});}} style={{padding:"12px 0",fontSize:12}}>Compétence</button>
+            <button className="b" onClick={function(){setInfoPopup("skill");}} style={{padding:"12px 0",fontSize:12}}>Compétences</button>
             <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bientôt</button>
           </div>
-          {cp.skill&&(function(){var sk2=SKILLS[hero.id];if(!sk2)return null;return <div style={{background:"var(--card)",borderRadius:12,padding:14,marginBottom:8,border:"1px solid var(--brd)"}}><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}><div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>⚡</div><div><div style={{fontWeight:700,fontSize:14,color:"#fbbf24"}}>{sk2.name} <span style={{fontSize:11,color:"var(--td)",fontWeight:400}}>Niveau {sk2.lvl+(hero.mastery||0)}</span></div><div style={{fontSize:12,color:"var(--td)"}}>{sk2.desc}</div></div></div><StatRow icon="⏳" label="Recharge" val={st.rel} type="flat" suf=" tours"/></div>;})()}
+          {(function(){
+            var isMag3=ht&&ht.wt==="magical";
+            function SR2(p){return <div style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid #ffffff08",fontSize:13}}>
+              <span style={{color:"var(--td)"}}>{p.icon} {p.label}</span>
+              <span style={{fontWeight:600,color:p.col||"var(--t)"}}>{p.val}</span>
+            </div>;}
+            return <div style={{background:"var(--card)",borderRadius:12,padding:12,marginBottom:8,border:"1px solid var(--brd)"}}>
+              {!isMag3&&<SR2 icon="⚔️" label="Force" val={fmtPM(st.str)} col={st.str>=1?"#4ade80":"#facc15"}/>}
+              {isMag3&&<SR2 icon="🔮" label="Magie" val={fmtPM(st.mag)} col={st.mag>=1?"#4ade80":"#facc15"}/>}
+              <SR2 icon="💥" label="Critique" val={fmtPct(st.crit)}/>
+              <SR2 icon="🛡️" label="Vuln. Physique" val={fmtPM(st.phv)} col={st.phv<1?"#4ade80":st.phv>1?"#facc15":"var(--t)"}/>
+              <SR2 icon="🛡️" label="Vuln. Magique" val={fmtPM(st.mav)} col={st.mav<1?"#4ade80":st.mav>1?"#facc15":"var(--t)"}/>
+              <SR2 icon="💨" label="Esquive" val={fmtPct(st.dodge)}/>
+              <SR2 icon="♻️" label="Récupération" val={fmtPct(st.rgHp)} col={st.rgHp>0?"#4ade80":"var(--t)"}/>
+              <SR2 icon="⏳" label="Recharge" val={st.rel+" tours"}/>
+            </div>;
+          })()}
           <div style={{flex:1}}/>
           <div style={{display:"flex",gap:8}}>
             <button className="b" onClick={function(){navSheet(-1);}} disabled={sR.length<=1} style={{flex:1,fontSize:28,padding:"16px 0",fontWeight:900}}>◀</button>
@@ -744,6 +760,24 @@ export default function Game(){
           </div>
         </div>;
       })()}
+            {infoPopup==="skill"&&(function(){var sk3=SKILLS[hero.id];if(!sk3){setInfoPopup(null);return null;}return <div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Compétences</h3>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+            <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>⚡</div>
+            <div>
+              <div style={{fontWeight:700,fontSize:15,color:"#fbbf24"}}>{sk3.name}</div>
+              <div style={{fontSize:12,color:"var(--td)"}}>Niveau {sk3.lvl+(hero.mastery||0)}</div>
+            </div>
+          </div>
+          <div style={{fontSize:13,color:"var(--td)",marginBottom:8,lineHeight:1.6}}>{sk3.desc}</div>
+          <div style={{fontSize:13,padding:8,background:"#ffffff04",borderRadius:8}}>
+            <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"var(--td)"}}>⏳ Recharge</span><span style={{fontWeight:600}}>{st.rel} tours</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span style={{color:"var(--td)"}}>💥 Multiplicateur</span><span style={{fontWeight:600,color:"#fbbf24"}}>×{sk3.mult}</span></div>
+          </div>
+          <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:12,width:"100%"}}>Fermer</button>
+        </div>
+      </div>;})()}
             {infoPopup==="elem"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des vulnérabilités</h3>
@@ -1189,12 +1223,12 @@ export default function Game(){
               var hst=cs(h,g.bl);var rc=(RA[h.rarity]||{}).c;
               var ww2=gw(h);var ht3=HEROES.find(function(hh){return hh.id===h.id;});var iM3=ht3&&ht3.wt==="magical";var ms3=iM3?hst.mag:hst.str;var avg3=Math.round(ww2.dmg*Math.max(0.1,ms3));
               return <div key={i} style={{padding:10,borderRadius:12,background:rc+"12",border:"1px solid "+rc+"40",position:"relative"}}>
-                <button onClick={function(){doTogTeam(h.uid);}} style={{position:"absolute",top:4,right:4,fontSize:10,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer"}}>\u2715</button>
+                <button onClick={function(){doTogTeam(h.uid);}} style={{position:"absolute",top:4,right:4,fontSize:10,padding:"2px 6px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer"}}>✕</button>
                 <div style={{fontWeight:700,fontSize:13}}>{h.name} <span style={{fontSize:11,color:"var(--td)"}}>Nv.{h.level}</span></div>
                 <div style={{fontSize:10,color:rc,marginBottom:4}}>{(RA[h.rarity]||{}).s}</div>
                 <div style={{display:"flex",gap:10,fontSize:12}}>
-                  <span>\ud83e\ude78 {hst.hp}</span>
-                  <span>{iM3?"\ud83d\udd2e":"\u2694\ufe0f"} ~{avg3}</span>
+                  <span>🩸 {hst.hp}</span>
+                  <span>{iM3?"🔮":"⚔️"} ~{avg3}</span>
                 </div>
                 <button onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} className="b" style={{fontSize:9,padding:"2px 6px",marginTop:4,width:"100%"}}>Profil</button>
               </div>;
@@ -1208,7 +1242,7 @@ export default function Game(){
               return <div key={h.uid} onClick={function(){if(!full)doTogTeam(h.uid);}} style={{padding:8,borderRadius:10,background:"#ffffff04",border:"1px solid var(--brd)",cursor:full?"default":"pointer",opacity:full?0.4:1}}>
                 <div style={{fontWeight:700,fontSize:12}}>{h.name} <span style={{fontSize:10,color:"var(--td)"}}>Nv.{h.level}</span></div>
                 <div style={{fontSize:10,color:rc,marginBottom:2}}>{(RA[h.rarity]||{}).s}</div>
-                <div style={{display:"flex",gap:8,fontSize:11}}><span>\ud83e\ude78 {hst4.hp}</span><span>{iM4?"\ud83d\udd2e":"\u2694\ufe0f"} ~{avg4}</span></div>
+                <div style={{display:"flex",gap:8,fontSize:11}}><span>🩸 {hst4.hp}</span><span>{iM4?"🔮":"⚔️"} ~{avg4}</span></div>
               </div>;
             })}
           </div>
