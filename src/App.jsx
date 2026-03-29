@@ -87,7 +87,7 @@ function cs(hero,bl){
   return s;
 }
 function gw(h){var w=h.equipment&&h.equipment.weapon;return w||{name:"Poings",wt:"physical",dmg:5,el:"Neutre"};}
-function xpN(lv,r){var base=50+r*10;var mult=2+6*((lv-1)/98);return Math.floor(base*lv*mult);}
+function xpN(lv){var base=65;var mult=2+6*((lv-1)/98);return Math.floor(base*lv*mult);}
 
 
 // NEW DAMAGE FORMULA: dmg × (1 + strBonus + vulnBonus) then × variance × crit × elemRes
@@ -339,7 +339,7 @@ export default function Game(){
     },n>1?1800:1000);
   }
 
-  function doLvUp(u){setG(function(p){var h=p.roster.find(function(r){return r.uid===u;});if(!h)return p;var n=xpN(h.level,h.rarity);if(h.xp<n)return p;return Object.assign({},p,{roster:p.roster.map(function(r){return r.uid===u?Object.assign({},r,{level:r.level+1,xp:r.xp-n}):r;})});});}
+  function doLvUp(u){setG(function(p){var h=p.roster.find(function(r){return r.uid===u;});if(!h)return p;var n=xpN(h.level);if(h.xp<n)return p;return Object.assign({},p,{roster:p.roster.map(function(r){return r.uid===u?Object.assign({},r,{level:r.level+1,xp:r.xp-n}):r;})});});}
   function doTogTeam(u){setG(function(p){var i=p.team.indexOf(u);if(i>=0){var t=[].concat(p.team);t[i]=null;return Object.assign({},p,{team:t});}var s=p.team.indexOf(null);if(s>=0){var t=[].concat(p.team);t[s]=u;return Object.assign({},p,{team:t});}return p;});}
   // Drop hero into team slot (drag-and-drop)
   function dropInSlot(slotIdx){
@@ -574,7 +574,7 @@ export default function Game(){
     if(hero){
       var ht=HEROES.find(function(h){return h.id===hero.id;});
       var st=cs(hero,g.bl);var w=gw(hero);var rc=(RA[hero.rarity]||{}).c||"#888";
-      var xn=xpN(hero.level,hero.rarity);var canLv=hero.xp>=xn;
+      var xn=xpN(hero.level);var canLv=hero.xp>=xn;
       var inTeam=g.team.indexOf(hero.uid)>=0;
       var atkEl=w.el&&w.el!=="Neutre"?w.el:null;
       function mkTip(key){var arr=st._s[key];if(!arr||!arr.length)return null;var total;if(key==="hp"||key==="rel")total=st[key];else if(key==="crit"||key==="dodge"||key==="rgHp")total=fmtPct(st[key]);else total=fmtPM(st[key]);return arr.join("\n")+"\n= "+total;}
@@ -932,14 +932,15 @@ export default function Game(){
         var fNextCost=flv<10?FORGE_COSTS[flv+1]||null:null;
         // Market
         var mlv=g.bl.marche||1;
-        var MARCHE_COSTS={2:2000,3:8000,4:25000,5:75000};
+        var MARCHE_COSTS={2:1000,3:5000,4:20000,5:50000};
         var mNextCost=mlv<5?MARCHE_COSTS[mlv+1]||null:null;
         // Shop items categorized
         var shopConso=[];var shopGab=[];var shopCata=[];
-        if(mlv>=1){shopConso.push({id:"scroll",name:"Parchemin d'invocation",cost:1000,rar:1,icon:"📜"});shopConso.push({id:"scroll_10",name:"Parchemin d'invocation ×10",cost:9500,rar:1,icon:"📜",qty:10});shopGab.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rang 1)",cost:100,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_1",name:CATA_NAMES[1],cost:250,rar:1,icon:"💎"});}
-        if(mlv>=2){shopConso.push({id:"tome_1",name:"Tome d'expérience mineur",cost:150,rar:1,icon:"📖"});shopGab.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rang 2)",cost:250,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_2",name:CATA_NAMES[2],cost:750,rar:2,icon:"💎"});}
-        if(mlv>=3){shopGab.push({id:"gabarit_3",name:GABARIT_NAMES[3]+" (Rang 3)",cost:600,rar:1,icon:"📐"});}
-        if(mlv>=4){shopConso.push({id:"tome_2",name:"Tome d'expérience",cost:2000,rar:2,icon:"📖"});}
+        if(mlv>=1){shopConso.push({id:"scroll",name:"Parchemin d'invocation",cost:1000,rar:1,icon:"📜"});shopConso.push({id:"scroll_10",name:"Parchemin d'invocation ×10",cost:9500,rar:1,icon:"📜",qty:10});shopGab.push({id:"gabarit_1",name:GABARIT_NAMES[1]+" (Rang 1)",cost:50,rar:1,icon:"📐"});shopGab.push({id:"gabarit_2",name:GABARIT_NAMES[2]+" (Rang 2)",cost:250,rar:1,icon:"📐"});shopCata.push({id:"catalyseur_1",name:CATA_NAMES[1],cost:100,rar:1,icon:"💎"});shopConso.push({id:"tome_1",name:"Tome d'expérience mineur",cost:150,rar:1,icon:"📖"});}
+        if(mlv>=2){shopGab.push({id:"gabarit_3",name:GABARIT_NAMES[3]+" (Rang 3)",cost:1250,rar:1,icon:"📐"});}
+        if(mlv>=3){shopGab.push({id:"gabarit_4",name:GABARIT_NAMES[4]+" (Rang 4)",cost:6250,rar:2,icon:"📐"});shopCata.push({id:"catalyseur_2",name:CATA_NAMES[2],cost:1000,rar:2,icon:"💎"});shopConso.push({id:"tome_2",name:"Tome d'expérience",cost:650,rar:2,icon:"📖"});}
+        if(mlv>=4){shopGab.push({id:"gabarit_5",name:GABARIT_NAMES[5]+" (Rang 5)",cost:31250,rar:2,icon:"📐"});}
+        if(mlv>=5){shopCata.push({id:"catalyseur_3",name:CATA_NAMES[3],cost:10000,rar:3,icon:"💎"});shopConso.push({id:"tome_3",name:"Tome d'expérience majeur",cost:3250,rar:3,icon:"📖"});}
         function doBuy(item){
           if(g.gold<item.cost)return;
           setFloats(function(f){return f.concat([{uid:"ui",val:"+1 "+item.name,color:"#4ade80",id:uid()}]);});
@@ -1059,7 +1060,7 @@ export default function Game(){
           <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" lv={g.bl.alchimiste||1} onClick={function(){setVp(vp==="alchimiste"?"none":"alchimiste");}}/>
           {vp==="alchimiste"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
             {(function(){var alv=g.bl.alchimiste||1;
-              var ALCH_COSTS={2:3000,3:10000,4:30000,5:80000};
+              var ALCH_COSTS={2:1000,3:5000,4:20000,5:50000};
               var aNextCost=alv<5?ALCH_COSTS[alv+1]||null:null;
               function doTransmute(fromKey,toKey,qty){setG(function(p){var nm=Object.assign({},p.mat||{});if((nm[fromKey]||0)<qty)return p;nm[fromKey]=(nm[fromKey]||0)-qty;nm[toKey]=(nm[toKey]||0)+1;return Object.assign({},p,{mat:nm});});}
               function RecipeCard(rp){var have=m[rp.from]||0;var canDo=have>=rp.qty;return <div style={{background:(canDo?"#4ade80":"#888")+"08",border:"1px solid "+(canDo?"#4ade80":"#888")+"30",borderRadius:10,padding:10}}>
@@ -1070,14 +1071,25 @@ export default function Game(){
                   <button className="b bg" disabled={!canDo} onClick={function(){doTransmute(rp.from,rp.to,rp.qty);}} style={{fontSize:11,padding:"4px 10px"}}>⚗️ Transmuter</button>
                 </div>
               </div>;}
-              var cataRecipes=[];var gabRecipes=[];
-              if(alv>=1){cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],name:"Catalyseur ★ → ★★"});}
-              if(alv>=2){cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],name:"Catalyseur ★★ → ★★★"});}
-              if(alv>=3){cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:10,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],name:"Catalyseur ★★★ → ★★★★"});}
-              if(alv>=1){for(var gi=1;gi<=14;gi++){var gFrom="gabarit_"+gi;var gTo="gabarit_"+(gi+1);if(alv>=1&&gi<=3)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=2&&gi<=6)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=3&&gi<=9)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=4&&gi<=12)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});else if(alv>=5)gabRecipes.push({from:gFrom,to:gTo,qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",name:"Rang "+gi+" → Rang "+(gi+1)});}}
+              var cataRecipes=[];var gabRecipes=[];var tomeRecipes=[];
+              if(alv>=1){gabRecipes.push({from:"gabarit_1",to:"gabarit_3",qty:5,fromName:"Gabarit R1+R2",toName:"Gabarit R3",name:"G R1→R3"});gabRecipes.push({from:"gabarit_3",to:"gabarit_5",qty:5,fromName:"Gabarit R3+R4",toName:"Gabarit R5",name:"G R3→R5"});}
+              if(alv>=2){cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],name:"C ★→★★"});gabRecipes.push({from:"gabarit_5",to:"gabarit_7",qty:5,fromName:"Gabarit R5+R6",toName:"Gabarit R7",name:"G R5→R7"});tomeRecipes.push({from:"tome_1",to:"tome_2",qty:5,fromName:"Tome mineur",toName:"Tome normal",name:"T ★→★★"});}
+              if(alv>=3){cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],name:"C ★★→★★★"});gabRecipes.push({from:"gabarit_7",to:"gabarit_9",qty:5,fromName:"Gabarit R7+R8",toName:"Gabarit R9",name:"G R7→R9"});tomeRecipes.push({from:"tome_2",to:"tome_3",qty:5,fromName:"Tome normal",toName:"Tome majeur",name:"T ★★→★★★"});}
+              if(alv>=4){cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:7,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],name:"C ★★★→★★★★"});gabRecipes.push({from:"gabarit_10",to:"gabarit_12",qty:12,fromName:"Gabarit R10+R11",toName:"Gabarit R12",name:"G R10→R12"});tomeRecipes.push({from:"tome_3",to:"tome_4",qty:5,fromName:"Tome majeur",toName:"Tome épique",name:"T ★★★→★★★★"});}
+              if(alv>=5){cataRecipes.push({from:"catalyseur_4",to:"catalyseur_5",qty:10,fromName:CATA_NAMES[4],toName:CATA_NAMES[5],name:"C ★★★★→★★★★★"});gabRecipes.push({from:"gabarit_13",to:"gabarit_14",qty:15,fromName:"Gabarit R13",toName:"Gabarit R14",name:"G R13→R14"});gabRecipes.push({from:"gabarit_14",to:"gabarit_15",qty:15,fromName:"Gabarit R14",toName:"Gabarit R15",name:"G R14→R15"});tomeRecipes.push({from:"tome_4",to:"tome_5",qty:5,fromName:"Tome épique",toName:"Tome extraordinaire",name:"T ★★★★→★★★★★"});}
+
+              function TomeRecipeCard(tp){var co2=g.conso||{};var have2=co2[tp.from]||0;var can2=have2>=tp.qty;
+              return <div style={{background:"#ffffff04",border:"1px solid var(--brd)",borderRadius:10,padding:10}}>
+                <div style={{fontWeight:600,fontSize:12}}>{tp.qty}× {tp.fromName} → 1× {tp.toName}</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
+                  <span style={{fontSize:11,color:can2?"#4ade80":"#ef4444"}}>{have2} en stock</span>
+                  <button className="b bg" disabled={!can2} onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});nc[tp.from]=(nc[tp.from]||0)-tp.qty;nc[tp.to]=(nc[tp.to]||0)+1;return Object.assign({},p,{conso:nc});});}} style={{fontSize:11,padding:"4px 10px"}}>⚗️ Transmuter</button>
+                </div>
+              </div>;}
               return <div>
                 {cataRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Catalyseurs</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{cataRecipes.map(function(r){return <RecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} name={r.name}/>;})}</div></div>}
                 {gabRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Gabarits</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{gabRecipes.map(function(r){return <RecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} name={r.name}/>;})}</div></div>}
+                {tomeRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Tomes d'expérience</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{tomeRecipes.map(function(r){return <TomeRecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName}/>;})}</div></div>}
                 {aNextCost!=null&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:4,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer l'Alchimiste au niveau {alv+1}</span><button className="b bg" disabled={g.gold<aNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.alchimiste=(bl.alchimiste||1)+1;return Object.assign({},p,{gold:p.gold-aNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{aNextCost.toLocaleString()} or</button></div>}
               </div>;
             })()}
@@ -1118,7 +1130,7 @@ export default function Game(){
             var ww=gw(h);var ht2=HEROES.find(function(hh){return hh.id===h.id;});
             var ww2=gw(h);var iM=ww2.wt==="magical";var ms=iM?hst.mag:hst.str;
             var avg=Math.round(ww.dmg*Math.max(0.1,ms));
-            var canLv=h.xp>=xpN(h.level,h.rarity);
+            var canLv=h.xp>=xpN(h.level);
             return <div key={h.uid} onClick={function(){setSheet(h.uid);}} style={{padding:8,background:"var(--card)",border:"1px solid "+rc+"40",borderRadius:12,cursor:"pointer",textAlign:"center",position:"relative"}}>
               <Portrait id={h.id} size={44} fs={22} icon={h.icon} canLv={canLv}/>
               <div style={{flex:1,minWidth:0}}>
