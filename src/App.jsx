@@ -953,11 +953,11 @@ export default function Game(){
             return np;
           });
         }
-        function ShopCard(props){var si=props.item;var rc=(RA[si.rar]||{}).c||"#888";return <div style={{background:rc+"08",border:"1px solid "+rc+"30",borderRadius:10,padding:10}}>
-          <div style={{fontWeight:700,fontSize:13,color:rc}}>{si.icon} {si.name}</div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-            <span style={{fontSize:13,color:"#fbbf24",fontWeight:600}}>{si.cost.toLocaleString()}g</span>
-            <button className="b bg" disabled={g.gold<si.cost} onClick={function(){doBuy(si);}} style={{fontSize:12,padding:"4px 12px"}}>Acheter</button>
+        function ShopCard(props){var si=props.item;var rc=(RA[si.rar]||{}).c||"#888";return <div style={{background:rc+"08",border:"1px solid "+rc+"30",borderRadius:8,padding:"6px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontSize:12,color:rc,fontWeight:600,flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{si.icon} {si.name}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+            <span style={{fontSize:12,color:"#fbbf24",fontWeight:600}}>{si.cost.toLocaleString()}g</span>
+            <button className="b bg" disabled={g.gold<si.cost} onClick={function(){doBuy(si);}} style={{fontSize:11,padding:"4px 10px"}}>Acheter</button>
           </div>
         </div>;}
         var BUILDING_INFO={forge:"Le forgeron permet de créer de l'équipement à partir de divers composants. La base inerte définit le type d'équipement créé, le gabarit son rang, et le catalyseur sa rareté. Les chances de réussite sont proportionnelles à la complexité de l'équipement désiré. Augmenter le niveau d'expertise du forgeron permet d'augmenter les chances de succès. Il est possible d'acquérir des composants supplémentaires en recyclant de l'équipement ou en les achetant au marché.",marche:"Le marché propose divers composants et consommables à l'achat. Améliorer le marché débloque de nouveaux articles.",alchimiste:"L'alchimiste permet de transmuter des matériaux en composants de rang ou de rareté supérieur. 10 composants du même type sont nécessaires pour obtenir 1 composant du rang suivant. Améliorer l'alchimiste débloque des recettes de rang supérieur."};
@@ -1063,27 +1063,28 @@ export default function Game(){
               var ALCH_COSTS={2:1000,3:5000,4:20000,5:50000};
               var aNextCost=alv<5?ALCH_COSTS[alv+1]||null:null;
               function doTransmute(fromKey,toKey,qty){setG(function(p){var nm=Object.assign({},p.mat||{});if((nm[fromKey]||0)<qty)return p;nm[fromKey]=(nm[fromKey]||0)-qty;nm[toKey]=(nm[toKey]||0)+1;return Object.assign({},p,{mat:nm});});}
-              function RecipeCard(rp){var have=m[rp.from]||0;var canDo=have>=rp.qty;return <div style={{background:(canDo?"#4ade80":"#888")+"08",border:"1px solid "+(canDo?"#4ade80":"#888")+"30",borderRadius:10,padding:10}}>
-                <div style={{fontWeight:700,fontSize:13,color:canDo?"var(--t)":"#666"}}>{rp.name}</div>
-                <div style={{fontSize:11,color:"var(--td)"}}>{rp.qty}× {rp.fromName} → 1× {rp.toName}</div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-                  <span style={{fontSize:11,color:canDo?"#4ade80":"#ef4444"}}>{have} en stock</span>
-                  <button className="b bg" disabled={!canDo} onClick={function(){doTransmute(rp.from,rp.to,rp.qty);}} style={{fontSize:11,padding:"4px 10px"}}>⚗️ Transmuter</button>
+              function RecipeCard(rp){var have=m[rp.from]||0;var canDo=have>=rp.qty;var fcol=(RA[rp.fr]||{}).c||"#888";var tcol=(RA[rp.tr]||{}).c||"#888";return <div style={{background:"#ffffff04",border:"1px solid var(--brd)",borderRadius:8,padding:8}}>
+                <div style={{fontSize:12}}>{rp.qty}× <span style={{color:fcol,fontWeight:600}}>{rp.fromName}</span> → 1× <span style={{color:tcol,fontWeight:600}}>{rp.toName}</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4}}>
+                  <span style={{fontSize:10,color:canDo?"#4ade80":"#ef4444"}}>{have} en stock</span>
+                  <button className="b bg" disabled={!canDo} onClick={function(){doTransmute(rp.from,rp.to,rp.qty);}} style={{fontSize:10,padding:"3px 8px"}}>⚗️ Transmuter</button>
                 </div>
               </div>;}
               var cataRecipes=[];var gabRecipes=[];var tomeRecipes=[];
-              if(alv>=1){gabRecipes.push({from:"gabarit_1",to:"gabarit_3",qty:5,fromName:"Gabarit R1+R2",toName:"Gabarit R3",name:"G R1→R3"});gabRecipes.push({from:"gabarit_3",to:"gabarit_5",qty:5,fromName:"Gabarit R3+R4",toName:"Gabarit R5",name:"G R3→R5"});}
-              if(alv>=2){cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],name:"C ★→★★"});gabRecipes.push({from:"gabarit_5",to:"gabarit_7",qty:5,fromName:"Gabarit R5+R6",toName:"Gabarit R7",name:"G R5→R7"});tomeRecipes.push({from:"tome_1",to:"tome_2",qty:5,fromName:"Tome mineur",toName:"Tome normal",name:"T ★→★★"});}
-              if(alv>=3){cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],name:"C ★★→★★★"});gabRecipes.push({from:"gabarit_7",to:"gabarit_9",qty:5,fromName:"Gabarit R7+R8",toName:"Gabarit R9",name:"G R7→R9"});tomeRecipes.push({from:"tome_2",to:"tome_3",qty:5,fromName:"Tome normal",toName:"Tome majeur",name:"T ★★→★★★"});}
-              if(alv>=4){cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:7,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],name:"C ★★★→★★★★"});gabRecipes.push({from:"gabarit_10",to:"gabarit_12",qty:12,fromName:"Gabarit R10+R11",toName:"Gabarit R12",name:"G R10→R12"});tomeRecipes.push({from:"tome_3",to:"tome_4",qty:5,fromName:"Tome majeur",toName:"Tome épique",name:"T ★★★→★★★★"});}
-              if(alv>=5){cataRecipes.push({from:"catalyseur_4",to:"catalyseur_5",qty:10,fromName:CATA_NAMES[4],toName:CATA_NAMES[5],name:"C ★★★★→★★★★★"});gabRecipes.push({from:"gabarit_13",to:"gabarit_14",qty:15,fromName:"Gabarit R13",toName:"Gabarit R14",name:"G R13→R14"});gabRecipes.push({from:"gabarit_14",to:"gabarit_15",qty:15,fromName:"Gabarit R14",toName:"Gabarit R15",name:"G R14→R15"});tomeRecipes.push({from:"tome_4",to:"tome_5",qty:5,fromName:"Tome épique",toName:"Tome extraordinaire",name:"T ★★★★→★★★★★"});}
+              function gabRar(r){return r<=3?1:r<=6?2:r<=9?3:r<=12?4:5;}
+              // Gabarits: 10x RN > 1x RN+1
+              if(alv>=1){for(var gi=1;gi<=4;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});}
+              if(alv>=2){for(var gi=5;gi<=7;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],fr:1,tr:2});tomeRecipes.push({from:"tome_1",to:"tome_2",qty:5,fromName:"Tome mineur",toName:"Tome normal",fr:1,tr:2});}
+              if(alv>=3){for(var gi=8;gi<=10;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],fr:2,tr:3});tomeRecipes.push({from:"tome_2",to:"tome_3",qty:5,fromName:"Tome normal",toName:"Tome majeur",fr:2,tr:3});}
+              if(alv>=4){for(var gi=11;gi<=12;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:7,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],fr:3,tr:4});tomeRecipes.push({from:"tome_3",to:"tome_4",qty:5,fromName:"Tome majeur",toName:"Tome épique",fr:3,tr:4});}
+              if(alv>=5){for(var gi=13;gi<=14;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:15,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_4",to:"catalyseur_5",qty:10,fromName:CATA_NAMES[4],toName:CATA_NAMES[5],fr:4,tr:5});tomeRecipes.push({from:"tome_4",to:"tome_5",qty:5,fromName:"Tome épique",toName:"Tome extraordinaire",fr:4,tr:5});}
 
-              function TomeRecipeCard(tp){var co2=g.conso||{};var have2=co2[tp.from]||0;var can2=have2>=tp.qty;
-              return <div style={{background:"#ffffff04",border:"1px solid var(--brd)",borderRadius:10,padding:10}}>
-                <div style={{fontWeight:600,fontSize:12}}>{tp.qty}× {tp.fromName} → 1× {tp.toName}</div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-                  <span style={{fontSize:11,color:can2?"#4ade80":"#ef4444"}}>{have2} en stock</span>
-                  <button className="b bg" disabled={!can2} onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});nc[tp.from]=(nc[tp.from]||0)-tp.qty;nc[tp.to]=(nc[tp.to]||0)+1;return Object.assign({},p,{conso:nc});});}} style={{fontSize:11,padding:"4px 10px"}}>⚗️ Transmuter</button>
+              function TomeRecipeCard(tp){var co2=g.conso||{};var have2=co2[tp.from]||0;var can2=have2>=tp.qty;var fcol2=(RA[tp.fr]||{}).c||"#888";var tcol2=(RA[tp.tr]||{}).c||"#888";
+              return <div style={{background:"#ffffff04",border:"1px solid var(--brd)",borderRadius:8,padding:8}}>
+                <div style={{fontSize:12}}>{tp.qty}× <span style={{color:fcol2,fontWeight:600}}>{tp.fromName}</span> → 1× <span style={{color:tcol2,fontWeight:600}}>{tp.toName}</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4}}>
+                  <span style={{fontSize:10,color:can2?"#4ade80":"#ef4444"}}>{have2} en stock</span>
+                  <button className="b bg" disabled={!can2} onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});nc[tp.from]=(nc[tp.from]||0)-tp.qty;nc[tp.to]=(nc[tp.to]||0)+1;return Object.assign({},p,{conso:nc});});}} style={{fontSize:10,padding:"3px 8px"}}>⚗️ Transmuter</button>
                 </div>
               </div>;}
               return <div>
