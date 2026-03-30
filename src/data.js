@@ -394,11 +394,11 @@ export var DG = [
 // ═══════════════════════════════════════════════════════════════
 
 export var TOMES = [
-  { id: "tome_1", name: "Tome d'expérience mineur", rarity: 1, xp: 50, icon: "📖", shopLv: 2, cost: 150 },
-  { id: "tome_2", name: "Tome d'expérience", rarity: 2, xp: 200, icon: "📖", shopLv: 0, cost: 0 },
-  { id: "tome_3", name: "Tome d'expérience majeur", rarity: 3, xp: 500, icon: "📖", shopLv: 0, cost: 0 },
-  { id: "tome_4", name: "Tome d'expérience considérable", rarity: 4, xp: 1000, icon: "📖", shopLv: 0, cost: 0 },
-  { id: "tome_5", name: "Tome d'expérience extraordinaire", rarity: 5, xp: 2500, icon: "📖", shopLv: 0, cost: 0 },
+  { id: "tome_1", name: "Tome d'expérience mineur", rarity: 1, xp: 100, icon: "📖", shopLv: 2, cost: 150 },
+  { id: "tome_2", name: "Tome d'expérience", rarity: 2, xp: 500, icon: "📖", shopLv: 0, cost: 0 },
+  { id: "tome_3", name: "Tome d'expérience majeur", rarity: 3, xp: 2500, icon: "📖", shopLv: 0, cost: 0 },
+  { id: "tome_4", name: "Tome d'expérience considérable", rarity: 4, xp: 15000, icon: "📖", shopLv: 0, cost: 0 },
+  { id: "tome_5", name: "Tome d'expérience extraordinaire", rarity: 5, xp: 80000, icon: "📖", shopLv: 0, cost: 0 },
 ];
 
 export var FRAGMENTS = [

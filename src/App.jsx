@@ -854,8 +854,8 @@ export default function Game(){
   if(!loaded)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Cinzel",fontSize:16}}>Chargement de la sauvegarde...</div>;
 
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px 70px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:14,marginBottom:10,border:"1px solid var(--brd)"}}>
-      <h1 style={{fontFamily:"Cinzel",fontSize:20,fontWeight:900,color:"var(--acc)",textShadow:"0 0 12px #9b7ec830"}}>⚔️ ECLIPSIA</h1>
+    <div style={{position:"sticky",top:0,zIndex:80,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 14px",background:"var(--bg)",borderBottom:"1px solid var(--brd)",marginBottom:8}}>
+      <h1 style={{fontFamily:"Cinzel",fontSize:16,fontWeight:900,color:"var(--acc)"}}>ECLIPSIA</h1>
       <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}>
         <span>💰 {g.gold.toLocaleString()}</span><span>📜 {g.scrolls||0}</span>
         <div style={{position:"relative"}}>
@@ -1064,10 +1064,11 @@ export default function Game(){
               var aNextCost=alv<5?ALCH_COSTS[alv+1]||null:null;
               function doTransmute(fromKey,toKey,qty){setG(function(p){var nm=Object.assign({},p.mat||{});if((nm[fromKey]||0)<qty)return p;nm[fromKey]=(nm[fromKey]||0)-qty;nm[toKey]=(nm[toKey]||0)+1;return Object.assign({},p,{mat:nm});});}
               function RecipeCard(rp){var have=m[rp.from]||0;var canDo=have>=rp.qty;var fcol=(RA[rp.fr]||{}).c||"#888";var tcol=(RA[rp.tr]||{}).c||"#888";return <div style={{background:"#ffffff04",border:"1px solid var(--brd)",borderRadius:8,padding:8}}>
-                <div style={{fontSize:12}}>{rp.qty}× <span style={{color:fcol,fontWeight:600}}>{rp.fromName}</span> → 1× <span style={{color:tcol,fontWeight:600}}>{rp.toName}</span></div>
+                <div style={{fontSize:11}}>{rp.qty}× <span style={{color:fcol,fontWeight:600}}>{rp.fromName}</span></div>
+                <div style={{fontSize:11}}>→ 1× <span style={{color:tcol,fontWeight:600}}>{rp.toName}</span></div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4}}>
                   <span style={{fontSize:10,color:canDo?"#4ade80":"#ef4444"}}>{have} en stock</span>
-                  <button className="b bg" disabled={!canDo} onClick={function(){doTransmute(rp.from,rp.to,rp.qty);}} style={{fontSize:10,padding:"3px 8px"}}>⚗️ Transmuter</button>
+                  <button className="b bg" disabled={!canDo} onClick={function(){doTransmute(rp.from,rp.to,rp.qty);}} style={{fontSize:10,padding:"3px 8px"}}>Transmuter</button>
                 </div>
               </div>;}
               var cataRecipes=[];var gabRecipes=[];var tomeRecipes=[];
@@ -1076,15 +1077,16 @@ export default function Game(){
               if(alv>=1){for(var gi=1;gi<=4;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});}
               if(alv>=2){for(var gi=5;gi<=7;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],fr:1,tr:2});tomeRecipes.push({from:"tome_1",to:"tome_2",qty:5,fromName:"Tome mineur",toName:"Tome normal",fr:1,tr:2});}
               if(alv>=3){for(var gi=8;gi<=10;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],fr:2,tr:3});tomeRecipes.push({from:"tome_2",to:"tome_3",qty:5,fromName:"Tome normal",toName:"Tome majeur",fr:2,tr:3});}
-              if(alv>=4){for(var gi=11;gi<=12;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:7,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],fr:3,tr:4});tomeRecipes.push({from:"tome_3",to:"tome_4",qty:5,fromName:"Tome majeur",toName:"Tome épique",fr:3,tr:4});}
-              if(alv>=5){for(var gi=13;gi<=14;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:15,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_4",to:"catalyseur_5",qty:10,fromName:CATA_NAMES[4],toName:CATA_NAMES[5],fr:4,tr:5});tomeRecipes.push({from:"tome_4",to:"tome_5",qty:5,fromName:"Tome épique",toName:"Tome extraordinaire",fr:4,tr:5});}
+              if(alv>=4){for(var gi=11;gi<=12;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:7,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],fr:3,tr:4});tomeRecipes.push({from:"tome_3",to:"tome_4",qty:5,fromName:"Tome majeur",toName:"Tome considérable",fr:3,tr:4});}
+              if(alv>=5){for(var gi=13;gi<=14;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:15,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_4",to:"catalyseur_5",qty:10,fromName:CATA_NAMES[4],toName:CATA_NAMES[5],fr:4,tr:5});tomeRecipes.push({from:"tome_4",to:"tome_5",qty:5,fromName:"Tome considérable",toName:"Tome extraordinaire",fr:4,tr:5});}
 
               function TomeRecipeCard(tp){var co2=g.conso||{};var have2=co2[tp.from]||0;var can2=have2>=tp.qty;var fcol2=(RA[tp.fr]||{}).c||"#888";var tcol2=(RA[tp.tr]||{}).c||"#888";
               return <div style={{background:"#ffffff04",border:"1px solid var(--brd)",borderRadius:8,padding:8}}>
-                <div style={{fontSize:12}}>{tp.qty}× <span style={{color:fcol2,fontWeight:600}}>{tp.fromName}</span> → 1× <span style={{color:tcol2,fontWeight:600}}>{tp.toName}</span></div>
+                <div style={{fontSize:11}}>{tp.qty}× <span style={{color:fcol2,fontWeight:600}}>{tp.fromName}</span></div>
+                <div style={{fontSize:11}}>→ 1× <span style={{color:tcol2,fontWeight:600}}>{tp.toName}</span></div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4}}>
                   <span style={{fontSize:10,color:can2?"#4ade80":"#ef4444"}}>{have2} en stock</span>
-                  <button className="b bg" disabled={!can2} onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});nc[tp.from]=(nc[tp.from]||0)-tp.qty;nc[tp.to]=(nc[tp.to]||0)+1;return Object.assign({},p,{conso:nc});});}} style={{fontSize:10,padding:"3px 8px"}}>⚗️ Transmuter</button>
+                  <button className="b bg" disabled={!can2} onClick={function(){setG(function(p){var nc=Object.assign({},p.conso||{});nc[tp.from]=(nc[tp.from]||0)-tp.qty;nc[tp.to]=(nc[tp.to]||0)+1;return Object.assign({},p,{conso:nc});});}} style={{fontSize:10,padding:"3px 8px"}}>Transmuter</button>
                 </div>
               </div>;}
               return <div>
@@ -1119,7 +1121,7 @@ export default function Game(){
       <div style={{display:"flex",gap:4,marginBottom:10}}>
         {[["team","Équipe"],["rarity","Rareté"],["level","Niveau"],["dmg","Dégâts"]].map(function(s){return <button key={s[0]} className={"b "+(heroSort===s[0]?"ton":"")} onClick={function(){setHeroSort(s[0]);}} style={{flex:1,fontSize:11}}>{s[1]}</button>;})}
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6}}>
         {(function(){
           var sorted=[].concat(g.roster);
           if(heroSort==="rarity")sorted.sort(function(a,b){return b.rarity-a.rarity||b.level-a.level;});
@@ -1229,7 +1231,7 @@ export default function Game(){
         <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:15,marginBottom:10}}>Sélection d'équipe</h3>
           <div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe : {team.length}/4 — {DG[teamPick]?DG[teamPick].name:""}</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:10}}>
             {[0,1,2,3].map(function(i){
               var h=g.team[i]?g.roster.find(function(r){return r.uid===g.team[i];}):null;
               if(!h)return <div key={i} style={{padding:12,borderRadius:10,border:"2px dashed #ffffff15",textAlign:"center",color:"#444",fontSize:12}}>Slot {i+1}</div>;
@@ -1237,38 +1239,38 @@ export default function Game(){
               var ww2=gw(h);var ht3=HEROES.find(function(hh){return hh.id===h.id;});var iM3=ww2.wt==="magical";var ms3=iM3?hst.mag:hst.str;var avg3=Math.round(ww2.dmg*Math.max(0.1,ms3));
               return <div key={i} style={{padding:10,borderRadius:12,background:rc+"12",border:"1px solid "+rc+"40",position:"relative"}}>
 
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                  <Portrait id={h.id} size={32} fs={16} icon={h.icon}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:11}}>{h.name} <span style={{color:"var(--td)",fontSize:10}}>Nv.{h.level}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <Portrait id={h.id} size={36} fs={18} icon={h.icon}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:12}}>{h.name} <span style={{color:"var(--td)",fontSize:10}}>Nv.{h.level}</span></div>
                     <div style={{fontSize:9,color:rc}}>{(RA[h.rarity]||{}).s}</div>
-                    <div style={{fontSize:10,color:"var(--td)"}}>🩸{hst.hp} {iM3?"💫":"⚔️"}~{avg3}</div>
+                    <div style={{fontSize:10,color:"var(--td)",marginTop:1}}>🩸 {hst.hp}  {iM3?"💫":"⚔️"} ~{avg3}</div>
                   </div>
-                </div>
-                <div style={{display:"flex",gap:3}}>
-                  <button onClick={function(){doTogTeam(h.uid);}} className="b" style={{flex:1,fontSize:10,padding:"3px 0",color:"#ef4444"}}>✖</button>
-                  <button onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} className="b" style={{flex:1,fontSize:10,padding:"3px 0"}}>🔍</button>
+                  <div style={{display:"flex",flexDirection:"column",gap:3,flexShrink:0}}>
+                    <button onClick={function(){doTogTeam(h.uid);}} className="b" style={{fontSize:11,padding:"5px 10px",background:"#ef444420",color:"#ef4444",border:"1px solid #ef444440"}}>▼</button>
+                    <button onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} className="b" style={{fontSize:11,padding:"5px 10px"}}>🔍</button>
+                  </div>
                 </div>
               </div>;
             })}
           </div>
           <div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:6}}>Réserve</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:12}}>
             {g.roster.filter(function(h){return g.team.indexOf(h.uid)<0;}).map(function(h){
               var rc=(RA[h.rarity]||{}).c;var full=g.team.indexOf(null)<0;
               var hst4=cs(h,g.bl);var ww4=gw(h);var ht4=HEROES.find(function(hh){return hh.id===h.id;});var iM4=ww4.wt==="magical";var ms4=iM4?hst4.mag:hst4.str;var avg4=Math.round(ww4.dmg*Math.max(0.1,ms4));
-              return <div key={h.uid} style={{padding:8,borderRadius:10,background:"#ffffff04",border:"1px solid var(--brd)",opacity:full?0.4:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                  <Portrait id={h.id} size={32} fs={16} icon={h.icon}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:700,fontSize:11}}>{h.name} <span style={{color:"var(--td)",fontSize:10}}>Nv.{h.level}</span></div>
+              return <div key={h.uid} style={{padding:8,borderRadius:10,background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"40",opacity:full?0.4:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <Portrait id={h.id} size={36} fs={18} icon={h.icon}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:12}}>{h.name} <span style={{color:"var(--td)",fontSize:10}}>Nv.{h.level}</span></div>
                     <div style={{fontSize:9,color:rc}}>{(RA[h.rarity]||{}).s}</div>
-                    <div style={{fontSize:10,color:"var(--td)"}}>🩸{hst4.hp} {iM4?"💫":"⚔️"}~{avg4}</div>
+                    <div style={{fontSize:10,color:"var(--td)",marginTop:1}}>🩸 {hst4.hp}  {iM4?"💫":"⚔️"} ~{avg4}</div>
                   </div>
-                </div>
-                <div style={{display:"flex",gap:3}}>
-                  <button className="b" disabled={full} onClick={function(){if(!full)doTogTeam(h.uid);}} style={{flex:1,fontSize:10,padding:"3px 0",color:"#4ade80"}}>⬆</button>
-                  <button className="b" onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} style={{flex:1,fontSize:10,padding:"3px 0"}}>🔍</button>
+                  <div style={{display:"flex",flexDirection:"column",gap:3,flexShrink:0}}>
+                    <button className="b" disabled={full} onClick={function(){if(!full)doTogTeam(h.uid);}} style={{fontSize:11,padding:"5px 10px",background:"#4ade8020",color:"#4ade80",border:"1px solid #4ade8040"}}>▲</button>
+                    <button className="b" onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} style={{fontSize:11,padding:"5px 10px"}}>🔍</button>
+                  </div>
                 </div>
               </div>;
             })}
