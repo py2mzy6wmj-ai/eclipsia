@@ -274,6 +274,7 @@ export default function Game(){
   var _sel=useState(null);var sel=_sel[0],setSel=_sel[1];
   var _heroSort=useState('rarity');var heroSort=_heroSort[0],setHeroSort=_heroSort[1];
   var _teamPick=useState(null);var teamPick=_teamPick[0],setTeamPick=_teamPick[1];
+  var _bldPopup=useState(null);var bldPopup=_bldPopup[0],setBldPopup=_bldPopup[1];
   var _sheet=useState(null);var sheet=_sheet[0],setSheet=_sheet[1];
   var _au=useState(false);var au=_au[0],setAu=_au[1];
   var _dExp=useState(null);var dExp=_dExp[0],setDExp=_dExp[1];
@@ -972,8 +973,21 @@ export default function Game(){
         </div>;}
         return <div>
           {/* FORGERON */}
-          <PnlH k="forge" name="Forgeron" icon="🔨" lv={flv} onClick={function(){setVp(vp==="forge"?"none":"forge");}}/>
-          {vp==="forge"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
+          
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+          {[{k:"forge",n:"Forgeron",ic:"🔨",lv:flv},{k:"marche",n:"Marché",ic:"🏪",lv:mlv},{k:"alchimiste",n:"Alchimiste",ic:"⚗️",lv:alv},{k:"rempart",n:"Rempart",ic:"🏰",dis:true},{k:"autel",n:"Autel",ic:"🩸",dis:true},{k:"tour",n:"Tour Arcane",ic:"🗼",dis:true}].map(function(b){
+            return <div key={b.k} onClick={function(){if(!b.dis)setBldPopup(b.k);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:12,textAlign:"center",cursor:b.dis?"default":"pointer",opacity:b.dis?0.3:1,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div style={{fontSize:26}}>{b.ic}</div>
+              <div style={{fontWeight:700,fontSize:12,marginTop:4}}>{b.n}</div>
+              {b.lv!=null&&<div style={{fontSize:10,color:"var(--acc)"}}>Nv.{b.lv}</div>}
+              {b.dis&&<div style={{fontSize:9,color:"#555"}}>Bientôt</div>}
+            </div>;
+          })}
+        </div>
+
+          {bldPopup==="forge"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🔨 Forgeron Nv.{flv}</h3><button className="b" onClick={function(){setBldPopup(null);}} style={{fontSize:12,padding:"4px 10px"}}>✕</button></div>
+
 
             {/* 3 lines: Type, Rang, Rareté — show item names */}
             <div style={{marginBottom:10}}>
@@ -1021,14 +1035,16 @@ export default function Game(){
             </div>}
             {/* Bottom upgrade bandeau */}
             {fNextCost!=null&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:10,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Forgeron au niveau {flv+1}</span>
+              <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}></div><div style={{height:1,background:"var(--brd)",margin:"8px 0"}}/><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Forgeron au niveau {flv+1}</span>
               <button className="b bg" disabled={g.gold<fNextCost} onClick={function(){if(g.gold<fNextCost)return;setG(function(p){var bl=Object.assign({},p.bl);bl.forge=(bl.forge||1)+1;return Object.assign({},p,{gold:p.gold-fNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{fNextCost.toLocaleString()} or</button>
             </div>}
-          </div>}
+          </div></div>}
 
           {/* MARCHÉ */}
-          <PnlH k="marche" name="Marché" icon="🏪" lv={mlv} onClick={function(){setVp(vp==="marche"?"none":"marche");}}/>
-          {vp==="marche"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginTop:-6,marginBottom:10,border:"1px solid var(--brd)",borderTop:"none"}}>
+          
+          {bldPopup==="marche"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:10,border:"1px solid var(--brd)",borderTop:"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🏪 Marché Nv.{mlv}</h3><button className="b" onClick={function(){setBldPopup(null);}} style={{fontSize:12,padding:"4px 10px"}}>✕</button></div>
+
             <div>
               {shopConso.length>0&&<div>
                 <div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Consommables</div>
@@ -1054,11 +1070,13 @@ export default function Game(){
                 <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||1)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{mNextCost.toLocaleString()} or</button>
               </div>}
             </div>
-          </div>}
+          </div></div>}
 
           {/* ALCHIMISTE */}
-          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" lv={g.bl.alchimiste||1} onClick={function(){setVp(vp==="alchimiste"?"none":"alchimiste");}}/>
-          {vp==="alchimiste"&&<div style={{background:"var(--card)",borderRadius:"0 0 12px 12px",padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
+          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" lv={g.bl.alchimiste||1} onClick={function(){setBldPopup("alchimiste");}}/>
+          {bldPopup==="alchimiste"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>⚗️ Alchimiste Nv.{alv}</h3><button className="b" onClick={function(){setBldPopup(null);}} style={{fontSize:12,padding:"4px 10px"}}>✕</button></div>
+
             {(function(){var alv=g.bl.alchimiste||1;
               var ALCH_COSTS={2:1000,3:5000,4:20000,5:50000};
               var aNextCost=alv<5?ALCH_COSTS[alv+1]||null:null;
@@ -1075,9 +1093,9 @@ export default function Game(){
               function gabRar(r){return r<=3?1:r<=6?2:r<=9?3:r<=12?4:5;}
               // Gabarits: 10x RN > 1x RN+1
               if(alv>=1){for(var gi=1;gi<=4;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});}
-              if(alv>=2){for(var gi=5;gi<=7;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],fr:1,tr:2});tomeRecipes.push({from:"tome_1",to:"tome_2",qty:5,fromName:"Tome mineur",toName:"Tome normal",fr:1,tr:2});}
-              if(alv>=3){for(var gi=8;gi<=10;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],fr:2,tr:3});tomeRecipes.push({from:"tome_2",to:"tome_3",qty:5,fromName:"Tome normal",toName:"Tome majeur",fr:2,tr:3});}
-              if(alv>=4){for(var gi=11;gi<=12;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:7,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],fr:3,tr:4});tomeRecipes.push({from:"tome_3",to:"tome_4",qty:5,fromName:"Tome majeur",toName:"Tome considérable",fr:3,tr:4});}
+              if(alv>=2){for(var gi=5;gi<=6;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_1",to:"catalyseur_2",qty:10,fromName:CATA_NAMES[1],toName:CATA_NAMES[2],fr:1,tr:2});tomeRecipes.push({from:"tome_1",to:"tome_2",qty:5,fromName:"Tome mineur",toName:"Tome normal",fr:1,tr:2});}
+              if(alv>=3){for(var gi=7;gi<=9;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_2",to:"catalyseur_3",qty:10,fromName:CATA_NAMES[2],toName:CATA_NAMES[3],fr:2,tr:3});tomeRecipes.push({from:"tome_2",to:"tome_3",qty:5,fromName:"Tome normal",toName:"Tome majeur",fr:2,tr:3});}
+              if(alv>=4){for(var gi=10;gi<=12;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:10,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_3",to:"catalyseur_4",qty:7,fromName:CATA_NAMES[3],toName:CATA_NAMES[4],fr:3,tr:4});tomeRecipes.push({from:"tome_3",to:"tome_4",qty:5,fromName:"Tome majeur",toName:"Tome considérable",fr:3,tr:4});}
               if(alv>=5){for(var gi=13;gi<=14;gi++)gabRecipes.push({from:"gabarit_"+gi,to:"gabarit_"+(gi+1),qty:15,fromName:GABARIT_NAMES[gi]+" (Rang "+gi+")",toName:GABARIT_NAMES[gi+1]+" (Rang "+(gi+1)+")",fr:gabRar(gi),tr:gabRar(gi+1)});cataRecipes.push({from:"catalyseur_4",to:"catalyseur_5",qty:10,fromName:CATA_NAMES[4],toName:CATA_NAMES[5],fr:4,tr:5});tomeRecipes.push({from:"tome_4",to:"tome_5",qty:5,fromName:"Tome considérable",toName:"Tome extraordinaire",fr:4,tr:5});}
 
               function TomeRecipeCard(tp){var co2=g.conso||{};var have2=co2[tp.from]||0;var can2=have2>=tp.qty;var fcol2=(RA[tp.fr]||{}).c||"#888";var tcol2=(RA[tp.tr]||{}).c||"#888";
@@ -1096,7 +1114,7 @@ export default function Game(){
                 {aNextCost!=null&&<div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:4,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer l'Alchimiste au niveau {alv+1}</span><button className="b bg" disabled={g.gold<aNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.alchimiste=(bl.alchimiste||1)+1;return Object.assign({},p,{gold:p.gold-aNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{aNextCost.toLocaleString()} or</button></div>}
               </div>;
             })()}
-          </div>}
+          </div></div>}
 
           {/* Building info popup */}
           {infoPopup&&infoPopup.indexOf("bld_")===0&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -1107,12 +1125,7 @@ export default function Game(){
             </div>
           </div>}
 
-          {/* Other buildings - greyed out */}
-          {[{k:"rempart",n:"Rempart",ic:"🏰"},{k:"autel",n:"Autel",ic:"🩸"},{k:"tour",n:"Tour Arcane",ic:"🗼"},{k:"ecole",n:"École",ic:"📖"},{k:"mine",n:"Mine",ic:"⛏️"},{k:"oracle",n:"Oracle",ic:"🔮"},{k:"taverne",n:"Taverne",ic:"🍺"}].map(function(b){
-            return <div key={b.k} style={{display:"flex",alignItems:"center",padding:12,background:"#0e0d0d",border:"1px solid #1a1515",borderRadius:12,marginBottom:6,opacity:0.3}}>
-              <span style={{fontSize:20,marginRight:8}}>{b.ic}</span><span style={{fontWeight:700,fontSize:14,color:"#555"}}>{b.n}</span><span style={{marginLeft:"auto",fontSize:11,color:"#444"}}>Bientôt</span>
-            </div>;
-          })}
+
         </div>;
       })()}
     </div>}
@@ -1240,15 +1253,15 @@ export default function Game(){
               return <div key={i} style={{padding:10,borderRadius:12,background:rc+"12",border:"1px solid "+rc+"40",position:"relative"}}>
 
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <Portrait id={h.id} size={36} fs={18} icon={h.icon}/>
+                  <Portrait id={h.id} size={44} fs={22} icon={h.icon}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:700,fontSize:12}}>{h.name} <span style={{color:"var(--td)",fontSize:10}}>Nv.{h.level}</span></div>
                     <div style={{fontSize:9,color:rc}}>{(RA[h.rarity]||{}).s}</div>
                     <div style={{fontSize:10,color:"var(--td)",marginTop:1}}>🩸 {hst.hp}  {iM3?"💫":"⚔️"} ~{avg3}</div>
                   </div>
                   <div style={{display:"flex",flexDirection:"column",gap:3,flexShrink:0}}>
-                    <button onClick={function(){doTogTeam(h.uid);}} className="b" style={{fontSize:11,padding:"5px 10px",background:"#ef444420",color:"#ef4444",border:"1px solid #ef444440"}}>▼</button>
-                    <button onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} className="b" style={{fontSize:11,padding:"5px 10px"}}>🔍</button>
+                    <button onClick={function(){doTogTeam(h.uid);}} className="b" style={{fontSize:10,padding:"5px 8px",background:"#ef444420",color:"#ef4444",border:"1px solid #ef444440"}}>Retirer</button>
+                    <button onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} className="b" style={{fontSize:10,padding:"5px 8px"}}>Profil</button>
                   </div>
                 </div>
               </div>;
@@ -1261,23 +1274,23 @@ export default function Game(){
               var hst4=cs(h,g.bl);var ww4=gw(h);var ht4=HEROES.find(function(hh){return hh.id===h.id;});var iM4=ww4.wt==="magical";var ms4=iM4?hst4.mag:hst4.str;var avg4=Math.round(ww4.dmg*Math.max(0.1,ms4));
               return <div key={h.uid} style={{padding:8,borderRadius:10,background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"40",opacity:full?0.4:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <Portrait id={h.id} size={36} fs={18} icon={h.icon}/>
+                  <Portrait id={h.id} size={44} fs={22} icon={h.icon}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:700,fontSize:12}}>{h.name} <span style={{color:"var(--td)",fontSize:10}}>Nv.{h.level}</span></div>
                     <div style={{fontSize:9,color:rc}}>{(RA[h.rarity]||{}).s}</div>
                     <div style={{fontSize:10,color:"var(--td)",marginTop:1}}>🩸 {hst4.hp}  {iM4?"💫":"⚔️"} ~{avg4}</div>
                   </div>
                   <div style={{display:"flex",flexDirection:"column",gap:3,flexShrink:0}}>
-                    <button className="b" disabled={full} onClick={function(){if(!full)doTogTeam(h.uid);}} style={{fontSize:11,padding:"5px 10px",background:"#4ade8020",color:"#4ade80",border:"1px solid #4ade8040"}}>▲</button>
-                    <button className="b" onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} style={{fontSize:11,padding:"5px 10px"}}>🔍</button>
+                    <button className="b" disabled={full} onClick={function(){if(!full)doTogTeam(h.uid);}} style={{fontSize:10,padding:"5px 8px",background:"#4ade8020",color:"#4ade80",border:"1px solid #4ade8040"}}>Ajouter</button>
+                    <button className="b" onClick={function(e){e.stopPropagation();setTeamPick(null);setSheet(h.uid);}} style={{fontSize:10,padding:"5px 8px"}}>Profil</button>
                   </div>
                 </div>
               </div>;
             })}
           </div>
-          <div style={{display:"flex",gap:8}}>
-            <button className="b bg" disabled={!team.length} onClick={function(){startDun(teamPick);setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"10px 0"}}>⚔️ Lancer !</button>
-            <button className="b" onClick={function(){setTeamPick(null);}} style={{flex:1,fontSize:14}}>Annuler</button>
+          <div style={{position:"sticky",bottom:0,background:"var(--card)",padding:"8px 0",display:"flex",gap:8}}>
+            <button className="b bg" disabled={!team.length} onClick={function(){startDun(teamPick);setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"12px 0"}}>Lancer !</button>
+            <button className="b" onClick={function(){setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"12px 0"}}>Annuler</button>
           </div>
         </div>
       </div>}
