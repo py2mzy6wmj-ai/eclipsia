@@ -902,7 +902,7 @@ export default function Game(){
 
     {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
       {(function(){
-        var m=g.mat||{};var flv=g.bl.forge||1;
+        var m=g.mat||{};var flv=g.bl.forge||1;var alv=g.bl.alchimiste||1;
         function forgeChance(rank,rarity,fLv){var diff=Math.max(0,(rank-2)*12+Math.max(0,(rarity-2))*20+Math.max(0,(rank-3))*(rarity-1)*5);var skill=fLv*10;var ch=100-diff+skill;return Math.max(2,Math.min(100,Math.round(ch)));}
         var inerteKey=fs.slot+"_inerte";var gabKey="gabarit_"+fs.rank;var cataKey="catalyseur_"+fs.rar;
         var hasInerte=(m[inerteKey]||0)>0;var hasGab=(m[gabKey]||0)>0;var hasCata=(m[cataKey]||0)>0;
@@ -1073,7 +1073,6 @@ export default function Game(){
           </div></div>}
 
           {/* ALCHIMISTE */}
-          <PnlH k="alchimiste" name="Alchimiste" icon="⚗️" lv={g.bl.alchimiste||1} onClick={function(){setBldPopup("alchimiste");}}/>
           {bldPopup==="alchimiste"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>⚗️ Alchimiste Nv.{alv}</h3><button className="b" onClick={function(){setBldPopup(null);}} style={{fontSize:12,padding:"4px 10px"}}>✕</button></div>
 
