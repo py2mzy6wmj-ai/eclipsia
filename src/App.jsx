@@ -277,6 +277,7 @@ export default function Game(){
   var _teamPick=useState(null);var teamPick=_teamPick[0],setTeamPick=_teamPick[1];
   var _bldPopup=useState(null);var bldPopup=_bldPopup[0],setBldPopup=_bldPopup[1];
   var _showCamp=useState(false);var showCamp=_showCamp[0],setShowCamp=_showCamp[1];
+  var _grIdx=useState(0);var grIdx=_grIdx[0],setGrIdx=_grIdx[1];
   var _sheet=useState(null);var sheet=_sheet[0],setSheet=_sheet[1];
   var _au=useState(false);var au=_au[0],setAu=_au[1];
   var _dExp=useState(null);var dExp=_dExp[0],setDExp=_dExp[1];
@@ -314,12 +315,18 @@ export default function Game(){
 
   var sc=g.scrolls||0;
   function doInvoc(n){
-    if(sc<n)return;setGa(true);setGr(null);
+    if(sc<n)return;setGa(true);setGr(null);setGrIdx(0);
     setTimeout(function(){
       var res=[],ros=[].concat(g.roster),dupItems=[];
+      var pity10=(g.pity10||0);var pity50=(g.pity50||0);
       for(var i=0;i<n;i++){
+        pity10++;pity50++;
         var bon=(g.bl.oracle||0)*.004;var r=Math.random(),cum=0,rr=1;
         for(var j=5;j>=1;j--){cum+=Math.max(.01,RA[j].r+(j>=3?bon/3:-bon/2));if(r<cum){rr=j;break;}}
+        if(pity50>=50&&rr<3){rr=3;pity50=0;pity10=0;}
+        else if(pity10>=10&&rr<2){rr=2;pity10=0;}
+        if(rr>=3)pity50=0;if(rr>=3)pity10=0;
+        if(rr>=2)pity10=0;
         var pool=HEROES.filter(function(h){return h.rarity===rr;});
         if(!pool.length)pool=HEROES.filter(function(h){return h.rarity<=rr;});
         if(!pool.length)pool=HEROES;
@@ -337,7 +344,7 @@ export default function Game(){
       setG(function(p){
         var nc=Object.assign({},p.conso||{});
         for(var di=0;di<dupItems.length;di++){nc[dupItems[di]]=(nc[dupItems[di]]||0)+1;}
-        return Object.assign({},p,{scrolls:(p.scrolls||0)-n,roster:ros,conso:nc});
+        return Object.assign({},p,{scrolls:(p.scrolls||0)-n,roster:ros,conso:nc,pity10:pity10,pity50:pity50});
       });setGr(n===1?res[0]:res);setGa(false);
     },n>1?1800:1000);
   }
@@ -947,7 +954,7 @@ export default function Game(){
     {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
       {(function(){
         var m=g.mat||{};var flv=g.bl.forge||1;var alv=g.bl.alchimiste||1;
-        function forgeChance(rank,rarity,fLv){var diff=Math.max(0,(rank-2)*12+Math.max(0,(rarity-2))*20+Math.max(0,(rank-3))*(rarity-1)*5);var skill=fLv*10;var ch=100-diff+skill;return Math.max(2,Math.min(100,Math.round(ch)));}
+        function forgeChance(rank,rarity,fLv){var diff=Math.max(0,(rank-2)*8+Math.max(0,(rarity-2))*12+Math.max(0,(rank-3))*(rarity-1)*3);var skill=fLv*12;var ch=100-diff+skill;return Math.max(5,Math.min(100,Math.round(ch)));}
         var inerteKey=fs.slot+"_inerte";var gabKey="gabarit_"+fs.rank;var cataKey="catalyseur_"+fs.rar;
         var hasInerte=(m[inerteKey]||0)>0;var hasGab=(m[gabKey]||0)>0;var hasCata=(m[cataKey]||0)>0;
         var canForge=hasInerte&&hasGab&&hasCata;
@@ -1258,11 +1265,10 @@ export default function Game(){
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
       {!dun&&!showCamp&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>Aventure</h2>
         <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}}>
-          <div onClick={function(){setShowCamp(true);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:16,textAlign:"center",cursor:"pointer",minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+          <div onClick={function(){setShowCamp(true);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:20,textAlign:"center",cursor:"pointer",minHeight:90,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/campaign.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
-            <div style={{fontSize:28,zIndex:1}}>⚔️</div>
-            <div style={{fontWeight:700,fontSize:14,marginTop:4,zIndex:1}}>Campagne</div>
-            <div style={{fontSize:10,color:"var(--td)",zIndex:1}}>Explorez les donjons</div>
+            <div style={{fontWeight:700,fontSize:16,marginTop:6,fontFamily:"Cinzel",color:"var(--acc)",zIndex:1}}>Campagne</div>
+            <div style={{fontSize:11,color:"var(--td)",marginTop:2,zIndex:1}}>Explorez les donjons</div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
@@ -1443,66 +1449,88 @@ export default function Game(){
     </div>}
 
     {tab==="invocation"&&<div style={{animation:"fi .3s ease"}}>
-      <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>Invocation</h2>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)"}}>Invocation</h2>
+        <button className="b" onClick={function(){setInfoPopup("invoc_rates");}} style={{fontSize:10,padding:"2px 8px"}}>INFO</button>
+      </div>
       <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Coût: 1 📜 par invocation · Stock: {sc} parchemins</div>
 
-      {/* INVOCATION ANIMATION */}
       <div style={{position:"relative",width:"100%",height:160,margin:"0 auto 16px",borderRadius:16,background:"linear-gradient(145deg,var(--card),#1a1a2e)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
         {ga&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle,"+(grRarCol||"#9b7ec8")+"30,transparent 70%)",animation:"pulse 0.6s ease-in-out infinite"}}/>}
         {ga&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:80,height:80,borderRadius:"50%",border:"3px solid "+(grRarCol||"#9b7ec8"),animation:"sp .5s linear infinite",opacity:0.6}}/></div>}
         <div style={{fontSize:48,zIndex:1,animation:ga?"sp .5s linear infinite":"gw 3s infinite"}}>{ga?"✨":"📯"}</div>
       </div>
 
-      {/* BUTTONS */}
-      <div style={{display:"flex",gap:8,marginBottom:14}}>
+      <div style={{display:"flex",gap:8,marginBottom:10}}>
         <button className="b bg" disabled={sc<1||ga} onClick={function(){doInvoc(1);}} style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700}}>×1</button>
         <button className="b bg" disabled={sc<10||ga} onClick={function(){doInvoc(10);}} style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700}}>×10</button>
       </div>
 
-      {/* RESULTS POPUP */}
-      {gr&&!ga&&<div onClick={function(){setGr(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}>
-        <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .3s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16,marginBottom:12,textAlign:"center"}}>{Array.isArray(gr)?"Invocation ×10":"Invocation"}</h3>
-          {Array.isArray(gr)?<div>
-            {gr.map(function(r,i){var hrc=(RA[r.h.rarity]||{}).c||"#888";return <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:8,marginBottom:4,background:"linear-gradient(145deg,"+hrc+"15,"+hrc+"08)",border:"1px solid "+hrc+"40",borderRadius:10}}>
-              <Portrait id={r.h.id} size={36} fs={18} icon={r.h.icon}/>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700,fontSize:13}}>{r.h.name}</div>
-                <div style={{fontSize:10,color:hrc,fontWeight:700}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
-                {r.dup&&<div style={{fontSize:10}}>{r.frag&&<span style={{color:(RA[r.h.rarity]||{}).c}}>🧩 {r.frag.name}</span>}{r.frag&&r.tome?" + ":""}{r.tome&&<span style={{color:(RA[r.tome.rarity]||{}).c}}>📖 {r.tome.name}</span>}</div>}
-              </div>
-              {r.dup&&<span style={{fontSize:10,color:"var(--td)",fontStyle:"italic"}}>doublon</span>}
-            </div>;})}
-          </div>
-          :<div style={{textAlign:"center"}}>
-            {(function(){var r=gr;var hrc=(RA[r.h.rarity]||{}).c||"#888";return <div>
-              <div style={{background:"linear-gradient(145deg,"+hrc+"20,"+hrc+"08)",border:"1px solid "+hrc+"50",borderRadius:16,padding:16,marginBottom:12,textAlign:"center"}}>
-                <div style={{display:"flex",justifyContent:"center"}}><Portrait id={r.h.id} size={72} fs={36} icon={r.h.icon}/></div>
-                <div style={{fontSize:20,fontWeight:800,fontFamily:"Cinzel",marginTop:8}}>{r.h.name}</div>
-                <div style={{fontSize:13,color:hrc,fontWeight:700}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
-                {(function(){var ht3=HEROES.find(function(h){return h.id===r.h.id;});return ht3?<div style={{fontSize:12,color:"var(--td)",marginTop:4}}>{ht3.title}</div>:null;})()}
-              </div>
-              {r.dup&&<div style={{padding:10,background:"#d4a01710",borderRadius:10,border:"1px solid #d4a01730",fontSize:13}}>
+      <div style={{marginBottom:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--td)",marginBottom:3}}><span>★★ garanti</span><span>{(g.pity10||0)}/10</span></div>
+        <div style={{height:6,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:6}}>
+          <div style={{width:((g.pity10||0)/10*100)+"%",height:"100%",background:(RA[2]||{}).c,transition:"width .3s"}}/>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--td)",marginBottom:3}}><span>★★★ garanti</span><span>{(g.pity50||0)}/50</span></div>
+        <div style={{height:6,background:"#0a0a18",borderRadius:4,overflow:"hidden"}}>
+          <div style={{width:((g.pity50||0)/50*100)+"%",height:"100%",background:(RA[3]||{}).c,transition:"width .3s"}}/>
+        </div>
+      </div>
+
+      {gr&&!ga&&(function(){
+        var results=Array.isArray(gr)?gr:[gr];
+        var idx=Array.isArray(gr)?grIdx:0;
+        var r=results[idx];if(!r)return null;
+        var hrc=(RA[r.h.rarity]||{}).c||"#888";
+        var ht3=HEROES.find(function(h){return h.id===r.h.id;});
+        var intensity=r.h.rarity<=1?0.15:r.h.rarity===2?0.25:r.h.rarity===3?0.4:r.h.rarity===4?0.6:0.9;
+        var glowSize=r.h.rarity<=1?"40%":r.h.rarity===2?"50%":r.h.rarity===3?"60%":r.h.rarity===4?"70%":"90%";
+        return <div onClick={function(){if(!Array.isArray(gr))setGr(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",background:"var(--card)",borderRadius:16,padding:20,border:"1px solid "+hrc+"60",animation:"fi .3s ease",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+Math.round(intensity*99).toString(16).padStart(2,"0")+",transparent "+glowSize+")",pointerEvents:"none"}}/>
+            {r.h.rarity>=3&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+"20,transparent 60%)",animation:"pulse 1.5s ease-in-out infinite",pointerEvents:"none"}}/>}
+            {r.h.rarity>=4&&<div style={{position:"absolute",top:-20,left:"50%",marginLeft:-40,width:80,height:80,borderRadius:"50%",border:"2px solid "+hrc+"40",animation:"sp 3s linear infinite",pointerEvents:"none"}}/>}
+            {r.h.rarity>=5&&<div style={{position:"absolute",top:-10,left:"50%",marginLeft:-60,width:120,height:120,borderRadius:"50%",border:"1px solid "+hrc+"30",animation:"sp 5s linear infinite reverse",pointerEvents:"none"}}/>}
+            <div style={{textAlign:"center",position:"relative",zIndex:1}}>
+              {Array.isArray(gr)&&<div style={{fontSize:11,color:"var(--td)",marginBottom:8}}>{idx+1} / {results.length}</div>}
+              <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><Portrait id={r.h.id} size={80} fs={40} icon={r.h.icon}/></div>
+              <div style={{fontSize:22,fontWeight:800,fontFamily:"Cinzel",color:hrc}}>{r.h.name}</div>
+              <div style={{fontSize:14,color:hrc,fontWeight:700,marginTop:4}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
+              {ht3&&<div style={{fontSize:12,color:"var(--td)",marginTop:4,fontStyle:"italic"}}>{ht3.title}</div>}
+              {r.dup&&<div style={{padding:10,background:"#d4a01710",borderRadius:10,border:"1px solid #d4a01730",fontSize:12,marginTop:12,textAlign:"left"}}>
                 <div style={{fontWeight:700,color:"#d4a017",marginBottom:4}}>Héros déjà obtenu</div>
                 {r.frag&&<div>🧩 <span style={{color:(RA[r.h.rarity]||{}).c}}>{r.frag.name}</span></div>}
                 {r.tome&&<div>📖 <span style={{color:(RA[r.tome.rarity]||{}).c}}>{r.tome.name}</span></div>}
               </div>}
-            </div>;})()}
-          </div>}
-          <div style={{position:"sticky",bottom:0,background:"var(--card)",padding:"8px 0",borderTop:"1px solid var(--brd)"}}><button className="b" onClick={function(){setGr(null);}} style={{width:"100%",padding:"10px 0",fontSize:14}}>Fermer</button></div>
-        </div>
-      </div>}
+              {!r.dup&&<div style={{fontSize:12,color:"#4ade80",marginTop:12,fontWeight:600}}>Nouveau héros !</div>}
+            </div>
+            <div style={{marginTop:16,position:"relative",zIndex:1}}>
+              {Array.isArray(gr)?<div style={{display:"flex",gap:8}}>
+                {idx>0&&<button className="b" onClick={function(){setGrIdx(function(p){return p-1;});}} style={{flex:1,padding:"10px 0",fontSize:13}}>Précédent</button>}
+                {idx<results.length-1?<button className="b bg" onClick={function(){setGrIdx(function(p){return p+1;});}} style={{flex:1,padding:"10px 0",fontSize:13}}>Suivant</button>
+                :<button className="b" onClick={function(){setGr(null);setGrIdx(0);}} style={{flex:1,padding:"10px 0",fontSize:13}}>Fermer</button>}
+              </div>
+              :<button className="b" onClick={function(){setGr(null);}} style={{width:"100%",padding:"10px 0",fontSize:13}}>Fermer</button>}
+            </div>
+          </div>
+        </div>;
+      })()}
 
-      {/* RATES */}
-      <div style={{marginTop:8}}>
-        <div style={{fontSize:13,color:"var(--td)",marginBottom:6}}>Taux d'invocation</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
-          {[1,2,3,4,5].map(function(r){return <div key={r} style={{display:"flex",justifyContent:"space-between",padding:"3px 8px",fontSize:12,background:"var(--card)",borderRadius:6,border:"1px solid var(--brd)"}}>
-            <span style={{color:(RA[r]||{}).c}}>{(RA[r]||{}).s} {(RA[r]||{}).n}</span>
+      {infoPopup==="invoc_rates"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:380,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16,marginBottom:12}}>Taux d'invocation</h3>
+          {[1,2,3,4,5].map(function(r){return <div key={r} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:13,borderBottom:"1px solid #ffffff08"}}>
+            <span style={{color:(RA[r]||{}).c,fontWeight:600}}>{(RA[r]||{}).s} {(RA[r]||{}).n}</span>
             <span style={{color:"var(--td)"}}>{((RA[r]||{}).r*100).toFixed(1)}%</span>
           </div>;})}
+          <div style={{fontSize:11,color:"var(--td)",marginTop:10,lineHeight:1.6}}>
+            <div>★★ garanti toutes les 10 invocations</div>
+            <div>★★★ garanti toutes les 50 invocations</div>
+          </div>
+          <button className="b" onClick={function(){setInfoPopup(null);}} style={{width:"100%",marginTop:12,padding:"10px 0",fontSize:13}}>Fermer</button>
         </div>
-      </div>
+      </div>}
+    </div>}
     </div>}
     {!inD&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--bg)",borderTop:"1px solid var(--brd)",display:"flex",zIndex:90,padding:"10px 0 env(safe-area-inset-bottom, 10px) 0"}}>
       {Object.keys(TM).map(function(k){return <button key={k} onClick={function(){setTab(k);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"6px 0",color:tab===k?"var(--acc)":"var(--td)",fontFamily:"inherit",fontSize:10,fontWeight:tab===k?700:400}}>
