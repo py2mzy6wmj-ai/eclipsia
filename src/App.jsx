@@ -1264,23 +1264,21 @@ export default function Game(){
 
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
       {!dun&&!showCamp&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>Aventure</h2>
-        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}}>
-          <div onClick={function(){setShowCamp(true);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:20,textAlign:"center",cursor:"pointer",minHeight:90,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+          <div onClick={function(){setShowCamp(true);}} style={{gridColumn:"1 / -1",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/campaign.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
-            <div style={{fontWeight:700,fontSize:16,marginTop:6,fontFamily:"Cinzel",color:"var(--acc)",zIndex:1}}>Campagne</div>
-            <div style={{fontSize:11,color:"var(--td)",marginTop:2,zIndex:1}}>Explorez les donjons</div>
+            <div style={{fontWeight:700,fontSize:15,fontFamily:"Cinzel",color:"var(--acc)",zIndex:1}}>Campagne Principale</div>
+            <div style={{fontSize:10,color:"var(--td)",marginTop:2,zIndex:1}}>Explorez les donjons</div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-              <div style={{fontSize:26}}>🌀</div>
-              <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Abysses Infinies</div>
-              <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
-            </div>
-            <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-              <div style={{fontSize:26}}>😈</div>
-              <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Messagers du Mal</div>
-              <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
-            </div>
+          <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+            <div style={{fontSize:26}}>🌀</div>
+            <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Abysses Infinies</div>
+            <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
+          </div>
+          <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+            <div style={{fontSize:26}}>😈</div>
+            <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Messagers du Mal</div>
+            <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
           </div>
         </div>
       </div>}
@@ -1456,9 +1454,8 @@ export default function Game(){
       <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Coût: 1 📜 par invocation · Stock: {sc} parchemins</div>
 
       <div style={{position:"relative",width:"100%",height:160,margin:"0 auto 16px",borderRadius:16,background:"linear-gradient(145deg,var(--card),#1a1a2e)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-        {ga&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle,"+(grRarCol||"#9b7ec8")+"30,transparent 70%)",animation:"pulse 0.6s ease-in-out infinite"}}/>}
-        {ga&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:80,height:80,borderRadius:"50%",border:"3px solid "+(grRarCol||"#9b7ec8"),animation:"sp .5s linear infinite",opacity:0.6}}/></div>}
-        <div style={{fontSize:48,zIndex:1,animation:ga?"sp .5s linear infinite":"gw 3s infinite"}}>{ga?"✨":"📯"}</div>
+        {ga&&<div style={{position:"absolute",inset:"-20%",background:"radial-gradient(circle,"+(grRarCol||"#9b7ec8")+"50,transparent 60%)",animation:"pulse 0.8s ease-in-out infinite"}}/>}
+        <div style={{fontSize:64,lineHeight:1,animation:ga?"sp .5s linear infinite":"gw 3s infinite"}}>{ga?"✨":"📯"}</div>
       </div>
 
       <div style={{display:"flex",gap:8,marginBottom:10}}>
@@ -1466,14 +1463,19 @@ export default function Game(){
         <button className="b bg" disabled={sc<10||ga} onClick={function(){doInvoc(10);}} style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700}}>×10</button>
       </div>
 
-      <div style={{marginBottom:14}}>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--td)",marginBottom:3}}><span>★★ garanti</span><span>{(g.pity10||0)}/10</span></div>
-        <div style={{height:6,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginBottom:6}}>
-          <div style={{width:((g.pity10||0)/10*100)+"%",height:"100%",background:(RA[2]||{}).c,transition:"width .3s"}}/>
+      <div style={{background:"var(--card)",borderRadius:12,padding:12,marginBottom:14,border:"1px solid var(--brd)"}}>
+        <div style={{fontSize:12,fontWeight:600,color:"var(--t)",marginBottom:8}}>Garanties</div>
+        <div style={{marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--td)",marginBottom:4}}><span style={{color:(RA[2]||{}).c,fontWeight:600}}>Héros ★★ garanti dans {10-(g.pity10||0)} invocations</span><span>{(g.pity10||0)}/10</span></div>
+          <div style={{height:10,background:"#0a0a18",borderRadius:6,overflow:"hidden"}}>
+            <div style={{width:((g.pity10||0)/10*100)+"%",height:"100%",background:(RA[2]||{}).c,transition:"width .3s",borderRadius:6}}/>
+          </div>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--td)",marginBottom:3}}><span>★★★ garanti</span><span>{(g.pity50||0)}/50</span></div>
-        <div style={{height:6,background:"#0a0a18",borderRadius:4,overflow:"hidden"}}>
-          <div style={{width:((g.pity50||0)/50*100)+"%",height:"100%",background:(RA[3]||{}).c,transition:"width .3s"}}/>
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--td)",marginBottom:4}}><span style={{color:(RA[3]||{}).c,fontWeight:600}}>Héros ★★★ garanti dans {50-(g.pity50||0)} invocations</span><span>{(g.pity50||0)}/50</span></div>
+          <div style={{height:10,background:"#0a0a18",borderRadius:6,overflow:"hidden"}}>
+            <div style={{width:((g.pity50||0)/50*100)+"%",height:"100%",background:(RA[3]||{}).c,transition:"width .3s",borderRadius:6}}/>
+          </div>
         </div>
       </div>
 
@@ -1489,8 +1491,7 @@ export default function Game(){
           <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",background:"var(--card)",borderRadius:16,padding:20,border:"1px solid "+hrc+"60",animation:"fi .3s ease",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+Math.round(intensity*99).toString(16).padStart(2,"0")+",transparent "+glowSize+")",pointerEvents:"none"}}/>
             {r.h.rarity>=3&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+"20,transparent 60%)",animation:"pulse 1.5s ease-in-out infinite",pointerEvents:"none"}}/>}
-            {r.h.rarity>=4&&<div style={{position:"absolute",top:-20,left:"50%",marginLeft:-40,width:80,height:80,borderRadius:"50%",border:"2px solid "+hrc+"40",animation:"sp 3s linear infinite",pointerEvents:"none"}}/>}
-            {r.h.rarity>=5&&<div style={{position:"absolute",top:-10,left:"50%",marginLeft:-60,width:120,height:120,borderRadius:"50%",border:"1px solid "+hrc+"30",animation:"sp 5s linear infinite reverse",pointerEvents:"none"}}/>}
+
             <div style={{textAlign:"center",position:"relative",zIndex:1}}>
               {Array.isArray(gr)&&<div style={{fontSize:11,color:"var(--td)",marginBottom:8}}>{idx+1} / {results.length}</div>}
               <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><Portrait id={r.h.id} size={80} fs={40} icon={r.h.icon}/></div>
@@ -1502,7 +1503,7 @@ export default function Game(){
                 {r.frag&&<div>🧩 <span style={{color:(RA[r.h.rarity]||{}).c}}>{r.frag.name}</span></div>}
                 {r.tome&&<div>📖 <span style={{color:(RA[r.tome.rarity]||{}).c}}>{r.tome.name}</span></div>}
               </div>}
-              {!r.dup&&<div style={{fontSize:12,color:"#4ade80",marginTop:12,fontWeight:600}}>Nouveau héros !</div>}
+              {!r.dup&&<div style={{padding:10,background:"#4ade8010",borderRadius:10,border:"1px solid #4ade8030",fontSize:12,marginTop:12,textAlign:"center"}}><div style={{fontWeight:700,color:"#4ade80"}}>Nouveau héros !</div></div>}
             </div>
             <div style={{marginTop:16,position:"relative",zIndex:1}}>
               {Array.isArray(gr)?<div style={{display:"flex",gap:8}}>
