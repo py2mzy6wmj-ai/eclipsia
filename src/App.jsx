@@ -558,7 +558,7 @@ export default function Game(){
       {!isE&&u.isHero&&<div style={{fontSize:10,marginTop:2,color:u.cd<=0?"#fbbf24":"#666",fontWeight:u.cd<=0?800:400}}>{u.cd<=0?"⚡ PRÊT":"⏳ "+u.cd}</div>}
       </div>);}
 
-  var inD=!!dun;var selH=sel?g.roster.find(function(r){return r.uid===sel;}):null;
+  var inD=!!dun;var grRarCol=gr&&!Array.isArray(gr)?(RA[gr.h.rarity]||{}).c:gr&&Array.isArray(gr)&&gr.length>0?(RA[Math.max.apply(null,gr.map(function(r){return r.h.rarity;}))]||{}).c:null;var selH=sel?g.roster.find(function(r){return r.uid===sel;}):null;
 
   // Portrait helper — img with onError setting src to empty + showing emoji behind
   function Portrait(props){var id=props.id,size=props.size||64,fs=props.fs||36;var src=portrait(id);
@@ -623,7 +623,6 @@ export default function Game(){
                   <SR2 icon="🛡️" label="Vuln. Magique" val={fmtPM(st.mav)} col={st.mav<1?"#4ade80":st.mav>1?"#facc15":"var(--t)"}/>
                   <SR2 icon="💨" label="Esquive" val={fmtPct(st.dodge)}/>
                   <SR2 icon="♻️" label="Récupération" val={fmtPct(st.rgHp)} col={st.rgHp>0?"#4ade80":"var(--t)"}/>
-                  <SR2 icon="⏳" label="Recharge" val={st.rel+" tours"}/>
                 </div>}
                 {statPage===1&&<div>
                   {EL.map(function(el){var v=st.er[el]!=null?st.er[el]:1;var c=erc(v);
@@ -719,29 +718,7 @@ export default function Game(){
             })}
           </div>
 
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,marginTop:16,fontSize:16}}>Vulnérabilités Élémentaires</h3>
-          <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
-            {EL.map(function(el){
-              var baseV2=ht&&ht.er&&ht.er[el]!=null?ht.er[el]:1;
-              var eqLines2=[];var eqTotal2=0;
-              var eq3=hero.equipment||{};
-              ["weapon","armor","accessory","talisman"].forEach(function(sl){
-                var it5=eq3[sl];if(it5&&it5.bon&&it5.bon.er&&it5.bon.er[el]!=null){
-                  var v3=it5.bon.er[el];eqTotal2+=v3;
-                  eqLines2.push({name:it5.name,val:v3});
-                }
-              });
-              var finalV2=Math.max(0,baseV2+eqTotal2);
-              var c2=erc(finalV2);
-              return <div key={el} style={{marginBottom:8,padding:8,background:"#ffffff04",borderRadius:6}}>
-                <div style={{fontWeight:700,color:(EM[el]||{}).c||"#ccc",fontSize:13,marginBottom:4}}>{(EM[el]||{}).i||""} {el}</div>
-                <div style={{color:"#aaa"}}>Base : {fmtEV(baseV2)}</div>
-                {eqLines2.map(function(d2,i2){return <div key={i2} style={{color:"#aaa"}}>{d2.name} : {(d2.val>0?"+":"")+Math.round(d2.val*100)+"%"}</div>;})}
-                <div style={{fontWeight:700,color:c2,marginTop:2}}>= {fmtEV(finalV2)}</div>
-              </div>;
-            })}
-          </div>
-<button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
+          <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
         </div>
       </div>}
       {infoPopup==="maitrise"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -913,7 +890,7 @@ export default function Game(){
     }
   }
 
-  var TM={base:{l:"Ville",i:"🏰"},roster:{l:"Héros",i:"👥"},donjon:{l:"Donjons",i:"⚔️"},inventaire:{l:"Inventaire",i:"📦"},invocation:{l:"Invoc",i:"🎲"}};
+  var TM={base:{l:"Ville",i:"🏰"},roster:{l:"Héros",i:"👥"},donjon:{l:"Donjons",i:"⚔️"},inventaire:{l:"Inventaire",i:"📦"},invocation:{l:"Invoc",i:"📯"}};
 
   // Auth guard
   if(!authReady)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Cinzel",fontSize:20}}>Chargement...</div>;
@@ -1052,7 +1029,7 @@ export default function Game(){
         </div>
 
           {bldPopup==="forge"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🔨 Forgeron Nv.{flv}</h3><button className="b" onClick={function(){setBldPopup(null);}} style={{fontSize:12,padding:"4px 10px"}}>✕</button></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🔨 Forgeron Nv.{flv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
 
 
             {/* 3 lines: Type, Rang, Rareté — show item names */}
@@ -1109,7 +1086,7 @@ export default function Game(){
           {/* MARCHÉ */}
           
           {bldPopup==="marche"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:10,border:"1px solid var(--brd)",borderTop:"none"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🏪 Marché Nv.{mlv}</h3><button className="b" onClick={function(){setBldPopup(null);}} style={{fontSize:12,padding:"4px 10px"}}>✕</button></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🏪 Marché Nv.{mlv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
 
             <div>
               {shopConso.length>0&&<div>
@@ -1140,7 +1117,7 @@ export default function Game(){
 
           {/* ALCHIMISTE */}
           {bldPopup==="alchimiste"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>⚗️ Alchimiste Nv.{alv}</h3><button className="b" onClick={function(){setBldPopup(null);}} style={{fontSize:12,padding:"4px 10px"}}>✕</button></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>⚗️ Alchimiste Nv.{alv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
 
             {(function(){var alv=g.bl.alchimiste||1;
               var ALCH_COSTS={2:1000,3:5000,4:20000,5:50000};
@@ -1436,30 +1413,68 @@ export default function Game(){
       </div>}
     </div>}
 
-    {tab==="invocation"&&<div style={{animation:"fi .3s ease",textAlign:"center"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:4}}>🎲 Invocation</h2>
+    {tab==="invocation"&&<div style={{animation:"fi .3s ease"}}>
+      <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>Invocation</h2>
       <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Coût: 1 📜 par invocation · Stock: {sc} parchemins</div>
-      <div style={{width:140,height:140,margin:"0 auto 16px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:50,background:"radial-gradient(circle,#9b7ec812,transparent)",border:"2px solid var(--acc)",animation:ga?"sp .5s linear infinite":"gw 3s infinite"}}>{ga?"✨":"🎲"}</div>
-      <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:14}}>
-        <button className="b bg" disabled={sc<1||ga} onClick={function(){doInvoc(1);}} style={{padding:"8px 20px",fontSize:14}}>×1 (1📜)</button>
-        <button className="b bg" disabled={sc<10||ga} onClick={function(){doInvoc(10);}} style={{padding:"8px 20px",fontSize:14}}>×10 (10📜)</button>
+
+      {/* INVOCATION ANIMATION */}
+      <div style={{position:"relative",width:"100%",height:160,margin:"0 auto 16px",borderRadius:16,background:"linear-gradient(145deg,var(--card),#1a1a2e)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+        {ga&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle,"+(grRarCol||"#9b7ec8")+"30,transparent 70%)",animation:"pulse 0.6s ease-in-out infinite"}}/>}
+        {ga&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:80,height:80,borderRadius:"50%",border:"3px solid "+(grRarCol||"#9b7ec8"),animation:"sp .5s linear infinite",opacity:0.6}}/></div>}
+        <div style={{fontSize:48,zIndex:1,animation:ga?"sp .5s linear infinite":"gw 3s infinite"}}>{ga?"✨":"📯"}</div>
       </div>
-      {gr&&!ga&&<div style={{background:"var(--card)",borderRadius:14,padding:14,maxWidth:440,margin:"0 auto",border:"1px solid var(--acc)",animation:"fi .4s ease"}}>
-        {Array.isArray(gr)?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(85px,1fr))",gap:4}}>
-          {gr.map(function(r,i){return <div key={i} style={{padding:6,borderRadius:8,textAlign:"center",background:r.dup?"#ffffff05":(RA[r.h.rarity]||{}).c+"12",border:"1px solid "+(RA[r.h.rarity]||{}).c+"30"}}>
-            <Portrait id={r.h.id} size={48} fs={20} icon={r.h.icon}/><div style={{fontSize:10,fontWeight:700,marginTop:2}}>{r.h.name}</div><div style={{fontSize:9,color:(RA[r.h.rarity]||{}).c}}>{(RA[r.h.rarity]||{}).s}</div>
-            {r.dup&&<div style={{fontSize:9,color:"#d4a017"}}>{r.frag?"🧩":""}+{r.tome?"📖":""}</div>}
-            {!r.dup&&<div style={{fontSize:9,color:"#4ade80",fontWeight:700}}>NOUVEAU</div>}</div>;})}
-        </div>:<div>
-          <div style={{margin:"0 auto 8px",width:"fit-content"}}><Portrait id={gr.h.id} size={120} fs={60} icon={gr.h.icon}/></div>
-          <div style={{fontSize:20,fontWeight:700,color:(RA[gr.h.rarity]||{}).c,marginTop:4}}>{gr.h.name}</div>
-          <div style={{fontSize:14,color:(RA[gr.h.rarity]||{}).c}}>{(RA[gr.h.rarity]||{}).s} {(RA[gr.h.rarity]||{}).n}</div>
-          <div style={{fontSize:12,color:"var(--td)",marginTop:2,fontStyle:"italic"}}>{gr.h.title}</div>
-          {gr.dup&&<div style={{fontSize:13,color:"#d4a017",marginTop:6}}>Doublon → 🧩 {gr.frag?gr.frag.name:""} + 📖 {gr.tome?gr.tome.name:""}</div>}
-          {!gr.dup&&<div style={{fontSize:14,color:"#4ade80",marginTop:6,fontWeight:700}}>✨ NOUVEAU !</div>}
-        </div>}
+
+      {/* BUTTONS */}
+      <div style={{display:"flex",gap:8,marginBottom:14}}>
+        <button className="b bg" disabled={sc<1||ga} onClick={function(){doInvoc(1);}} style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700}}>×1</button>
+        <button className="b bg" disabled={sc<10||ga} onClick={function(){doInvoc(10);}} style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700}}>×10</button>
+      </div>
+
+      {/* RESULTS POPUP */}
+      {gr&&!ga&&<div onClick={function(){setGr(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}>
+        <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .3s ease"}}>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16,marginBottom:12,textAlign:"center"}}>{Array.isArray(gr)?"Invocation ×10":"Invocation"}</h3>
+          {Array.isArray(gr)?<div>
+            {gr.map(function(r,i){var hrc=(RA[r.h.rarity]||{}).c||"#888";return <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:8,marginBottom:4,background:"linear-gradient(145deg,"+hrc+"15,"+hrc+"08)",border:"1px solid "+hrc+"40",borderRadius:10}}>
+              <Portrait id={r.h.id} size={36} fs={18} icon={r.h.icon}/>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13}}>{r.h.name}</div>
+                <div style={{fontSize:10,color:hrc,fontWeight:700}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
+                {r.dup&&<div style={{fontSize:10,color:"#d4a017"}}>{r.frag?"🧩 Fragment d'âme":""}{r.frag&&r.tome?" + ":""}{r.tome?"📖 Tome d'expérience":""}</div>}
+              </div>
+              {r.dup&&<span style={{fontSize:10,color:"var(--td)",fontStyle:"italic"}}>doublon</span>}
+            </div>;})}
+          </div>
+          :<div style={{textAlign:"center"}}>
+            {(function(){var r=gr;var hrc=(RA[r.h.rarity]||{}).c||"#888";return <div>
+              <div style={{background:"linear-gradient(145deg,"+hrc+"20,"+hrc+"08)",border:"1px solid "+hrc+"50",borderRadius:16,padding:16,marginBottom:12}}>
+                <Portrait id={r.h.id} size={72} fs={36} icon={r.h.icon}/>
+                <div style={{fontSize:20,fontWeight:800,fontFamily:"Cinzel",marginTop:8}}>{r.h.name}</div>
+                <div style={{fontSize:13,color:hrc,fontWeight:700}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
+                {(function(){var ht3=HEROES.find(function(h){return h.id===r.h.id;});return ht3?<div style={{fontSize:12,color:"var(--td)",marginTop:4}}>{ht3.title}</div>:null;})()}
+              </div>
+              {r.dup&&<div style={{padding:10,background:"#d4a01710",borderRadius:10,border:"1px solid #d4a01730",fontSize:13}}>
+                <div style={{fontWeight:700,color:"#d4a017",marginBottom:4}}>Héros déjà obtenu</div>
+                {r.frag&&<div>🧩 Fragment d'âme reçu</div>}
+                {r.tome&&<div>📖 Tome d'expérience reçu</div>}
+              </div>}
+            </div>;})()}
+          </div>}
+          <button className="b" onClick={function(){setGr(null);}} style={{width:"100%",marginTop:12,padding:"10px 0",fontSize:14}}>Fermer</button>
+        </div>
       </div>}
-      <div style={{marginTop:14,fontSize:12,color:"var(--td)"}}>{Object.keys(RA).map(function(r){var pct=RA[r].r*100;return <span key={r} style={{marginRight:10,color:RA[r].c}}>{RA[r].n}: {pct%1===0?pct:pct.toFixed(1)}%</span>;})}</div>
-    </div>}
+
+      {/* RATES */}
+      <div style={{marginTop:8}}>
+        <div style={{fontSize:13,color:"var(--td)",marginBottom:6}}>Taux d'invocation</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
+          {[1,2,3,4,5].map(function(r){return <div key={r} style={{display:"flex",justifyContent:"space-between",padding:"3px 8px",fontSize:12,background:"var(--card)",borderRadius:6,border:"1px solid var(--brd)"}}>
+            <span style={{color:(RA[r]||{}).c}}>{(RA[r]||{}).s} {(RA[r]||{}).n}</span>
+            <span style={{color:"var(--td)"}}>{((RA[r]||{}).r*100).toFixed(1)}%</span>
+          </div>;})}
+        </div>
+      </div>
+    </div>}}
     {!inD&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--bg)",borderTop:"1px solid var(--brd)",display:"flex",zIndex:90,padding:"10px 0 env(safe-area-inset-bottom, 10px) 0"}}>
       {Object.keys(TM).map(function(k){return <button key={k} onClick={function(){setTab(k);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"6px 0",color:tab===k?"var(--acc)":"var(--td)",fontFamily:"inherit",fontSize:10,fontWeight:tab===k?700:400}}>
         <span style={{fontSize:18}}>{TM[k].i}</span><span>{TM[k].l}</span>
