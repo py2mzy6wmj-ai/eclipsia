@@ -276,6 +276,7 @@ export default function Game(){
   var _statPage=useState(0);var statPage=_statPage[0],setStatPage=_statPage[1];
   var _teamPick=useState(null);var teamPick=_teamPick[0],setTeamPick=_teamPick[1];
   var _bldPopup=useState(null);var bldPopup=_bldPopup[0],setBldPopup=_bldPopup[1];
+  var _showCamp=useState(false);var showCamp=_showCamp[0],setShowCamp=_showCamp[1];
   var _sheet=useState(null);var sheet=_sheet[0],setSheet=_sheet[1];
   var _au=useState(false);var au=_au[0],setAu=_au[1];
   var _dExp=useState(null);var dExp=_dExp[0],setDExp=_dExp[1];
@@ -890,7 +891,7 @@ export default function Game(){
     }
   }
 
-  var TM={base:{l:"Ville",i:"🏰"},roster:{l:"Héros",i:"👥"},donjon:{l:"Donjons",i:"⚔️"},inventaire:{l:"Inventaire",i:"📦"},invocation:{l:"Invoc",i:"📯"}};
+  var TM={base:{l:"Ville",i:"🏰"},roster:{l:"Héros",i:"👥"},donjon:{l:"Aventure",i:"⚔️"},inventaire:{l:"Inventaire",i:"📦"},invocation:{l:"Invocation",i:"📯"}};
 
   // Auth guard
   if(!authReady)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Cinzel",fontSize:20}}>Chargement...</div>;
@@ -1255,7 +1256,32 @@ export default function Game(){
     </div>}
 
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
-      {!dun&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:4}}>⚔️ Donjons</h2>
+      {!dun&&!showCamp&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>Aventure</h2>
+        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}}>
+          <div onClick={function(){setShowCamp(true);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:16,textAlign:"center",cursor:"pointer",minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+            <div style={{fontSize:28}}>⚔️</div>
+            <div style={{fontWeight:700,fontSize:14,marginTop:4}}>Campagne</div>
+            <div style={{fontSize:10,color:"var(--td)"}}>Explorez les donjons</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div style={{fontSize:26}}>🌀</div>
+              <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Abysses Infinies</div>
+              <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
+            </div>
+            <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div style={{fontSize:26}}>😈</div>
+              <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Messagers du Mal</div>
+              <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
+            </div>
+          </div>
+        </div>
+      </div>}
+
+      {!dun&&showCamp&&<div style={{position:"fixed",inset:0,background:"var(--bg)",zIndex:100,overflowY:"auto",display:"flex",flexDirection:"column"}}>
+        <div style={{flex:1,maxWidth:540,margin:"0 auto",width:"100%",padding:"10px 12px 16px",display:"flex",flexDirection:"column"}}>
+          <div style={{marginBottom:8}}><button className="b" onClick={function(){setShowCamp(false);}} style={{fontSize:13}}>← Retour</button></div>
+          <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:8}}>Campagne</h2>
         {DG.map(function(d,i){var bt=g.beaten||[];var lk=d.ul>=0&&bt.indexOf(d.ul)<0;if(d.secret&&bt.indexOf(29)<0)lk=true;if(lk)return null;var isOpen=dExp===i;var beaten=bt.indexOf(i)>=0;
           var enmPool=(d.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);
           var bssPool=(d.bosses||[]).map(function(bid){return BSS.find(function(b){return b.id===bid;});}).filter(Boolean);
@@ -1276,7 +1302,9 @@ export default function Game(){
             <button className="b bg" onClick={function(){setTeamPick(i);}} style={{fontSize:14,width:"100%",padding:"10px 0"}}>⚔️ Explorer</button>
           </div>}
         </div>;})}
-      </div>}
+      </div>
+        </div>}
+
       {teamPick!=null&&!dun&&<div onClick={function(){setTeamPick(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:15,marginBottom:10}}>Sélection d'équipe</h3>
@@ -1440,27 +1468,27 @@ export default function Game(){
               <div style={{flex:1}}>
                 <div style={{fontWeight:700,fontSize:13}}>{r.h.name}</div>
                 <div style={{fontSize:10,color:hrc,fontWeight:700}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
-                {r.dup&&<div style={{fontSize:10,color:"#d4a017"}}>{r.frag?"🧩 Fragment d'âme":""}{r.frag&&r.tome?" + ":""}{r.tome?"📖 Tome d'expérience":""}</div>}
+                {r.dup&&<div style={{fontSize:10}}>{r.frag&&<span style={{color:(RA[r.h.rarity]||{}).c}}>🧩 {r.frag.name}</span>}{r.frag&&r.tome?" + ":""}{r.tome&&<span style={{color:(RA[r.tome.rarity]||{}).c}}>📖 {r.tome.name}</span>}</div>}
               </div>
               {r.dup&&<span style={{fontSize:10,color:"var(--td)",fontStyle:"italic"}}>doublon</span>}
             </div>;})}
           </div>
           :<div style={{textAlign:"center"}}>
             {(function(){var r=gr;var hrc=(RA[r.h.rarity]||{}).c||"#888";return <div>
-              <div style={{background:"linear-gradient(145deg,"+hrc+"20,"+hrc+"08)",border:"1px solid "+hrc+"50",borderRadius:16,padding:16,marginBottom:12}}>
-                <Portrait id={r.h.id} size={72} fs={36} icon={r.h.icon}/>
+              <div style={{background:"linear-gradient(145deg,"+hrc+"20,"+hrc+"08)",border:"1px solid "+hrc+"50",borderRadius:16,padding:16,marginBottom:12,textAlign:"center"}}>
+                <div style={{display:"flex",justifyContent:"center"}}><Portrait id={r.h.id} size={72} fs={36} icon={r.h.icon}/></div>
                 <div style={{fontSize:20,fontWeight:800,fontFamily:"Cinzel",marginTop:8}}>{r.h.name}</div>
                 <div style={{fontSize:13,color:hrc,fontWeight:700}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
                 {(function(){var ht3=HEROES.find(function(h){return h.id===r.h.id;});return ht3?<div style={{fontSize:12,color:"var(--td)",marginTop:4}}>{ht3.title}</div>:null;})()}
               </div>
               {r.dup&&<div style={{padding:10,background:"#d4a01710",borderRadius:10,border:"1px solid #d4a01730",fontSize:13}}>
                 <div style={{fontWeight:700,color:"#d4a017",marginBottom:4}}>Héros déjà obtenu</div>
-                {r.frag&&<div>🧩 Fragment d'âme reçu</div>}
-                {r.tome&&<div>📖 Tome d'expérience reçu</div>}
+                {r.frag&&<div>🧩 <span style={{color:(RA[r.h.rarity]||{}).c}}>{r.frag.name}</span></div>}
+                {r.tome&&<div>📖 <span style={{color:(RA[r.tome.rarity]||{}).c}}>{r.tome.name}</span></div>}
               </div>}
             </div>;})()}
           </div>}
-          <button className="b" onClick={function(){setGr(null);}} style={{width:"100%",marginTop:12,padding:"10px 0",fontSize:14}}>Fermer</button>
+          <div style={{position:"sticky",bottom:0,background:"var(--card)",padding:"8px 0",borderTop:"1px solid var(--brd)"}}><button className="b" onClick={function(){setGr(null);}} style={{width:"100%",padding:"10px 0",fontSize:14}}>Fermer</button></div>
         </div>
       </div>}
 
