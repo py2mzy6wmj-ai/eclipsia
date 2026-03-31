@@ -1474,7 +1474,7 @@ export default function Game(){
           </div>;})}
         </div>
       </div>
-    </div>}}
+    </div>);
     {!inD&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--bg)",borderTop:"1px solid var(--brd)",display:"flex",zIndex:90,padding:"10px 0 env(safe-area-inset-bottom, 10px) 0"}}>
       {Object.keys(TM).map(function(k){return <button key={k} onClick={function(){setTab(k);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"6px 0",color:tab===k?"var(--acc)":"var(--td)",fontFamily:"inherit",fontSize:10,fontWeight:tab===k?700:400}}>
         <span style={{fontSize:18}}>{TM[k].i}</span><span>{TM[k].l}</span>
