@@ -273,6 +273,7 @@ export default function Game(){
   var _ga=useState(false);var ga=_ga[0],setGa=_ga[1];
   var _sel=useState(null);var sel=_sel[0],setSel=_sel[1];
   var _heroSort=useState('rarity');var heroSort=_heroSort[0],setHeroSort=_heroSort[1];
+  var _statPage=useState(0);var statPage=_statPage[0],setStatPage=_statPage[1];
   var _teamPick=useState(null);var teamPick=_teamPick[0],setTeamPick=_teamPick[1];
   var _bldPopup=useState(null);var bldPopup=_bldPopup[0],setBldPopup=_bldPopup[1];
   var _sheet=useState(null);var sheet=_sheet[0],setSheet=_sheet[1];
@@ -605,15 +606,34 @@ export default function Game(){
               <span style={{color:"var(--td)"}}>{p.icon} {p.label}</span>
               <span style={{fontWeight:600,color:p.col||"var(--t)"}}>{p.val}</span>
             </div>;}
-            return <div style={{background:"var(--card)",borderRadius:12,padding:10,marginBottom:8,border:"1px solid var(--brd)"}}>
-              {!isMag3&&<SR2 icon="💪" label="Force" val={fmtPM(st.str)} col={st.str>=1?"#4ade80":"#facc15"}/>}
-              {isMag3&&<SR2 icon="🔮" label="Magie" val={fmtPM(st.mag)} col={st.mag>=1?"#4ade80":"#facc15"}/>}
-              <SR2 icon="💥" label="Critique" val={fmtPct(st.crit)}/>
-              <SR2 icon="🛡️" label="Vulnérabilité Physique" val={fmtPM(st.phv)} col={st.phv<1?"#4ade80":st.phv>1?"#facc15":"var(--t)"}/>
-              <SR2 icon="🔰" label="Vulnérabilité Magique" val={fmtPM(st.mav)} col={st.mav<1?"#4ade80":st.mav>1?"#facc15":"var(--t)"}/>
-              <SR2 icon="💨" label="Esquive" val={fmtPct(st.dodge)}/>
-              <SR2 icon="♻️" label="Récupération" val={fmtPct(st.rgHp)} col={st.rgHp>0?"#4ade80":"var(--t)"}/>
-              <SR2 icon="⏳" label="Recharge" val={st.rel+" tours"}/>
+            var _tsx=useRef(null);
+            function onTS(e){_tsx.current=e.touches[0].clientX;}
+            function onTE(e){if(_tsx.current===null)return;var dx=e.changedTouches[0].clientX-_tsx.current;if(Math.abs(dx)>40){setStatPage(dx<0?1:0);}_tsx.current=null;}
+            return <div style={{background:"var(--card)",borderRadius:12,marginBottom:8,border:"1px solid var(--brd)",overflow:"hidden"}} onTouchStart={onTS} onTouchEnd={onTE}>
+              <div style={{display:"flex",borderBottom:"1px solid var(--brd)"}}>
+                <div onClick={function(){setStatPage(0);}} style={{flex:1,padding:"6px 0",textAlign:"center",fontSize:11,fontWeight:statPage===0?700:400,color:statPage===0?"var(--acc)":"var(--td)",borderBottom:statPage===0?"2px solid var(--acc)":"2px solid transparent",cursor:"pointer"}}>Caractéristiques</div>
+                <div onClick={function(){setStatPage(1);}} style={{flex:1,padding:"6px 0",textAlign:"center",fontSize:11,fontWeight:statPage===1?700:400,color:statPage===1?"var(--acc)":"var(--td)",borderBottom:statPage===1?"2px solid var(--acc)":"2px solid transparent",cursor:"pointer"}}>Éléments</div>
+              </div>
+              <div style={{padding:10}}>
+                {statPage===0&&<div>
+                  {!isMag3&&<SR2 icon="💪" label="Force" val={fmtPM(st.str)} col={st.str>=1?"#4ade80":"#facc15"}/>}
+                  {isMag3&&<SR2 icon="🔮" label="Magie" val={fmtPM(st.mag)} col={st.mag>=1?"#4ade80":"#facc15"}/>}
+                  <SR2 icon="💥" label="Critique" val={fmtPct(st.crit)}/>
+                  <SR2 icon="🛡️" label="Vuln. Physique" val={fmtPM(st.phv)} col={st.phv<1?"#4ade80":st.phv>1?"#facc15":"var(--t)"}/>
+                  <SR2 icon="🛡️" label="Vuln. Magique" val={fmtPM(st.mav)} col={st.mav<1?"#4ade80":st.mav>1?"#facc15":"var(--t)"}/>
+                  <SR2 icon="💨" label="Esquive" val={fmtPct(st.dodge)}/>
+                  <SR2 icon="♻️" label="Récupération" val={fmtPct(st.rgHp)} col={st.rgHp>0?"#4ade80":"var(--t)"}/>
+                  <SR2 icon="⏳" label="Recharge" val={st.rel+" tours"}/>
+                </div>}
+                {statPage===1&&<div>
+                  {EL.map(function(el){var v=st.er[el]!=null?st.er[el]:1;var c=erc(v);
+                    return <div key={el} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:12}}>
+                      <span style={{color:"var(--td)"}}>{(EM[el]||{}).i} {el}</span>
+                      <span style={{fontWeight:600,color:c}}>{fmtEV(v)}</span>
+                    </div>;
+                  })}
+                </div>}
+              </div>
             </div>;
           })()}
           <div style={{display:"grid",gridTemplateColumns:"1fr",gap:4,marginBottom:8}}>
@@ -630,7 +650,7 @@ export default function Game(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
             <button className={"b "+(canLv?"bgr glow":"")} disabled={!canLv} onClick={function(){setSlv(true);}} style={{padding:"12px 0",fontSize:12,fontWeight:canLv?800:600}}>Gain de niveau</button>
             <button className="b" onClick={function(){setTomePanel(hero.uid);setTomeQty({});}} style={{padding:"12px 0",fontSize:12}}>Entraînement</button>
-            {(function(){var _frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});var _fragC=_frag?(g.conso||{})[_frag.id]||0:0;var _canM=_fragC>=10&&(hero.mastery||0)<10;return <button className={"b "+(_canM?"bgr glow":"")} onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12,fontWeight:_canM?800:600}}>Maîtrise</button>;})()}            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Stats</button>
+            {(function(){var _frag=FRAGMENTS.find(function(f){return f.heroId===hero.id;});var _fragC=_frag?(g.conso||{})[_frag.id]||0:0;var _canM=_fragC>=10&&(hero.mastery||0)<10;return <button className={"b "+(_canM?"bgr glow":"")} onClick={function(){setInfoPopup("maitrise");}} style={{padding:"12px 0",fontSize:12,fontWeight:_canM?800:600}}>Maîtrise</button>;})()}            <button className="b" onClick={function(){setInfoPopup("carac");}} style={{padding:"12px 0",fontSize:12}}>Détails</button>
             <button className="b" onClick={function(){setInfoPopup("skill");}} style={{padding:"12px 0",fontSize:12}}>Compétences</button>
             <button className="b" disabled style={{padding:"12px 0",fontSize:12,opacity:0.3}}>Bientôt</button>
           </div>
@@ -645,7 +665,7 @@ export default function Game(){
         </div>
       {infoPopup==="carac"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des caractéristiques</h3>
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détails</h3>
           <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
             {(function(){
               var heroWt=ht?ht.wt:"physical";
@@ -675,7 +695,53 @@ export default function Game(){
               }).filter(Boolean);
             })()}
           </div>
-          <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
+          
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,marginTop:16,fontSize:16}}>Vulnérabilités Élémentaires</h3>
+          <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
+            {EL.map(function(el){
+              var baseV=ht&&ht.er&&ht.er[el]!=null?ht.er[el]:1;
+              var eqLines=[];var eqTotal=0;
+              var eq2=hero.equipment||{};
+              ["weapon","armor","accessory","talisman"].forEach(function(sl){
+                var it3=eq2[sl];if(it3&&it3.bon&&it3.bon.er&&it3.bon.er[el]!=null){
+                  var v2=it3.bon.er[el];eqTotal+=v2;
+                  eqLines.push({name:it3.name,val:v2});
+                }
+              });
+              var finalV=Math.max(0,baseV+eqTotal);
+              var c=erc(finalV);
+              return <div key={el} style={{marginBottom:8,padding:8,background:"#ffffff04",borderRadius:6}}>
+                <div style={{fontWeight:700,color:(EM[el]||{}).c||"#ccc",fontSize:13,marginBottom:4}}>{(EM[el]||{}).i||""} {el}</div>
+                <div style={{color:"#aaa"}}>Base : {fmtEV(baseV)}</div>
+                {eqLines.map(function(d,i){return <div key={i} style={{color:"#aaa"}}>{d.name} : {(d.val>0?"+":"")+Math.round(d.val*100)+"%"}</div>;})}
+                <div style={{fontWeight:700,color:c,marginTop:2}}>= {fmtEV(finalV)}</div>
+              </div>;
+            })}
+          </div>
+
+          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,marginTop:16,fontSize:16}}>Vulnérabilités Élémentaires</h3>
+          <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
+            {EL.map(function(el){
+              var baseV2=ht&&ht.er&&ht.er[el]!=null?ht.er[el]:1;
+              var eqLines2=[];var eqTotal2=0;
+              var eq3=hero.equipment||{};
+              ["weapon","armor","accessory","talisman"].forEach(function(sl){
+                var it5=eq3[sl];if(it5&&it5.bon&&it5.bon.er&&it5.bon.er[el]!=null){
+                  var v3=it5.bon.er[el];eqTotal2+=v3;
+                  eqLines2.push({name:it5.name,val:v3});
+                }
+              });
+              var finalV2=Math.max(0,baseV2+eqTotal2);
+              var c2=erc(finalV2);
+              return <div key={el} style={{marginBottom:8,padding:8,background:"#ffffff04",borderRadius:6}}>
+                <div style={{fontWeight:700,color:(EM[el]||{}).c||"#ccc",fontSize:13,marginBottom:4}}>{(EM[el]||{}).i||""} {el}</div>
+                <div style={{color:"#aaa"}}>Base : {fmtEV(baseV2)}</div>
+                {eqLines2.map(function(d2,i2){return <div key={i2} style={{color:"#aaa"}}>{d2.name} : {(d2.val>0?"+":"")+Math.round(d2.val*100)+"%"}</div>;})}
+                <div style={{fontWeight:700,color:c2,marginTop:2}}>= {fmtEV(finalV2)}</div>
+              </div>;
+            })}
+          </div>
+<button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:8,width:"100%"}}>Fermer</button>
         </div>
       </div>}
       {infoPopup==="maitrise"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -1038,7 +1104,7 @@ export default function Game(){
               <span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer le Forgeron au niveau {flv+1}</span>
               <button className="b bg" disabled={g.gold<fNextCost} onClick={function(){if(g.gold<fNextCost)return;setG(function(p){var bl=Object.assign({},p.bl);bl.forge=(bl.forge||1)+1;return Object.assign({},p,{gold:p.gold-fNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{fNextCost.toLocaleString()} or</button>
             </div></>}
-          </div></div>}
+          <div style={{position:"sticky",bottom:0,padding:"8px 0",background:"var(--card)",borderTop:"1px solid var(--brd)",marginTop:8}}><button className="b" onClick={function(){setBldPopup(null);}} style={{width:"100%",fontSize:13,padding:"10px 0"}}>Fermer</button></div></div></div>}
 
           {/* MARCHÉ */}
           
@@ -1070,7 +1136,7 @@ export default function Game(){
                 <button className="b bg" disabled={g.gold<mNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.marche=(bl.marche||1)+1;return Object.assign({},p,{gold:p.gold-mNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{mNextCost.toLocaleString()} or</button>
               </div></>}
             </div>
-          </div></div>}
+          <div style={{position:"sticky",bottom:0,padding:"8px 0",background:"var(--card)",borderTop:"1px solid var(--brd)",marginTop:8}}><button className="b" onClick={function(){setBldPopup(null);}} style={{width:"100%",fontSize:13,padding:"10px 0"}}>Fermer</button></div></div></div>}
 
           {/* ALCHIMISTE */}
           {bldPopup==="alchimiste"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
@@ -1107,13 +1173,13 @@ export default function Game(){
                 </div>
               </div>;}
               return <div>
-                {cataRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Catalyseurs</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{cataRecipes.map(function(r){return <RecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} name={r.name}/>;})}</div></div>}
-                {gabRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Gabarits</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{gabRecipes.map(function(r){return <RecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} name={r.name}/>;})}</div></div>}
-                {tomeRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Tomes d'expérience</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{tomeRecipes.map(function(r){return <TomeRecipeCard key={r.name} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName}/>;})}</div></div>}
+                {cataRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Catalyseurs</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{cataRecipes.map(function(r){return <RecipeCard key={r.name||r.from} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} fr={r.fr} tr={r.tr}/>;})}</div></div>}
+                {gabRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Gabarits</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{gabRecipes.map(function(r){return <RecipeCard key={r.name||r.from} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} fr={r.fr} tr={r.tr}/>;})}</div></div>}
+                {tomeRecipes.length>0&&<div><div style={{fontSize:13,color:"var(--td)",fontWeight:600,marginBottom:6}}>Tomes d'expérience</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:6,marginBottom:12}}>{tomeRecipes.map(function(r){return <TomeRecipeCard key={r.name||r.from} from={r.from} to={r.to} qty={r.qty} fromName={r.fromName} toName={r.toName} fr={r.fr} tr={r.tr}/>;})}</div></div>}
                 {aNextCost!=null&&<><div style={{height:1,background:"var(--brd)",margin:"10px 0"}}/><div style={{background:"linear-gradient(135deg,#1c1a1a,#241e1e)",borderRadius:8,padding:10,marginTop:4,border:"1px solid var(--brd)",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:13,fontWeight:600,color:"var(--t)"}}>Améliorer l'Alchimiste au niveau {alv+1}</span><button className="b bg" disabled={g.gold<aNextCost} onClick={function(){setG(function(p){var bl=Object.assign({},p.bl);bl.alchimiste=(bl.alchimiste||1)+1;return Object.assign({},p,{gold:p.gold-aNextCost,bl:bl});});}} style={{fontSize:13,padding:"6px 14px"}}>{aNextCost.toLocaleString()} or</button></div></>}
               </div>;
             })()}
-          </div></div>}
+          <div style={{position:"sticky",bottom:0,padding:"8px 0",background:"var(--card)",borderTop:"1px solid var(--brd)",marginTop:8}}><button className="b" onClick={function(){setBldPopup(null);}} style={{width:"100%",fontSize:13,padding:"10px 0"}}>Fermer</button></div></div></div>}
 
           {/* Building info popup */}
           {infoPopup&&infoPopup.indexOf("bld_")===0&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -1146,19 +1212,14 @@ export default function Game(){
             var ww2=gw(h);var iM=ww2.wt==="magical";var ms=iM?hst.mag:hst.str;
             var avg=Math.round(ww.dmg*Math.max(0.1,ms));
             var canLv=h.xp>=xpN(h.level);
-            return <div key={h.uid} onClick={function(){setSheet(h.uid);}} style={{padding:8,background:"var(--card)",border:"1px solid "+rc+"40",borderRadius:12,cursor:"pointer",textAlign:"center",position:"relative"}}>
+            return <div key={h.uid} onClick={function(){setSheet(h.uid);}} style={{padding:8,background:"linear-gradient(145deg,"+rc+"15,"+rc+"08)",border:"1px solid "+rc+"40",borderRadius:12,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
               <Portrait id={h.id} size={44} fs={22} icon={h.icon} canLv={canLv}/>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span style={{fontWeight:700,fontSize:14}}>{g.team.indexOf(h.uid)>=0?"✅ ":""}{h.name}</span>
-                  <span style={{fontSize:20,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>{h.level}</span>
-                </div>
-                <div style={{fontSize:11,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div>
-                <div style={{display:"flex",gap:12,fontSize:12,marginTop:2}}>
-                  <span>🩸 {hst.hp}</span>
-                  <span>{iM?"💫":"⚔️"} ~{avg}</span>
-                </div>
+                <div style={{fontWeight:700,fontSize:13}}>{h.name}{g.team.indexOf(h.uid)>=0?" ✅":""}</div>
+                <div style={{fontSize:10,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div>
+                <div style={{fontSize:11,color:"var(--td)",marginTop:2}}>🩸 {hst.hp}  {iM?"💫":"⚔️"} ~{avg}</div>
               </div>
+              <div style={{fontSize:18,fontWeight:900,color:rc+"70",fontFamily:"Cinzel",flexShrink:0}}>{h.level}</div>
             </div>;
           });
         })()}
