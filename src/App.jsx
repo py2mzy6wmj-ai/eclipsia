@@ -606,9 +606,9 @@ export default function Game(){
               <span style={{color:"var(--td)"}}>{p.icon} {p.label}</span>
               <span style={{fontWeight:600,color:p.col||"var(--t)"}}>{p.val}</span>
             </div>;}
-            var _tsx=useRef(null);
-            function onTS(e){_tsx.current=e.touches[0].clientX;}
-            function onTE(e){if(_tsx.current===null)return;var dx=e.changedTouches[0].clientX-_tsx.current;if(Math.abs(dx)>40){setStatPage(dx<0?1:0);}_tsx.current=null;}
+            var _tsxVal=null;
+            function onTS(e){_tsxVal=e.touches[0].clientX;}
+            function onTE(e){if(_tsxVal===null)return;var dx=e.changedTouches[0].clientX-_tsxVal;if(Math.abs(dx)>40){setStatPage(dx<0?1:0);}_tsxVal=null;}
             return <div style={{background:"var(--card)",borderRadius:12,marginBottom:8,border:"1px solid var(--brd)",overflow:"hidden"}} onTouchStart={onTS} onTouchEnd={onTE}>
               <div style={{display:"flex",borderBottom:"1px solid var(--brd)"}}>
                 <div onClick={function(){setStatPage(0);}} style={{flex:1,padding:"6px 0",textAlign:"center",fontSize:11,fontWeight:statPage===0?700:400,color:statPage===0?"var(--acc)":"var(--td)",borderBottom:statPage===0?"2px solid var(--acc)":"2px solid transparent",cursor:"pointer"}}>Caractéristiques</div>
