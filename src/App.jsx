@@ -236,6 +236,36 @@ function AuthScreen(props){
   </div>);
 }
 
+
+function ElectricBorder(props){
+  var color=props.color||"#5227FF",speed=props.speed||1,chaos=props.chaos||1,thickness=props.thickness||2,children=props.children,style=props.style||{};
+  var rootRef=useRef(null);
+  var rawId=useRef("eb"+Math.random().toString(36).slice(2,8)).current;
+  var filterId="turb-"+rawId;
+  useEffect(function(){
+    var anim;var seed=0;
+    function tick(){
+      seed+=speed*0.015;
+      var svg=rootRef.current&&rootRef.current.querySelector("svg");
+      if(svg){var turb=svg.querySelector("feTurbulence");if(turb)turb.setAttribute("seed",Math.floor(seed*60));}
+      anim=requestAnimationFrame(tick);
+    }
+    anim=requestAnimationFrame(tick);
+    return function(){cancelAnimationFrame(anim);};
+  },[speed]);
+  var _r=parseInt(color.slice(1,3),16)||0,_g=parseInt(color.slice(3,5),16)||0,_b=parseInt(color.slice(5,7),16)||0;
+  return(<div ref={rootRef} style={Object.assign({position:"relative",display:"inline-block"},style)}>
+    <svg style={{position:"absolute",width:0,height:0}}><defs>
+      <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="turbulence" baseFrequency={0.02*chaos} numOctaves={1} seed={0}/>
+        <feDisplacementMap in="SourceGraphic" scale={thickness*8}/>
+      </filter>
+    </defs></svg>
+    <div style={{position:"absolute",inset:-thickness*2+"px",borderRadius:"inherit",border:thickness+"px solid "+color,filter:"url(#"+filterId+")",boxShadow:"0 0 "+(thickness*4)+"px rgba("+_r+","+_g+","+_b+",0.5), inset 0 0 "+(thickness*4)+"px rgba("+_r+","+_g+","+_b+",0.3)",pointerEvents:"none",zIndex:0}}/>
+    <div style={{position:"relative",zIndex:1}}>{children}</div>
+  </div>);
+}
+
 export default function Game(){
   var _user=useState(null);var user=_user[0],setUser=_user[1];
   var _authReady=useState(false);var authReady=_authReady[0],setAuthReady=_authReady[1];
@@ -549,7 +579,7 @@ export default function Game(){
   function reset(){localStorage.removeItem("ecl8");setG(INIT);setDun(null);setLogs([]);setTab("base");setAu(false);setSheet(null);setFloats([]);if(user)supabase.from("saves").upsert({user_id:user.id,game_state:INIT},{onConflict:"user_id"});}
 
   // OLD THEME: --bg:#0e0d0d;--bg2:#141313;--card:#1c1a1a;--brd:#3a2828;--t:#e0d8d0;--td:#8a7e76;--acc:#c0392b;--red:#e74c3c;--gold:#d4a017
-  var css='@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#111114;--bg2:#1a1a1e;--card:#222228;--brd:#3a3a44;--t:#d8d8e0;--td:#8888a0;--acc:#9b7ec8;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);background-image:url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'60\' height=\'60\' fill=\'%230e0d0d\'/%3E%3Crect x=\'0\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'12\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'36\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3C/svg%3E");color:var(--t);font-family:"DM Sans",sans-serif;font-size:14px}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes gw{0%,100%{box-shadow:0 0 6px #9b7ec820}50%{box-shadow:0 0 18px #9b7ec850}}@keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes glw{0%,100%{box-shadow:0 0 4px #22c55e40}50%{box-shadow:0 0 16px #22c55e90}}@keyframes arr{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}.b{padding:8px 16px;border:1px solid var(--brd);border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;transition:all .15s;background:var(--card);color:var(--t)}.b:hover{background:#2a2222;transform:translateY(-1px)}.b:active{transform:translateY(0)}.b:disabled{opacity:.3;cursor:not-allowed;transform:none}.bg{background:linear-gradient(135deg,#9b7ec8,#7b5ea8);color:#fff;border:none;font-weight:700}.bg:hover{background:linear-gradient(135deg,#d44637,#b03426)}.br{background:linear-gradient(135deg,#6b4e98,#6b1414);color:#fff;border:none}.bgr{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none}.ton{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}.glow{animation:glw 1.5s infinite}@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}';
+  var css='@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#111114;--bg2:#1a1a1e;--card:#222228;--brd:#3a3a44;--t:#d8d8e0;--td:#8888a0;--acc:#9b7ec8;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);background-image:url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'60\' height=\'60\' fill=\'%230e0d0d\'/%3E%3Crect x=\'0\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'12\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'36\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3C/svg%3E");color:var(--t);font-family:"DM Sans",sans-serif;font-size:14px}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes gw{0%,100%{box-shadow:0 0 6px #9b7ec820}50%{box-shadow:0 0 18px #9b7ec850}}@keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes glw{0%,100%{box-shadow:0 0 4px #22c55e40}50%{box-shadow:0 0 16px #22c55e90}}@keyframes arr{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}.b{padding:8px 16px;border:1px solid var(--brd);border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;transition:all .15s;background:var(--card);color:var(--t)}.b:hover{background:#2a2222;transform:translateY(-1px)}.b:active{transform:translateY(0)}.b:disabled{opacity:.3;cursor:not-allowed;transform:none}.bg{background:linear-gradient(135deg,#9b7ec8,#7b5ea8);color:#fff;border:none;font-weight:700}.bg:hover{background:linear-gradient(135deg,#d44637,#b03426)}.br{background:linear-gradient(135deg,#6b4e98,#6b1414);color:#fff;border:none}.bgr{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none}.ton{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}.glow{animation:glw 1.5s infinite}@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}@keyframes veilShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}@keyframes veilFast{0%{background-position:0% 50%;filter:hue-rotate(0deg)}25%{filter:hue-rotate(90deg)}50%{background-position:100% 50%;filter:hue-rotate(180deg)}75%{filter:hue-rotate(270deg)}100%{background-position:0% 50%;filter:hue-rotate(360deg)}}';
 
   function Bar(props){var cur=props.cur,max=props.max,color=props.color||"#22c55e",h=props.h||10,label=props.label!==false;var p=clamp(cur/Math.max(1,max)*100,0,100);return(<div style={{position:"relative",width:"100%",height:h,background:"#0a0a18",borderRadius:h/2,overflow:"hidden"}}><div style={{width:p+"%",height:"100%",borderRadius:h/2,background:"linear-gradient(90deg,"+color+"cc,"+color+")",transition:"width .3s"}}/>{label&&<span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.max(9,h-2),fontWeight:700,color:"#fff",textShadow:"0 1px 1px #000a",fontFamily:"monospace"}}>{cur}/{max}</span>}</div>);}
   function turnPos(u){if(!dun||!dun.tO)return null;var alive=dun.tO.filter(function(id){return(dun.team.find(function(h){return h.uid===id&&h.hp>0;})||dun.en.find(function(e){return e.uid===id&&e.hp>0;}));});return alive.indexOf(u)+1||null;}
@@ -1446,40 +1476,44 @@ export default function Game(){
       </div>}
     </div>}
 
-    {tab==="invocation"&&<div style={{animation:"fi .3s ease"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)"}}>Invocation</h2>
-        <button className="b" onClick={function(){setInfoPopup("invoc_rates");}} style={{fontSize:10,padding:"2px 8px"}}>INFO</button>
-      </div>
-      <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Coût: 1 📜 par invocation · Stock: {sc} parchemins</div>
-
-      <div style={{position:"relative",width:"100%",height:160,margin:"0 auto 16px",borderRadius:16,background:"linear-gradient(145deg,var(--card),#1a1a2e)",border:"1px solid var(--brd)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-        {ga&&<div style={{position:"absolute",inset:"-20%",background:"radial-gradient(circle,"+(grRarCol||"#9b7ec8")+"50,transparent 60%)",animation:"pulse 0.8s ease-in-out infinite"}}/>}
-        <div style={{fontSize:64,lineHeight:1,animation:ga?"sp .5s linear infinite":"gw 3s infinite"}}>{ga?"✨":"📯"}</div>
-      </div>
-
-      <div style={{display:"flex",gap:8,marginBottom:10}}>
-        <button className="b bg" disabled={sc<1||ga} onClick={function(){doInvoc(1);}} style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700}}>×1</button>
-        <button className="b bg" disabled={sc<10||ga} onClick={function(){doInvoc(10);}} style={{flex:1,padding:"14px 0",fontSize:15,fontWeight:700}}>×10</button>
-      </div>
-
-      <div style={{background:"var(--card)",borderRadius:12,padding:12,marginBottom:14,border:"1px solid var(--brd)"}}>
-        <div style={{fontSize:12,fontWeight:600,color:"var(--t)",marginBottom:8}}>Garanties</div>
-        <div style={{marginBottom:10}}>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--td)",marginBottom:4}}><span style={{color:(RA[2]||{}).c,fontWeight:600}}>Héros ★★ garanti dans {10-(g.pity10||0)} invocations</span><span>{(g.pity10||0)}/10</span></div>
-          <div style={{height:10,background:"#0a0a18",borderRadius:6,overflow:"hidden"}}>
-            <div style={{width:((g.pity10||0)/10*100)+"%",height:"100%",background:(RA[2]||{}).c,transition:"width .3s",borderRadius:6}}/>
+        {tab==="invocation"&&<div style={{animation:"fi .3s ease",position:"relative",minHeight:"calc(100vh - 140px)"}}>
+      <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,#1a1020,#0d0d1a,#1a100d,#0d1a10,#100d1a)",backgroundSize:"400% 400%",animation:ga?"veilFast 2s linear infinite":"veilShift 20s ease infinite",opacity:ga?0.5:0.2,borderRadius:12,pointerEvents:"none",transition:"opacity 0.5s"}}/>
+      <div style={{position:"relative",zIndex:1}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)"}}>Invocation</h2>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            <span style={{fontSize:12,color:"var(--td)"}}>📜 {sc}</span>
+            <button className="b" onClick={function(){setInfoPopup("invoc_rates");}} style={{fontSize:10,padding:"2px 8px"}}>INFO</button>
           </div>
         </div>
-        <div>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--td)",marginBottom:4}}><span style={{color:(RA[3]||{}).c,fontWeight:600}}>Héros ★★★ garanti dans {50-(g.pity50||0)} invocations</span><span>{(g.pity50||0)}/50</span></div>
-          <div style={{height:10,background:"#0a0a18",borderRadius:6,overflow:"hidden"}}>
-            <div style={{width:((g.pity50||0)/50*100)+"%",height:"100%",background:(RA[3]||{}).c,transition:"width .3s",borderRadius:6}}/>
+
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          <button className="b bg" disabled={sc<1||ga} onClick={function(){doInvoc(1);}} style={{flex:1,padding:"22px 0",fontSize:18,fontWeight:700,borderRadius:14}}>Invoquer ×1</button>
+          <button className="b bg" disabled={sc<10||ga} onClick={function(){doInvoc(10);}} style={{flex:1,padding:"22px 0",fontSize:18,fontWeight:700,borderRadius:14}}>Invoquer ×10</button>
+        </div>
+
+        <div style={{height:ga?100:20,display:"flex",alignItems:"center",justifyContent:"center",transition:"height 0.5s"}}>
+          {ga&&<div style={{fontSize:14,color:"var(--acc)",animation:"pulse 1s ease-in-out infinite",fontFamily:"Cinzel"}}>Invocation en cours...</div>}
+        </div>
+
+        <div style={{background:"var(--card)",borderRadius:12,padding:12,border:"1px solid var(--brd)"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--t)",marginBottom:8}}>Garanties</div>
+          <div style={{marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--td)",marginBottom:4}}><span style={{color:(RA[2]||{}).c,fontWeight:600}}>Héros ★★ garanti dans {10-(g.pity10||0)} invocations</span><span>{(g.pity10||0)}/10</span></div>
+            <div style={{height:10,background:"#0a0a18",borderRadius:6,overflow:"hidden"}}>
+              <div style={{width:((g.pity10||0)/10*100)+"%",height:"100%",background:(RA[2]||{}).c,transition:"width .3s",borderRadius:6}}/>
+            </div>
+          </div>
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--td)",marginBottom:4}}><span style={{color:(RA[3]||{}).c,fontWeight:600}}>Héros ★★★ garanti dans {50-(g.pity50||0)} invocations</span><span>{(g.pity50||0)}/50</span></div>
+            <div style={{height:10,background:"#0a0a18",borderRadius:6,overflow:"hidden"}}>
+              <div style={{width:((g.pity50||0)/50*100)+"%",height:"100%",background:(RA[3]||{}).c,transition:"width .3s",borderRadius:6}}/>
+            </div>
           </div>
         </div>
       </div>
 
-      {gr&&!ga&&(function(){
+{gr&&!ga&&(function(){
         var results=Array.isArray(gr)?gr:[gr];
         var idx=Array.isArray(gr)?grIdx:0;
         var r=results[idx];if(!r)return null;
@@ -1488,7 +1522,7 @@ export default function Game(){
         var intensity=r.h.rarity<=1?0.15:r.h.rarity===2?0.25:r.h.rarity===3?0.4:r.h.rarity===4?0.6:0.9;
         var glowSize=r.h.rarity<=1?"40%":r.h.rarity===2?"50%":r.h.rarity===3?"60%":r.h.rarity===4?"70%":"90%";
         return <div onClick={function(){if(!Array.isArray(gr))setGr(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",background:"var(--card)",borderRadius:16,padding:20,border:"1px solid "+hrc+"60",animation:"fi .3s ease",position:"relative",overflow:"hidden"}}>
+          <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",display:"flex",justifyContent:"center"}}><ElectricBorder color={r.h.rarity>=2?hrc:"transparent"} speed={r.h.rarity<=1?0:r.h.rarity===2?0.5:r.h.rarity===3?1:r.h.rarity===4?2:4} chaos={r.h.rarity<=1?0:r.h.rarity===2?0.3:r.h.rarity===3?0.6:r.h.rarity===4?1:1.5} thickness={r.h.rarity<=2?1:r.h.rarity===3?2:r.h.rarity===4?2:3} style={{width:"100%",borderRadius:16}}><div style={{background:"var(--card)",borderRadius:16,padding:20,position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+Math.round(intensity*99).toString(16).padStart(2,"0")+",transparent "+glowSize+")",pointerEvents:"none"}}/>
             {r.h.rarity>=3&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+"20,transparent 60%)",animation:"pulse 1.5s ease-in-out infinite",pointerEvents:"none"}}/>}
 
@@ -1514,6 +1548,7 @@ export default function Game(){
               :<button className="b" onClick={function(){setGr(null);}} style={{width:"100%",padding:"10px 0",fontSize:13}}>Fermer</button>}
             </div>
           </div>
+          </ElectricBorder>
         </div>;
       })()}
 
