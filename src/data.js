@@ -360,6 +360,20 @@ export var ENM = [
   { id: "e_chien_infernal", name: "Chien infernal", icon: "🐕‍🦺", hp: 45, dmg: 12, at: "physical", str: 1.0, mag: 1.0, crit: 0.04, phv: 1, dodge: 0.08, mav: 1.1, xp: 5, gold: 5, er: { Feu: 0.7, Terre: 1, Foudre: 1.0, Eau: 1.3, Sacré: 1.3, Ténèbres: 0.9 } },
   { id: "e_ange_dechu", name: "Ange déchu", icon: "🪽", hp: 32, dmg: 16, at: "magical", str: 1.0, mag: 1.0, crit: 0.05, phv: 0.9, dodge: 0.08, mav: 0.85, xp: 6, gold: 6, er: { Feu: 1, Terre: 0.5, Foudre: 1.2, Eau: 1.0, Sacré: 0.5, Ténèbres: 0.7 } },
   { id: "e_slime_chroma", name: "Slime chromatique", icon: "🌈", hp: 35, dmg: 15, at: "magical", str: 1.0, mag: 1.0, crit: 0.03, phv: 0.45, dodge: 0.02, mav: 1.2, xp: 8, gold: 6, er: { Feu: 0.5, Terre: 0.5, Foudre: 0.5, Eau: 0.5, Sacré: 0.5, Ténèbres: 0.5 } },
+
+  // === LABYRINTHE MÉCANIQUE ===
+  { id: "e_auto_sentinelle", name: "Automate sentinelle", icon: "🤖", hp: 40, dmg: 10, at: "physical", str: 1.0, mag: 1.0, crit: 0.04, phv: 0.97, dodge: 0.05, mav: 1.02, xp: 5, gold: 5, er: { Feu: 1.0, Terre: 1.0, Foudre: 1.0, Eau: 1.0, Sacré: 1.0, Ténèbres: 1.0 } },
+  { id: "e_auto_blinde", name: "Automate blindé", icon: "🤖", hp: 80, dmg: 7, at: "physical", str: 1.0, mag: 1.0, crit: 0.02, phv: 0.60, dodge: 0.01, mav: 0.85, xp: 7, gold: 7, er: { Feu: 0.90, Terre: 0.80, Foudre: 1.10, Eau: 1.0, Sacré: 1.0, Ténèbres: 1.0 } },
+  { id: "e_auto_assassin", name: "Automate assassin", icon: "🤖", hp: 30, dmg: 17, at: "physical", str: 1.0, mag: 1.0, crit: 0.08, phv: 1.10, dodge: 0.12, mav: 1.10, xp: 6, gold: 6, er: { Feu: 1.0, Terre: 1.0, Foudre: 1.10, Eau: 1.0, Sacré: 1.0, Ténèbres: 0.90 } },
+  { id: "e_auto_antimagie", name: "Automate antimagie", icon: "🤖", hp: 55, dmg: 9, at: "physical", str: 1.0, mag: 1.0, crit: 0.03, phv: 1.05, dodge: 0.03, mav: 0.55, xp: 6, gold: 6, er: { Feu: 1.0, Terre: 1.0, Foudre: 1.0, Eau: 1.0, Sacré: 0.80, Ténèbres: 0.80 } },
+  { id: "e_auto_sorcier", name: "Automate sorcier", icon: "🤖", hp: 25, dmg: 20, at: "magical", str: 1.0, mag: 1.0, crit: 0.06, phv: 1.20, dodge: 0.04, mav: 1.00, xp: 6, gold: 6, er: { Feu: 0.90, Terre: 1.0, Foudre: 0.90, Eau: 1.0, Sacré: 1.10, Ténèbres: 0.90 } },
+  { id: "e_auto_ignifuge", name: "Automate ignifuge", icon: "🤖", hp: 45, dmg: 11, at: "physical", str: 1.0, mag: 1.0, crit: 0.04, phv: 0.95, dodge: 0.05, mav: 1.00, xp: 5, gold: 5, er: { Feu: 0.0, Terre: 1.0, Foudre: 1.0, Eau: 1.30, Sacré: 1.0, Ténèbres: 1.0 } },
+  { id: "e_auto_hydrophobe", name: "Automate hydrophobe", icon: "🤖", hp: 45, dmg: 11, at: "physical", str: 1.0, mag: 1.0, crit: 0.04, phv: 0.95, dodge: 0.05, mav: 1.00, xp: 5, gold: 5, er: { Feu: 1.30, Terre: 1.0, Foudre: 1.0, Eau: 0.0, Sacré: 1.0, Ténèbres: 1.0 } },
+  { id: "e_auto_paratonnerre", name: "Automate paratonnerre", icon: "🤖", hp: 45, dmg: 11, at: "magical", str: 1.0, mag: 1.0, crit: 0.04, phv: 1.00, dodge: 0.05, mav: 0.95, xp: 5, gold: 5, er: { Feu: 1.0, Terre: 1.30, Foudre: 0.0, Eau: 1.0, Sacré: 1.0, Ténèbres: 1.0 } },
+  { id: "e_auto_aerien", name: "Automate aérien", icon: "🤖", hp: 35, dmg: 12, at: "physical", str: 1.0, mag: 1.0, crit: 0.04, phv: 1.05, dodge: 0.10, mav: 1.05, xp: 5, gold: 5, er: { Feu: 1.0, Terre: 0.0, Foudre: 1.30, Eau: 1.0, Sacré: 1.0, Ténèbres: 1.0 } },
+  { id: "e_auto_reparateur", name: "Automate réparateur", icon: "🤖", hp: 50, dmg: 8, at: "physical", str: 1.0, mag: 1.0, crit: 0.03, phv: 0.90, dodge: 0.03, mav: 0.90, rgHp: 0.05, xp: 6, gold: 6, er: { Feu: 1.0, Terre: 1.0, Foudre: 1.0, Eau: 1.0, Sacré: 1.0, Ténèbres: 1.0 } },
+  { id: "e_auto_chromatique", name: "Automate chromatique", icon: "🤖", hp: 40, dmg: 14, at: "magical", str: 1.0, mag: 1.0, crit: 0.05, phv: 0.95, dodge: 0.05, mav: 0.95, xp: 7, gold: 7, er: { Feu: 0.10, Terre: 0.10, Foudre: 0.10, Eau: 0.10, Sacré: 0.10, Ténèbres: 0.10 } },
+  { id: "e_auto_miroir", name: "Automate miroir", icon: "🤖", hp: 40, dmg: 12, at: "magical", str: 1.0, mag: 1.0, crit: 0.05, phv: 0.80, dodge: 0.08, mav: 0.80, xp: 6, gold: 6, er: { Feu: 1.0, Terre: 1.0, Foudre: 1.0, Eau: 1.0, Sacré: 0.80, Ténèbres: 0.80 } },
 ];
 
 export var BSS = [
