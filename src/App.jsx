@@ -1265,7 +1265,7 @@ export default function Game(){
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
       {!dun&&!showCamp&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>Aventure</h2>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-          <div onClick={function(){setShowCamp(true);}} style={{gridColumn:"1 / -1",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+          <div onClick={function(){setShowCamp(true);}} style={{gridColumn:"1 / -1",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:12,textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",minHeight:80}}>
             <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/campaign.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
             <div style={{fontWeight:700,fontSize:15,fontFamily:"Cinzel",color:"var(--acc)",zIndex:1}}>Campagne Principale</div>
             <div style={{fontSize:10,color:"var(--td)",marginTop:2,zIndex:1}}>Explorez les donjons</div>
