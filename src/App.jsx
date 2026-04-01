@@ -1549,6 +1549,7 @@ export default function Game(){
             </div>
           </div>
           </ElectricBorder>
+          </div>
         </div>;
       })()}
 
