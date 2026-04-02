@@ -1499,9 +1499,8 @@ export default function Game(){
             </div>
           </div>
         </div>
-      </div>
 
-{gr&&!ga&&(function(){
+      {gr&&!ga&&(function(){
         var results=Array.isArray(gr)?gr:[gr];
         var idx=Array.isArray(gr)?grIdx:0;
         var r=results[idx];if(!r)return null;
