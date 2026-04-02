@@ -237,36 +237,6 @@ function AuthScreen(props){
 }
 
 
-function ElectricBorder(props){
-  var color=props.color||"#5227FF",speed=props.speed||1,chaos=props.chaos||1,thickness=props.thickness||2,children=props.children,style=props.style||{};
-  var rootRef=useRef(null);
-  var rawId=useRef("eb"+Math.random().toString(36).slice(2,8)).current;
-  var filterId="turb-"+rawId;
-  var seedRef=useRef(0);
-  useEffect(function(){
-    var anim;
-    function tick(){
-      seedRef.current+=speed*0.4;
-      var svg=rootRef.current&&rootRef.current.querySelector("svg");
-      if(svg){var turb=svg.querySelector("feTurbulence");if(turb)turb.setAttribute("seed",Math.floor(seedRef.current*30));}
-      anim=requestAnimationFrame(tick);
-    }
-    anim=requestAnimationFrame(tick);
-    return function(){cancelAnimationFrame(anim);};
-  },[speed]);
-  var _r=parseInt(color.slice(1,3),16)||0,_g2=parseInt(color.slice(3,5),16)||0,_b=parseInt(color.slice(5,7),16)||0;
-  var glowStr="0 0 "+(thickness*6)+"px rgba("+_r+","+_g2+","+_b+",0.6), 0 0 "+(thickness*12)+"px rgba("+_r+","+_g2+","+_b+",0.3), inset 0 0 "+(thickness*4)+"px rgba("+_r+","+_g2+","+_b+",0.2)";
-  return(<div ref={rootRef} style={Object.assign({position:"relative"},style)}>
-    <svg style={{position:"absolute",width:0,height:0,overflow:"hidden"}}><defs>
-      <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
-        <feTurbulence type="turbulence" baseFrequency={chaos} numOctaves={2} seed={0} result="turb"/>
-        <feDisplacementMap in="SourceGraphic" in2="turb" scale={thickness*6}/>
-      </filter>
-    </defs></svg>
-    <div style={{position:"absolute",inset:-thickness+"px",borderRadius:"inherit",border:thickness+"px solid "+color,filter:"url(#"+filterId+")",boxShadow:glowStr,pointerEvents:"none",zIndex:0}}/>
-    <div style={{position:"relative",zIndex:1}}>{children}</div>
-  </div>);
-}
 
 export default function Game(){
   var _user=useState(null);var user=_user[0],setUser=_user[1];
@@ -1495,9 +1465,8 @@ export default function Game(){
       </div>}
     </div>}
 
-        {tab==="invocation"&&<div style={{animation:"fi .3s ease",position:"relative",minHeight:"calc(100vh - 140px)"}}>
-      <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,#4a2080,#1a1050,#804020,#205040,#401a60,#206080)",backgroundSize:"600% 600%",animation:ga?"veilFast 2s linear infinite":"veilShift 25s ease infinite",opacity:ga?0.8:0.4,borderRadius:12,pointerEvents:"none",transition:"opacity 0.3s"}}/>
-      <div style={{position:"relative",zIndex:1}}>
+        {tab==="invocation"&&<div style={{animation:"fi .3s ease"}}>
+
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)"}}>Invocation</h2>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -1541,7 +1510,9 @@ export default function Game(){
         var intensity=r.h.rarity<=1?0.15:r.h.rarity===2?0.25:r.h.rarity===3?0.4:r.h.rarity===4?0.6:0.9;
         var glowSize=r.h.rarity<=1?"40%":r.h.rarity===2?"50%":r.h.rarity===3?"60%":r.h.rarity===4?"70%":"90%";
         return <div onClick={function(){if(!Array.isArray(gr))setGr(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",display:"flex",justifyContent:"center"}}><ElectricBorder color={hrc} speed={0.2*r.h.rarity} chaos={0.01+0.02*r.h.rarity} thickness={Math.max(1,r.h.rarity)} style={{width:"100%",borderRadius:16}}><div style={{background:"var(--card)",borderRadius:16,padding:20,position:"relative",overflow:"hidden"}}>
+          <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",background:"var(--card)",borderRadius:16,padding:20,position:"relative",overflow:"hidden",border:"1px solid "+hrc+"60"}}>
+            <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,"+hrc+"80,"+hrc+"10,"+hrc+"60,"+hrc+"05,"+hrc+"40)",backgroundSize:"400% 400%",animation:"veilShift "+(12-r.h.rarity*2)+"s ease infinite",opacity:0.08+r.h.rarity*0.08,pointerEvents:"none",borderRadius:16}}/>
+            {r.h.rarity>=3&&<div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,"+hrc+"90,transparent,"+hrc+"60,transparent,"+hrc+"40)",backgroundSize:"300% 300%",animation:"veilFast "+(5-r.h.rarity*0.5)+"s linear infinite",opacity:0.05+r.h.rarity*0.05,pointerEvents:"none",borderRadius:16}}/>}
             <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+Math.round(intensity*99).toString(16).padStart(2,"0")+",transparent "+glowSize+")",pointerEvents:"none"}}/>
             {r.h.rarity>=3&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+"20,transparent 60%)",animation:"pulse 1.5s ease-in-out infinite",pointerEvents:"none"}}/>}
 
@@ -1566,8 +1537,6 @@ export default function Game(){
               </div>
               :<button className="b" onClick={function(){setGr(null);}} style={{width:"100%",padding:"10px 0",fontSize:13}}>Fermer</button>}
             </div>
-          </div>
-          </ElectricBorder>
           </div>
         </div>;
       })()}
