@@ -201,7 +201,7 @@ function AuthScreen(props){
   var _err=useState(null);var err=_err[0],setErr=_err[1];
   var _ld=useState(false);var ld=_ld[0],setLd=_ld[1];
   // OLD THEME: --bg:#0e0d0d;--bg2:#141313;--card:#1c1a1a;--brd:#3a2828;--t:#e0d8d0;--td:#8a7e76;--acc:#c0392b;--red:#e74c3c;--gold:#d4a017
-  var css='@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#111114;--bg2:#1a1a1e;--card:#222228;--brd:#3a3a44;--t:#d8d8e0;--td:#8888a0;--acc:#9b7ec8;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--t);font-family:"DM Sans",sans-serif}';
+  var css='@import url("https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#111114;--bg2:#1a1a1e;--card:#222228;--brd:#3a3a44;--t:#d8d8e0;--td:#8888a0;--acc:#9b7ec8;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--t);font-family:"DM Sans",sans-serif}';
   function doAuth(){
     setErr(null);setLd(true);
     if(mode==="login"){
@@ -219,7 +219,7 @@ function AuthScreen(props){
   return(<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}><style>{css}</style>
     <div style={{maxWidth:380,width:"100%",animation:"fi .4s ease"}}>
       <div style={{textAlign:"center",marginBottom:24}}>
-        <h1 style={{fontFamily:"Cinzel",fontSize:32,fontWeight:900,color:"var(--acc)",textShadow:"0 0 20px #9b7ec840"}}>ECLIPSIA</h1>
+        <h1 style={{fontFamily:"Uncial Antiqua",fontSize:32,fontWeight:900,color:"var(--acc)",textShadow:"0 0 20px #9b7ec840"}}>ECLIPSIA</h1>
         <div style={{fontSize:13,color:"var(--td)",marginTop:4}}>JRPG Roguelite</div>
       </div>
       <div style={{background:"var(--card)",borderRadius:14,padding:24,border:"1px solid var(--brd)"}}>
@@ -242,26 +242,28 @@ function ElectricBorder(props){
   var rootRef=useRef(null);
   var rawId=useRef("eb"+Math.random().toString(36).slice(2,8)).current;
   var filterId="turb-"+rawId;
+  var seedRef=useRef(0);
   useEffect(function(){
-    var anim;var seed=0;
+    var anim;
     function tick(){
-      seed+=speed*0.015;
+      seedRef.current+=speed*0.4;
       var svg=rootRef.current&&rootRef.current.querySelector("svg");
-      if(svg){var turb=svg.querySelector("feTurbulence");if(turb)turb.setAttribute("seed",Math.floor(seed*60));}
+      if(svg){var turb=svg.querySelector("feTurbulence");if(turb)turb.setAttribute("seed",Math.floor(seedRef.current*30));}
       anim=requestAnimationFrame(tick);
     }
     anim=requestAnimationFrame(tick);
     return function(){cancelAnimationFrame(anim);};
   },[speed]);
-  var _r=parseInt(color.slice(1,3),16)||0,_g=parseInt(color.slice(3,5),16)||0,_b=parseInt(color.slice(5,7),16)||0;
-  return(<div ref={rootRef} style={Object.assign({position:"relative",display:"inline-block"},style)}>
-    <svg style={{position:"absolute",width:0,height:0}}><defs>
+  var _r=parseInt(color.slice(1,3),16)||0,_g2=parseInt(color.slice(3,5),16)||0,_b=parseInt(color.slice(5,7),16)||0;
+  var glowStr="0 0 "+(thickness*6)+"px rgba("+_r+","+_g2+","+_b+",0.6), 0 0 "+(thickness*12)+"px rgba("+_r+","+_g2+","+_b+",0.3), inset 0 0 "+(thickness*4)+"px rgba("+_r+","+_g2+","+_b+",0.2)";
+  return(<div ref={rootRef} style={Object.assign({position:"relative"},style)}>
+    <svg style={{position:"absolute",width:0,height:0,overflow:"hidden"}}><defs>
       <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
-        <feTurbulence type="turbulence" baseFrequency={0.02*chaos} numOctaves={1} seed={0}/>
-        <feDisplacementMap in="SourceGraphic" scale={thickness*8}/>
+        <feTurbulence type="turbulence" baseFrequency={chaos} numOctaves={2} seed={0} result="turb"/>
+        <feDisplacementMap in="SourceGraphic" in2="turb" scale={thickness*6}/>
       </filter>
     </defs></svg>
-    <div style={{position:"absolute",inset:-thickness*2+"px",borderRadius:"inherit",border:thickness+"px solid "+color,filter:"url(#"+filterId+")",boxShadow:"0 0 "+(thickness*4)+"px rgba("+_r+","+_g+","+_b+",0.5), inset 0 0 "+(thickness*4)+"px rgba("+_r+","+_g+","+_b+",0.3)",pointerEvents:"none",zIndex:0}}/>
+    <div style={{position:"absolute",inset:-thickness+"px",borderRadius:"inherit",border:thickness+"px solid "+color,filter:"url(#"+filterId+")",boxShadow:glowStr,pointerEvents:"none",zIndex:0}}/>
     <div style={{position:"relative",zIndex:1}}>{children}</div>
   </div>);
 }
@@ -579,7 +581,7 @@ export default function Game(){
   function reset(){localStorage.removeItem("ecl8");setG(INIT);setDun(null);setLogs([]);setTab("base");setAu(false);setSheet(null);setFloats([]);if(user)supabase.from("saves").upsert({user_id:user.id,game_state:INIT},{onConflict:"user_id"});}
 
   // OLD THEME: --bg:#0e0d0d;--bg2:#141313;--card:#1c1a1a;--brd:#3a2828;--t:#e0d8d0;--td:#8a7e76;--acc:#c0392b;--red:#e74c3c;--gold:#d4a017
-  var css='@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#111114;--bg2:#1a1a1e;--card:#222228;--brd:#3a3a44;--t:#d8d8e0;--td:#8888a0;--acc:#9b7ec8;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);background-image:url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'60\' height=\'60\' fill=\'%230e0d0d\'/%3E%3Crect x=\'0\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'12\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'36\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3C/svg%3E");color:var(--t);font-family:"DM Sans",sans-serif;font-size:14px}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes gw{0%,100%{box-shadow:0 0 6px #9b7ec820}50%{box-shadow:0 0 18px #9b7ec850}}@keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes glw{0%,100%{box-shadow:0 0 4px #22c55e40}50%{box-shadow:0 0 16px #22c55e90}}@keyframes arr{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}.b{padding:8px 16px;border:1px solid var(--brd);border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;transition:all .15s;background:var(--card);color:var(--t)}.b:hover{background:#2a2222;transform:translateY(-1px)}.b:active{transform:translateY(0)}.b:disabled{opacity:.3;cursor:not-allowed;transform:none}.bg{background:linear-gradient(135deg,#9b7ec8,#7b5ea8);color:#fff;border:none;font-weight:700}.bg:hover{background:linear-gradient(135deg,#d44637,#b03426)}.br{background:linear-gradient(135deg,#6b4e98,#6b1414);color:#fff;border:none}.bgr{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none}.ton{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}.glow{animation:glw 1.5s infinite}@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}@keyframes veilShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}@keyframes veilFast{0%{background-position:0% 50%;filter:hue-rotate(0deg)}25%{filter:hue-rotate(90deg)}50%{background-position:100% 50%;filter:hue-rotate(180deg)}75%{filter:hue-rotate(270deg)}100%{background-position:0% 50%;filter:hue-rotate(360deg)}}';
+  var css='@import url("https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=DM+Sans:wght@400;500;600;700&display=swap");:root{--bg:#111114;--bg2:#1a1a1e;--card:#222228;--brd:#3a3a44;--t:#d8d8e0;--td:#8888a0;--acc:#9b7ec8;--red:#e74c3c;--gold:#d4a017}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);background-image:url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect width=\'60\' height=\'60\' fill=\'%230e0d0d\'/%3E%3Crect x=\'0\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'0\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'12\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'12\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'24\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'15\' y=\'36\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'45\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'36\' width=\'15\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'0\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23141210\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3Crect x=\'30\' y=\'48\' width=\'30\' height=\'12\' rx=\'1\' fill=\'%23131110\' stroke=\'%231a1715\' stroke-width=\'.5\'/%3E%3C/svg%3E");color:var(--t);font-family:"DM Sans",sans-serif;font-size:14px}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@keyframes gw{0%,100%{box-shadow:0 0 6px #9b7ec820}50%{box-shadow:0 0 18px #9b7ec850}}@keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes glw{0%,100%{box-shadow:0 0 4px #22c55e40}50%{box-shadow:0 0 16px #22c55e90}}@keyframes arr{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}.b{padding:8px 16px;border:1px solid var(--brd);border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px;transition:all .15s;background:var(--card);color:var(--t)}.b:hover{background:#2a2222;transform:translateY(-1px)}.b:active{transform:translateY(0)}.b:disabled{opacity:.3;cursor:not-allowed;transform:none}.bg{background:linear-gradient(135deg,#9b7ec8,#7b5ea8);color:#fff;border:none;font-weight:700}.bg:hover{background:linear-gradient(135deg,#b091d4,#8b6eb8)}.br{background:linear-gradient(135deg,#6b4e98,#4e3880);color:#fff;border:none}.bgr{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none}.ton{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}.glow{animation:glw 1.5s infinite}@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}@keyframes veilShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}@keyframes veilFast{0%{background-position:0% 50%;filter:hue-rotate(0deg)}25%{filter:hue-rotate(90deg)}50%{background-position:100% 50%;filter:hue-rotate(180deg)}75%{filter:hue-rotate(270deg)}100%{background-position:0% 50%;filter:hue-rotate(360deg)}}';
 
   function Bar(props){var cur=props.cur,max=props.max,color=props.color||"#22c55e",h=props.h||10,label=props.label!==false;var p=clamp(cur/Math.max(1,max)*100,0,100);return(<div style={{position:"relative",width:"100%",height:h,background:"#0a0a18",borderRadius:h/2,overflow:"hidden"}}><div style={{width:p+"%",height:"100%",borderRadius:h/2,background:"linear-gradient(90deg,"+color+"cc,"+color+")",transition:"width .3s"}}/>{label&&<span style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.max(9,h-2),fontWeight:700,color:"#fff",textShadow:"0 1px 1px #000a",fontFamily:"monospace"}}>{cur}/{max}</span>}</div>);}
   function turnPos(u){if(!dun||!dun.tO)return null;var alive=dun.tO.filter(function(id){return(dun.team.find(function(h){return h.uid===id&&h.hp>0;})||dun.en.find(function(e){return e.uid===id&&e.hp>0;}));});return alive.indexOf(u)+1||null;}
@@ -624,10 +626,10 @@ export default function Game(){
       return(<div style={{position:"fixed",inset:0,background:"var(--bg)",zIndex:100,display:"flex",flexDirection:"column"}}><style>{css}</style>
         <div style={{flex:1,overflowY:"auto",maxWidth:540,margin:"0 auto",width:"100%",padding:"10px 12px 16px",display:"flex",flexDirection:"column"}}>
           <div style={{background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"50",borderRadius:16,padding:14,marginBottom:8,position:"relative"}}>
-            <div style={{position:"absolute",top:12,right:16,fontSize:28,fontWeight:900,color:rc+"80",fontFamily:"Cinzel"}}>{hero.level}</div>
+            <div style={{position:"absolute",top:12,right:16,fontSize:28,fontWeight:900,color:rc+"80",fontFamily:"Uncial Antiqua"}}>{hero.level}</div>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <Portrait id={hero.id} size={64} fs={32} icon={hero.icon}/>
-              <div style={{flex:1}}><div style={{fontSize:18,fontWeight:800,fontFamily:"Cinzel"}}>{hero.name}</div><div style={{fontSize:11,color:"#8888bb"}}>{ht?ht.title:""}</div><div style={{fontSize:12,color:rc,fontWeight:700}}>{(RA[hero.rarity]||{}).s} {(RA[hero.rarity]||{}).n}</div><div style={{fontSize:11,color:"var(--td)",marginTop:2}}>Maîtrise {hero.mastery||0}/10</div></div>
+              <div style={{flex:1}}><div style={{fontSize:18,fontWeight:800,fontFamily:"Uncial Antiqua"}}>{hero.name}</div><div style={{fontSize:11,color:"#8888bb"}}>{ht?ht.title:""}</div><div style={{fontSize:12,color:rc,fontWeight:700}}>{(RA[hero.rarity]||{}).s} {(RA[hero.rarity]||{}).n}</div><div style={{fontSize:11,color:"var(--td)",marginTop:2}}>Maîtrise {hero.mastery||0}/10</div></div>
             </div>
             <div style={{height:4,background:"#0a0a18",borderRadius:4,overflow:"hidden",marginTop:8}}><div style={{width:clamp(hero.xp/xn*100,0,100)+"%",height:"100%",background:"var(--acc)",transition:"width .3s"}}/></div>
             <div style={{fontSize:10,color:"var(--td)",marginTop:3,textAlign:"right"}}>XP {hero.xp}/{xn}</div>
@@ -702,7 +704,7 @@ export default function Game(){
         </div>
       {infoPopup==="carac"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détails</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détails</h3>
           <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
             {(function(){
               var heroWt=ht?ht.wt:"physical";
@@ -733,7 +735,7 @@ export default function Game(){
             })()}
           </div>
           
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,marginTop:16,fontSize:16}}>Vulnérabilités Élémentaires</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:12,marginTop:16,fontSize:16}}>Vulnérabilités Élémentaires</h3>
           <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
             {EL.map(function(el){
               var baseV=ht&&ht.er&&ht.er[el]!=null?ht.er[el]:1;
@@ -761,7 +763,7 @@ export default function Game(){
       </div>}
       {infoPopup==="maitrise"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:4,fontSize:16,textAlign:"center"}}>⭐ Maîtrise</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:4,fontSize:16,textAlign:"center"}}>⭐ Maîtrise</h3>
           <div style={{fontSize:13,color:"var(--td)",textAlign:"center",marginBottom:12}}>{hero.name}</div>
           {(function(){
             var mLv=hero.mastery||0;
@@ -804,7 +806,7 @@ export default function Game(){
         return <div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}>
           <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:15}}>{slotLabel} — {hero.name}</h3>
+              <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:15}}>{slotLabel} — {hero.name}</h3>
               <button className="b" onClick={function(){setInfoPopup(null);}} style={{fontSize:11,padding:"4px 10px"}}>✕</button>
             </div>
             <div style={{display:"flex",justifyContent:"center",gap:16,padding:8,background:"#ffffff04",borderRadius:8,marginBottom:10,fontSize:14,fontWeight:700}}>
@@ -833,7 +835,7 @@ export default function Game(){
                   <div style={{display:"flex",gap:4}}>
                     <button className="b bgr" style={{fontSize:11,padding:"5px 10px"}} onClick={function(){doEquip(hero.uid,it.uid);setInfoPopup(null);}}>Équiper</button>
                     <button style={{fontSize:14,padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)",background:"#152a15",color:"#4ade80",cursor:"pointer"}} onClick={function(e){doRecycle(it.uid,e);}}>♻️</button>
-                    <button style={{fontSize:14,padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)",background:"#2a1515",color:"#ef4444",cursor:"pointer"}} onClick={function(e){doSell(it.uid,e);}}>💰</button>
+                    <button style={{fontSize:14,padding:"4px 8px",borderRadius:6,border:"1px solid var(--brd)",background:"var(--card)",color:"#ef4444",cursor:"pointer"}} onClick={function(e){doSell(it.uid,e);}}>💰</button>
                   </div>
                 </div>
               </div>;
@@ -844,7 +846,7 @@ export default function Game(){
       })()}
             {infoPopup==="skill"&&(function(){var sk3=SKILLS[hero.id];if(!sk3){setInfoPopup(null);return null;}return <div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Compétences</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:12,fontSize:16}}>Compétences</h3>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
             <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,#9b7ec8,#6b4e98)",border:"2px solid #fbbf24",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>⚡</div>
             <div>
@@ -862,7 +864,7 @@ export default function Game(){
       </div>;})()}
             {infoPopup==="elem"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des vulnérabilités</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:12,fontSize:16}}>Détail des vulnérabilités</h3>
           <div style={{fontSize:12,lineHeight:1.8,fontFamily:"monospace",color:"#ccc"}}>
             {EL.map(function(el){
               var baseV=ht&&ht.er&&ht.er[el]!=null?ht.er[el]:1;
@@ -889,7 +891,7 @@ export default function Game(){
       </div>}
       {slv&&canLv&&(function(){var sN=cs(Object.assign({},hero,{level:hero.level+1}),g.bl);return <div onClick={function(){setSlv(false);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:4,fontSize:16,textAlign:"center"}}>⬆️ Niveau {hero.level} → {hero.level+1}</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:4,fontSize:16,textAlign:"center"}}>⬆️ Niveau {hero.level} → {hero.level+1}</h3>
           <div style={{fontSize:13,color:"var(--td)",textAlign:"center",marginBottom:12}}>{hero.name}</div>
           <div style={{textAlign:"left"}}>
             {(function(){var rows=[];
@@ -905,7 +907,7 @@ export default function Game(){
       </div>;})()}
       {tomePanel===hero.uid&&<div onClick={function(){setTomePanel(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:400,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>📖 Utiliser des Tomes</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:12,fontSize:16}}>📖 Utiliser des Tomes</h3>
           <div style={{fontSize:13,color:"var(--td)",marginBottom:12}}>Sélectionnez les tomes à utiliser pour {hero.name}</div>
           {(function(){var co=g.conso||{};var totalXp=0;var rows=TOMES.map(function(tm){var qty=tomeQty[tm.id]||0;var have=co[tm.id]||0;if(have<=0&&qty<=0)return null;totalXp+=qty*tm.xp;var trc=(RA[tm.rarity]||{}).c;return <div key={tm.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #ffffff08"}}>
             <div><div style={{color:trc,fontWeight:600,fontSize:13}}>{tm.icon} {tm.name}</div><div style={{fontSize:11,color:"var(--td)"}}>+{tm.xp} points d'expérience · {have} en stock</div></div>
@@ -931,13 +933,13 @@ export default function Game(){
   var TM={base:{l:"Ville",i:"🏰"},roster:{l:"Héros",i:"👥"},donjon:{l:"Aventure",i:"⚔️"},inventaire:{l:"Inventaire",i:"📦"},invocation:{l:"Invocation",i:"📯"}};
 
   // Auth guard
-  if(!authReady)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Cinzel",fontSize:20}}>Chargement...</div>;
+  if(!authReady)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Uncial Antiqua",fontSize:20}}>Chargement...</div>;
   if(!user)return <AuthScreen/>;
-  if(!loaded)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Cinzel",fontSize:16}}>Chargement de la sauvegarde...</div>;
+  if(!loaded)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Uncial Antiqua",fontSize:16}}>Chargement de la sauvegarde...</div>;
 
   return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px 70px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
     <div style={{position:"sticky",top:0,zIndex:80,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 14px",background:"var(--bg)",borderBottom:"1px solid var(--brd)",marginBottom:8}}>
-      <h1 style={{fontFamily:"Cinzel",fontSize:16,fontWeight:900,color:"var(--acc)"}}>ECLIPSIA</h1>
+      <h1 style={{fontFamily:"Uncial Antiqua",fontSize:16,fontWeight:900,color:"var(--acc)"}}>ECLIPSIA</h1>
       <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}>
         <span>💰 {g.gold.toLocaleString()}</span><span>📜 {g.scrolls||0}</span>
         <div style={{position:"relative"}}>
@@ -957,7 +959,7 @@ export default function Game(){
       </div>
     </div>
     {patchNotes&&<div onClick={function(){setPatchNotes(false);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:500,maxHeight:"80vh",overflowY:"auto",border:"1px solid var(--brd)"}}>
-      <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12}}>Notes de mise à jour</h3>
+      <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:12}}>Notes de mise à jour</h3>
       <div style={{fontSize:13,color:"var(--td)",lineHeight:1.8}}>
         <div style={{fontWeight:700,color:"var(--t)",marginBottom:4}}>v0.5</div>
         <div>• Refonte complète de l'affichage : termes complets au lieu des abréviations</div>
@@ -981,7 +983,7 @@ export default function Game(){
       {floats.filter(function(f){return f.uid==="ui";}).map(function(f){return <div key={f.id} style={{color:f.color,fontSize:16,fontWeight:800,textShadow:"0 2px 6px #000",animation:"floatUp 1.2s forwards",textAlign:"center",whiteSpace:"nowrap"}}>{f.val}</div>;})}
     </div>}
 
-    {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
+    {tab==="base"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:10}}>🏰 Ville</h2>
       {(function(){
         var m=g.mat||{};var flv=g.bl.forge||1;var alv=g.bl.alchimiste||1;
         function forgeChance(rank,rarity,fLv){var diff=Math.max(0,(rank-2)*8+Math.max(0,(rarity-2))*12+Math.max(0,(rank-3))*(rarity-1)*3);var skill=fLv*12;var ch=100-diff+skill;return Math.max(5,Math.min(100,Math.round(ch)));}
@@ -1067,7 +1069,7 @@ export default function Game(){
         </div>
 
           {bldPopup==="forge"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🔨 Forgeron Nv.{flv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:16}}>🔨 Forgeron Nv.{flv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
 
 
             {/* 3 lines: Type, Rang, Rareté — show item names */}
@@ -1124,7 +1126,7 @@ export default function Game(){
           {/* MARCHÉ */}
           
           {bldPopup==="marche"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:10,border:"1px solid var(--brd)",borderTop:"none"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>🏪 Marché Nv.{mlv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:16}}>🏪 Marché Nv.{mlv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
 
             <div>
               {shopConso.length>0&&<div>
@@ -1155,7 +1157,7 @@ export default function Game(){
 
           {/* ALCHIMISTE */}
           {bldPopup==="alchimiste"&&<div onClick={function(){setBldPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}><div onClick={function(e){e.stopPropagation();}} style={{maxWidth:480,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:14,marginTop:-6,marginBottom:6,border:"1px solid var(--brd)",borderTop:"none"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16}}>⚗️ Alchimiste Nv.{alv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:16}}>⚗️ Alchimiste Nv.{alv}</h3><button onClick={function(e){e.stopPropagation();setInfoPopup("bld_"+bldPopup);}} className="b" style={{fontSize:10,padding:"2px 8px",color:"var(--td)"}}>INFO</button></div>
 
             {(function(){var alv=g.bl.alchimiste||1;
               var ALCH_COSTS={2:1000,3:5000,4:20000,5:50000};
@@ -1199,7 +1201,7 @@ export default function Game(){
           {/* Building info popup */}
           {infoPopup&&infoPopup.indexOf("bld_")===0&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
             <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:440,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-              <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",marginBottom:12,fontSize:16}}>{(function(){var k=infoPopup.slice(4);return k==="forge"?"🔨 Forgeron":k==="marche"?"🏪 Marché":k==="alchimiste"?"⚗️ Alchimiste":"Info";})()}</h3>
+              <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:12,fontSize:16}}>{(function(){var k=infoPopup.slice(4);return k==="forge"?"🔨 Forgeron":k==="marche"?"🏪 Marché":k==="alchimiste"?"⚗️ Alchimiste":"Info";})()}</h3>
               <div style={{fontSize:13,color:"var(--td)",lineHeight:1.8,fontStyle:"italic"}}>{BUILDING_INFO[infoPopup.slice(4)]||"Informations à venir."}</div>
               <button className="b" onClick={function(){setInfoPopup(null);}} style={{marginTop:12,width:"100%"}}>Fermer</button>
             </div>
@@ -1210,7 +1212,7 @@ export default function Game(){
       })()}
     </div>}
 
-    {tab==="roster"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:8}}>Héros ({g.roster.length})</h2>
+    {tab==="roster"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:8}}>Héros ({g.roster.length})</h2>
       <div style={{display:"flex",gap:4,marginBottom:10}}>
         {[["team","Équipe"],["rarity","Rareté"],["level","Niveau"],["dmg","Dégâts"]].map(function(s){return <button key={s[0]} className={"b "+(heroSort===s[0]?"ton":"")} onClick={function(){setHeroSort(s[0]);}} style={{flex:1,fontSize:11}}>{s[1]}</button>;})}
       </div>
@@ -1234,7 +1236,7 @@ export default function Game(){
                 <div style={{fontSize:10,color:rc,fontWeight:700}}>{(RA[h.rarity]||{}).s}</div>
                 <div style={{fontSize:11,color:"var(--td)",marginTop:2}}>🩸 {hst.hp}  {iM?"💫":"⚔️"} ~{avg}</div>
               </div>
-              <div style={{fontSize:18,fontWeight:900,color:rc+"70",fontFamily:"Cinzel",flexShrink:0}}>{h.level}</div>
+              <div style={{fontSize:18,fontWeight:900,color:rc+"70",fontFamily:"Uncial Antiqua",flexShrink:0}}>{h.level}</div>
             </div>;
           });
         })()}
@@ -1242,7 +1244,7 @@ export default function Game(){
       {!g.roster.length&&<div style={{textAlign:"center",padding:40,color:"var(--td)",fontSize:14}}>Pas de héros — Invoc. !</div>}
     </div>}
 
-    {tab==="inventaire"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>📦 Inventaire</h2>
+    {tab==="inventaire"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:10}}>📦 Inventaire</h2>
       {(function(){
         var m=g.mat||{};var co=g.conso||{};
         var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
@@ -1293,22 +1295,22 @@ export default function Game(){
     </div>}
 
     {tab==="donjon"&&<div style={{animation:"fi .3s ease"}}>
-      {!dun&&!showCamp&&<div><h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:10}}>Aventure</h2>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-          <div onClick={function(){setShowCamp(true);}} style={{gridColumn:"1 / -1",background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:12,textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",minHeight:80}}>
+      {!dun&&!showCamp&&<div><h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:10}}>Aventure</h2>
+        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}}>
+          <div onClick={function(){setShowCamp(true);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",minHeight:80}}>
             <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/campaign.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
-            <div style={{fontWeight:700,fontSize:15,fontFamily:"Cinzel",color:"var(--acc)",zIndex:1}}>⚔️ Campagne Principale</div>
+            <div style={{fontWeight:700,fontSize:15,fontFamily:"Uncial Antiqua",color:"var(--acc)",zIndex:1}}>⚔️ Campagne Principale</div>
             <div style={{fontSize:10,color:"var(--td)",marginTop:2,zIndex:1}}>Explorez les donjons</div>
           </div>
-          <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-            <div style={{fontSize:26}}>🌀</div>
-            <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Labyrinthe Mécanique</div>
-            <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
+          <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/labyrinth.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
+            <div style={{fontWeight:700,fontSize:14,zIndex:1}}>🤖 Labyrinthe Mécanique</div>
+            <div style={{fontSize:9,color:"#555",zIndex:1}}>Bientôt</div>
           </div>
-          <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-            <div style={{fontSize:26}}>😈</div>
-            <div style={{fontWeight:700,fontSize:12,marginTop:4}}>Messagers du Mal</div>
-            <div style={{fontSize:9,color:"#555"}}>Bientôt</div>
+          <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/rift.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
+            <div style={{fontWeight:700,fontSize:14,zIndex:1}}>🔥 Faille Infernale</div>
+            <div style={{fontSize:9,color:"#555",zIndex:1}}>Bientôt</div>
           </div>
         </div>
       </div>}
@@ -1316,7 +1318,7 @@ export default function Game(){
       {!dun&&showCamp&&<div style={{position:"fixed",inset:0,background:"var(--bg)",zIndex:100,overflowY:"auto",display:"flex",flexDirection:"column"}}>
         <div style={{flex:1,maxWidth:540,margin:"0 auto",width:"100%",padding:"10px 12px 16px",display:"flex",flexDirection:"column"}}>
           <div style={{marginBottom:8}}><button className="b" onClick={function(){setShowCamp(false);}} style={{fontSize:13}}>← Retour</button></div>
-          <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)",marginBottom:8}}>Campagne</h2>
+          <h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:8}}>Campagne</h2>
         {DG.map(function(d,i){var bt=g.beaten||[];var lk=d.ul>=0&&bt.indexOf(d.ul)<0;if(d.secret&&bt.indexOf(29)<0)lk=true;if(lk)return null;var isOpen=dExp===i;var beaten=bt.indexOf(i)>=0;
           var enmPool=(d.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);
           var bssPool=(d.bosses||[]).map(function(bid){return BSS.find(function(b){return b.id===bid;});}).filter(Boolean);
@@ -1342,7 +1344,7 @@ export default function Game(){
 
       {teamPick!=null&&!dun&&<div onClick={function(){setTeamPick(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:15,marginBottom:10}}>Sélection d'équipe</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:15,marginBottom:10}}>Sélection d'équipe</h3>
           <div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe : {team.length}/4 — {DG[teamPick]?DG[teamPick].name:""}</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:10}}>
             {[0,1,2,3].map(function(i){
@@ -1396,7 +1398,7 @@ export default function Game(){
       </div>}
             {dun&&<div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div><h2 style={{fontFamily:"Cinzel",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
+          <div><h2 style={{fontFamily:"Uncial Antiqua",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             {au&&<div style={{padding:"6px 12px",borderRadius:10,background:"#9b7ec8",color:"#fff",fontSize:12,fontWeight:800,opacity:1,animation:"blink 2s ease-in-out infinite"}}>AUTO</div>}
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
@@ -1453,7 +1455,7 @@ export default function Game(){
         </div>
         {hl!=null&&logs[hl]&&logs[hl].st&&<div onClick={function(){setHl(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:380,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-            <div style={{fontWeight:700,color:"#9b7ec8",marginBottom:8,fontSize:14,fontFamily:"Cinzel"}}>Détail du calcul</div>
+            <div style={{fontWeight:700,color:"#9b7ec8",marginBottom:8,fontSize:14,fontFamily:"Uncial Antiqua"}}>Détail du calcul</div>
             <div style={{fontSize:13,fontFamily:"monospace",color:"#ccc",lineHeight:2}}>
               {logs[hl].st.res==="miss"&&<div>Précision {Math.round((logs[hl].st.prec||.95)*100)}% \u2192 Raté !</div>}
               {logs[hl].st.res==="dodged"&&<div>Esquive {Math.round((logs[hl].st.dg||0)*100)}% \u2192 Esquivé !</div>}
@@ -1480,7 +1482,7 @@ export default function Game(){
       <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,#1a1020,#0d0d1a,#1a100d,#0d1a10,#100d1a)",backgroundSize:"400% 400%",animation:ga?"veilFast 2s linear infinite":"veilShift 20s ease infinite",opacity:ga?0.5:0.2,borderRadius:12,pointerEvents:"none",transition:"opacity 0.5s"}}/>
       <div style={{position:"relative",zIndex:1}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <h2 style={{fontFamily:"Cinzel",fontSize:18,color:"var(--acc)"}}>Invocation</h2>
+          <h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)"}}>Invocation</h2>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
             <span style={{fontSize:12,color:"var(--td)"}}>📜 {sc}</span>
             <button className="b" onClick={function(){setInfoPopup("invoc_rates");}} style={{fontSize:10,padding:"2px 8px"}}>INFO</button>
@@ -1493,7 +1495,7 @@ export default function Game(){
         </div>
 
         <div style={{height:ga?100:20,display:"flex",alignItems:"center",justifyContent:"center",transition:"height 0.5s"}}>
-          {ga&&<div style={{fontSize:14,color:"var(--acc)",animation:"pulse 1s ease-in-out infinite",fontFamily:"Cinzel"}}>Invocation en cours...</div>}
+          {ga&&<div style={{fontSize:14,color:"var(--acc)",animation:"pulse 1s ease-in-out infinite",fontFamily:"Uncial Antiqua"}}>Invocation en cours...</div>}
         </div>
 
         <div style={{background:"var(--card)",borderRadius:12,padding:12,border:"1px solid var(--brd)"}}>
@@ -1522,14 +1524,14 @@ export default function Game(){
         var intensity=r.h.rarity<=1?0.15:r.h.rarity===2?0.25:r.h.rarity===3?0.4:r.h.rarity===4?0.6:0.9;
         var glowSize=r.h.rarity<=1?"40%":r.h.rarity===2?"50%":r.h.rarity===3?"60%":r.h.rarity===4?"70%":"90%";
         return <div onClick={function(){if(!Array.isArray(gr))setGr(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",display:"flex",justifyContent:"center"}}><ElectricBorder color={r.h.rarity>=2?hrc:"transparent"} speed={r.h.rarity<=1?0:r.h.rarity===2?0.5:r.h.rarity===3?1:r.h.rarity===4?2:4} chaos={r.h.rarity<=1?0:r.h.rarity===2?0.3:r.h.rarity===3?0.6:r.h.rarity===4?1:1.5} thickness={r.h.rarity<=2?1:r.h.rarity===3?2:r.h.rarity===4?2:3} style={{width:"100%",borderRadius:16}}><div style={{background:"var(--card)",borderRadius:16,padding:20,position:"relative",overflow:"hidden"}}>
+          <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:380,width:"100%",display:"flex",justifyContent:"center"}}><ElectricBorder color={hrc} speed={0.2*r.h.rarity} chaos={0.01+0.02*r.h.rarity} thickness={Math.max(1,r.h.rarity)} style={{width:"100%",borderRadius:16}}><div style={{background:"var(--card)",borderRadius:16,padding:20,position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+Math.round(intensity*99).toString(16).padStart(2,"0")+",transparent "+glowSize+")",pointerEvents:"none"}}/>
             {r.h.rarity>=3&&<div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 30%,"+hrc+"20,transparent 60%)",animation:"pulse 1.5s ease-in-out infinite",pointerEvents:"none"}}/>}
 
             <div style={{textAlign:"center",position:"relative",zIndex:1}}>
               {Array.isArray(gr)&&<div style={{fontSize:11,color:"var(--td)",marginBottom:8}}>{idx+1} / {results.length}</div>}
               <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><Portrait id={r.h.id} size={80} fs={40} icon={r.h.icon}/></div>
-              <div style={{fontSize:22,fontWeight:800,fontFamily:"Cinzel",color:hrc}}>{r.h.name}</div>
+              <div style={{fontSize:22,fontWeight:800,fontFamily:"Uncial Antiqua",color:hrc}}>{r.h.name}</div>
               <div style={{fontSize:14,color:hrc,fontWeight:700,marginTop:4}}>{(RA[r.h.rarity]||{}).s} {(RA[r.h.rarity]||{}).n}</div>
               {ht3&&<div style={{fontSize:12,color:"var(--td)",marginTop:4,fontStyle:"italic"}}>{ht3.title}</div>}
               {r.dup&&<div style={{padding:10,background:"#d4a01710",borderRadius:10,border:"1px solid #d4a01730",fontSize:12,marginTop:12,textAlign:"left"}}>
@@ -1555,7 +1557,7 @@ export default function Game(){
 
       {infoPopup==="invoc_rates"&&<div onClick={function(){setInfoPopup(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:14,padding:20,maxWidth:380,width:"100%",border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
-          <h3 style={{fontFamily:"Cinzel",color:"var(--acc)",fontSize:16,marginBottom:12}}>Taux d'invocation</h3>
+          <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:16,marginBottom:12}}>Taux d'invocation</h3>
           {[1,2,3,4,5].map(function(r){return <div key={r} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:13,borderBottom:"1px solid #ffffff08"}}>
             <span style={{color:(RA[r]||{}).c,fontWeight:600}}>{(RA[r]||{}).s} {(RA[r]||{}).n}</span>
             <span style={{color:"var(--td)"}}>{((RA[r]||{}).r*100).toFixed(1)}%</span>
