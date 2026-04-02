@@ -529,7 +529,10 @@ export default function Game(){
       }
       var mm=1+(g.bl.mine||0)*.03,xm=1+(g.bl.ecole||0)*.03;
       var tg=Math.floor((dun.rG+(dgDef.reward?dgDef.reward.gold:0))*mm),tx=Math.floor((dun.rX+(dun.bX||0)+(dgDef.reward?dgDef.reward.xp||0:0))*xm);
-      setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx});});
+      var isFirst=bt0.indexOf(dun.ti)<0;
+      var fb1=isFirst&&dgDef.firstBonus?dgDef.firstBonus:null;
+      if(fb1){tg+=fb1.gold||0;tx+=fb1.xp||0;}
+      setDun(function(d){return Object.assign({},d,{ph:"done",rE:rE,rG:tg,rX:tx,isFirst:isFirst,fb:fb1});});
       var logMsgs=[{t:"───────────────"},{t:"DONJON TERMINÉ !",tp:"kill"},{t:"Récompenses totales : "+tg+" or, "+tx+" xp, "+rE.length+" équipement"+(rE.length>1?"s":""),tp:"info"}];
       if(bt0.indexOf(dun.ti)<0){
         var fb0Log=dgDef.firstBonus;
@@ -1414,16 +1417,30 @@ export default function Game(){
           {dun.ph==="event"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:16,fontWeight:700,color:"#9b7ec8"}}>✨ Victoire !</div></div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
-          {dun.ph==="done"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:8}}>Donjon terminé !</div>
-            {(function(){var bt=g.beaten||[];var fb=DG[dun.ti]&&DG[dun.ti].firstBonus;if(fb&&bt.indexOf(dun.ti)<0)return <div style={{fontSize:13,color:"#fbbf24",fontWeight:700,marginTop:4,marginBottom:8,padding:6,background:"#fbbf2410",borderRadius:6}}>Bonus de 1ère victoire : 💰 {fb.gold.toLocaleString()} · ⭐ {fb.xp.toLocaleString()} · 📜 {fb.scrolls}{fb.equip?" · 🎁 "+fb.equip:""}{fb.tomes?" · 📖 "+Object.keys(fb.tomes).map(function(tk){var tm=TOMES.find(function(t){return t.id===tk;});return fb.tomes[tk]+"× "+(tm?tm.name:tk);}).join(", "):""}</div>;return null;})()}
-            <div style={{fontSize:13,color:"var(--t)",marginTop:4,padding:8,background:"#ffffff06",borderRadius:6,textAlign:"left"}}>
-              <div style={{fontWeight:700,marginBottom:4,textAlign:"center"}}>Récompenses totales</div>
-              <div>💰 {dun.rG.toLocaleString()} pièces d'or</div>
-              <div>⭐ {dun.rX.toLocaleString()} points d'expérience</div>
-              <div>🎁 {dun.rE.length} pièce{dun.rE.length>1?"s":""} d'équipement</div>
-              {(function(){var bt2=g.beaten||[];var fb2=DG[dun.ti]&&DG[dun.ti].firstBonus;if(!fb2||bt2.indexOf(dun.ti)>=0)return null;return <div>{fb2.scrolls?<div>📜 {fb2.scrolls} parchemin{fb2.scrolls>1?"s":""} d'invocation</div>:null}{fb2.tomes?Object.keys(fb2.tomes).map(function(tk){var tm2=TOMES.find(function(t){return t.id===tk;});return <div key={tk}>📖 {fb2.tomes[tk]}× {tm2?tm2.name:tk}</div>;}):null}</div>;})()}
+          {dun.ph==="done"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}>
+            <div style={{fontSize:18,fontWeight:700,color:"#4ade80",marginBottom:10}}>Donjon terminé !</div>
+            {dun.isFirst&&dun.fb&&<div style={{padding:10,background:"#fbbf2410",borderRadius:8,border:"1px solid #fbbf2430",marginBottom:10}}>
+              <div style={{fontSize:14,fontWeight:700,color:"#fbbf24",marginBottom:6}}>Bonus de première victoire !</div>
+              <div style={{fontSize:12,color:"#fbbf24",display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center"}}>
+                {dun.fb.gold&&<span>💰 {dun.fb.gold.toLocaleString()} or</span>}
+                {dun.fb.xp&&<span>⭐ {dun.fb.xp.toLocaleString()} XP</span>}
+                {dun.fb.scrolls&&<span>📜 {dun.fb.scrolls} parchemins</span>}
+                {dun.fb.equip&&<span>🎁 {dun.fb.equip} équipement{dun.fb.equip>1?"s":""}</span>}
+                {dun.fb.tomes&&Object.keys(dun.fb.tomes).map(function(tk){var tm3=TOMES.find(function(t){return t.id===tk;});return <span key={tk}>📖 {dun.fb.tomes[tk]}× {tm3?tm3.name:tk}</span>;})}
+              </div>
+            </div>}
+            <div style={{fontSize:13,color:"var(--t)",padding:10,background:"#ffffff06",borderRadius:8,textAlign:"left"}}>
+              <div style={{fontWeight:700,marginBottom:6,textAlign:"center",fontSize:14}}>Récompenses totales</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                <div>💰 {dun.rG.toLocaleString()} pièces d'or</div>
+                <div>⭐ {dun.rX.toLocaleString()} points d'expérience</div>
+                <div>🎁 {dun.rE.length} pièce{dun.rE.length>1?"s":""} d'équipement</div>
+                {dun.isFirst&&dun.fb&&dun.fb.scrolls&&<div>📜 {dun.fb.scrolls} parchemin{dun.fb.scrolls>1?"s":""} d'invocation</div>}
+                {dun.isFirst&&dun.fb&&dun.fb.tomes&&Object.keys(dun.fb.tomes).map(function(tk){var tm4=TOMES.find(function(t){return t.id===tk;});return <div key={tk}>📖 {dun.fb.tomes[tk]}× {tm4?tm4.name:tk}</div>;})}
+              </div>
             </div>
-            <button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12}}>Réclamer les récompenses</button></div>}
+            <button className="b bg" onClick={function(){endDun(true);setAu(false);}} style={{marginTop:12,width:"100%"}}>Réclamer les récompenses</button>
+          </div>}
         </div>
         {dun.ph==="combat"&&<div style={{display:"flex",gap:4,marginBottom:6}}>
           {(function(){var cur=dun.tO[dun.tI%dun.tO.length];var ch=dun.team.find(function(h){return h.uid===cur&&h.hp>0&&h.isHero;});var sk=ch?SKILLS[ch.id]:null;var ready=sk&&ch&&ch.cd<=0;
