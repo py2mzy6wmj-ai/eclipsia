@@ -937,8 +937,8 @@ export default function Game(){
   if(!user)return <AuthScreen/>;
   if(!loaded)return <div style={{minHeight:"100vh",background:"#0e0d0d",display:"flex",alignItems:"center",justifyContent:"center",color:"#9b7ec8",fontFamily:"Uncial Antiqua",fontSize:16}}>Chargement de la sauvegarde...</div>;
 
-  return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"12px 8px 70px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
-    <div style={{position:"sticky",top:0,zIndex:80,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 14px",background:"var(--bg)",borderBottom:"1px solid var(--brd)",marginBottom:8}}>
+  return(<div style={{minHeight:"100vh",background:"var(--bg)",padding:"44px 8px 70px 8px",maxWidth:900,margin:"0 auto"}}><style>{css}</style>
+    <div style={{position:"fixed",top:0,left:0,right:0,zIndex:80,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 14px",background:"var(--bg)",borderBottom:"1px solid var(--brd)"}}>
       <h1 style={{fontFamily:"Uncial Antiqua",fontSize:16,fontWeight:900,color:"var(--acc)"}}>ECLIPSIA</h1>
       <div style={{display:"flex",gap:14,fontSize:15,fontWeight:600,alignItems:"center"}}>
         <span>💰 {g.gold.toLocaleString()}</span><span>📜 {g.scrolls||0}</span>
