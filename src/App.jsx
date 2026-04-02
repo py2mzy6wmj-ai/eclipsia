@@ -1299,18 +1299,18 @@ export default function Game(){
         <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:8}}>
           <div onClick={function(){setShowCamp(true);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden",minHeight:80}}>
             <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/campaign.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
-            <div style={{fontWeight:700,fontSize:15,fontFamily:"Uncial Antiqua",color:"var(--acc)",zIndex:1}}>⚔️ Campagne Principale</div>
-            <div style={{fontSize:10,color:"var(--td)",marginTop:2,zIndex:1}}>Explorez les donjons</div>
+            <div style={{fontWeight:700,fontSize:15,fontFamily:"Uncial Antiqua",color:"var(--acc)",zIndex:1}}>Campagne Principale</div>
+            <div style={{fontSize:10,color:"var(--td)",marginTop:2,zIndex:1}}>Parcourez des plaines venteuses, des déserts arides, des cavernes lugubres...Bref, vivez la grande aventure !</div>
           </div>
           <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/labyrinth.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
-            <div style={{fontWeight:700,fontSize:14,zIndex:1}}>🤖 Labyrinthe Mécanique</div>
-            <div style={{fontSize:9,color:"#555",zIndex:1}}>Bientôt</div>
+            <div style={{fontWeight:700,fontSize:15,fontFamily:"Uncial Antiqua",color:"var(--acc)",zIndex:1}}>Labyrinthe Mécanique</div>
+            <div style={{fontSize:9,color:"#555",zIndex:1}}>Un labyrinthe fait d'acier et de rouages, créé par un inventeur fou et dont il a peuplé les couloirs de ses dangeureuses créations.</div>
           </div>
           <div style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:14,textAlign:"center",opacity:0.3,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",inset:0,backgroundImage:"url(./backgrounds/rift.png)",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15}}/>
-            <div style={{fontWeight:700,fontSize:14,zIndex:1}}>🔥 Faille Infernale</div>
-            <div style={{fontSize:9,color:"#555",zIndex:1}}>Bientôt</div>
+            <div style={{fontWeight:700,fontSize:15,fontFamily:"Uncial Antiqua",color:"var(--acc)",zIndex:1}}>Faille Infernale</div>
+            <div style={{fontSize:9,color:"#555",zIndex:1}}>Une poche interdimensionnelle habitée par un messager du mal.</div>
           </div>
         </div>
       </div>}
