@@ -795,7 +795,7 @@ export default function Game(){
         var eqSlot=infoPopup.slice(6);
         var slotLabel={weapon:"Arme",armor:"Armure",accessory:"Accessoire",talisman:"Talisman"}[eqSlot]||eqSlot;
         var curItem=hero.equipment?hero.equipment[eqSlot]:null;
-        var compatible=g.inv.filter(function(it){return it.slot===eqSlot;}).sort(function(a,b){return b.rarity-a.rarity||b.rank-a.rank;});
+        var compatible=g.inv.filter(function(it){if(it.slot!==eqSlot)return false;if(eqSlot==="weapon"&&ht){var heroWt=ht.wt||"physical";if(it.wt!==heroWt)return false;}return true;}).sort(function(a,b){return b.rarity-a.rarity||b.rank-a.rank;});
         // Preview: compute stats with a hypothetical equip
         function previewWith(item){
           var testHero=Object.assign({},hero,{equipment:Object.assign({},hero.equipment||{})});
@@ -1371,7 +1371,7 @@ export default function Game(){
           </div>
           <div style={{fontSize:12,color:"var(--td)",fontWeight:600,marginBottom:6}}>Réserve</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:12}}>
-            {g.roster.filter(function(h){return g.team.indexOf(h.uid)<0;}).map(function(h){
+            {g.roster.filter(function(h){return g.team.indexOf(h.uid)<0;}).sort(function(a,b){return b.rarity-a.rarity||b.level-a.level;}).map(function(h){
               var rc=(RA[h.rarity]||{}).c;var full=g.team.indexOf(null)<0;
               var hst4=cs(h,g.bl);var ww4=gw(h);var ht4=HEROES.find(function(hh){return hh.id===h.id;});var iM4=ww4.wt==="magical";var ms4=iM4?hst4.mag:hst4.str;var avg4=Math.round(ww4.dmg*Math.max(0.1,ms4));
               return <div key={h.uid} style={{padding:8,borderRadius:10,background:"linear-gradient(145deg,"+rc+"18,"+rc+"08)",border:"1px solid "+rc+"40",opacity:full?0.4:1}}>
@@ -1390,7 +1390,7 @@ export default function Game(){
               </div>;
             })}
           </div>
-          <div style={{position:"sticky",bottom:0,background:"var(--card)",padding:"8px 0",display:"flex",gap:8}}>
+          <div style={{position:"sticky",bottom:0,background:"var(--card)",padding:"8px 0",display:"flex",gap:8,zIndex:10,borderTop:"1px solid var(--brd)"}}>
             <button className="b bg" disabled={!team.length} onClick={function(){startDun(teamPick);setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"12px 0"}}>Lancer !</button>
             <button className="b" onClick={function(){setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"12px 0"}}>Annuler</button>
           </div>
