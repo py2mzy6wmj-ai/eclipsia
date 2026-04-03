@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 var supabase = createClient("https://xidrfbtcgvnbnrtyjquc.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpZHJmYnRjZ3ZuYm5ydHlqcXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTA1NjEsImV4cCI6MjA5MDAyNjU2MX0.-7dAj-wesiY8SgEQbDrT4MbKmoTB8EXSgBYrN491gFI");
-import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS, TOMES, FRAGMENTS } from './data';
+import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS, TOMES, FRAGMENTS, LABYRINTH_STRUCTURE, LABYRINTH_EVENTS, LABYRINTH_BOSSES, LABYRINTH_SCALING, LABYRINTH_REWARDS } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
@@ -279,6 +279,8 @@ export default function Game(){
   var _teamPick=useState(null);var teamPick=_teamPick[0],setTeamPick=_teamPick[1];
   var _bldPopup=useState(null);var bldPopup=_bldPopup[0],setBldPopup=_bldPopup[1];
   var _showCamp=useState(false);var showCamp=_showCamp[0],setShowCamp=_showCamp[1];
+  var _showLab=useState(false);var showLab=_showLab[0],setShowLab=_showLab[1];
+  var _unlockMsg=useState(null);var unlockMsg=_unlockMsg[0],setUnlockMsg=_unlockMsg[1];
   var _grIdx=useState(0);var grIdx=_grIdx[0],setGrIdx=_grIdx[1];
   var _sheet=useState(null);var sheet=_sheet[0],setSheet=_sheet[1];
   var _au=useState(false);var au=_au[0],setAu=_au[1];
@@ -529,6 +531,7 @@ export default function Game(){
       var extraG=0,extraX=0,extraS=0;
       if(won&&bt.indexOf(ti)<0){
         bt.push(ti);
+        var _ulk={0:"🔨 Forgeron",1:"🏪 Marché",2:"⚗️ Alchimiste",3:"🤖 Labyrinthe Mécanique",4:"🔥 Faille Infernale"};if(_ulk[ti])setTimeout(function(){setUnlockMsg(_ulk[ti]+" débloqué !");},800);
         var fb=DG[ti].firstBonus;
         if(fb){extraG=fb.gold||0;extraX=fb.xp||0;extraS=fb.scrolls||0;
           // First bonus tomes
@@ -1031,12 +1034,13 @@ export default function Game(){
           {/* FORGERON */}
           
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-          {[{k:"forge",n:"Forgeron",ic:"🔨",lv:flv},{k:"marche",n:"Marché",ic:"🏪",lv:mlv},{k:"alchimiste",n:"Alchimiste",ic:"⚗️",lv:alv},{k:"rempart",n:"Rempart",ic:"🏰",dis:true},{k:"autel",n:"Autel",ic:"🩸",dis:true},{k:"tour",n:"Tour Arcane",ic:"🗼",dis:true}].map(function(b){
-            return <div key={b.k} onClick={function(){if(!b.dis)setBldPopup(b.k);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:12,textAlign:"center",cursor:b.dis?"default":"pointer",opacity:b.dis?0.3:1,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          {(function(){var bt=g.beaten||[];return [{k:"forge",n:"Forgeron",ic:"🔨",lv:flv,ul:bt.indexOf(0)>=0},{k:"marche",n:"Marché",ic:"🏪",lv:mlv,ul:bt.indexOf(1)>=0},{k:"alchimiste",n:"Alchimiste",ic:"⚗️",lv:alv,ul:bt.indexOf(2)>=0},{k:"rempart",n:"Rempart",ic:"🏰",dis:true},{k:"autel",n:"Autel",ic:"🩸",dis:true},{k:"tour",n:"Tour Arcane",ic:"🗼",dis:true}];})().map(function(b){
+            var locked=!b.ul&&!b.dis;return <div key={b.k} onClick={function(){if(!b.dis&&b.ul)setBldPopup(b.k);}} style={{background:"var(--card)",border:"1px solid var(--brd)",borderRadius:12,padding:12,textAlign:"center",cursor:(b.dis||locked)?"default":"pointer",opacity:(b.dis||locked)?0.3:1,minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
               <div style={{fontSize:26}}>{b.ic}</div>
               <div style={{fontWeight:700,fontSize:12,marginTop:4}}>{b.n}</div>
               {b.lv!=null&&<div style={{fontSize:10,color:"var(--acc)"}}>Nv.{b.lv}</div>}
               {b.dis&&<div style={{fontSize:9,color:"#555"}}>Bientôt</div>}
+              {locked&&<div style={{fontSize:9,color:"#888"}}>🔒 Verrouillé</div>}
             </div>;
           })}
         </div>
@@ -1315,6 +1319,45 @@ export default function Game(){
       </div>
         </div>}
 
+            {!dun&&showLab&&<div style={{position:"fixed",inset:0,background:"var(--bg)",zIndex:100,overflowY:"auto",display:"flex",flexDirection:"column"}}>
+        <div style={{flex:1,maxWidth:540,margin:"0 auto",width:"100%",padding:"10px 12px 16px",display:"flex",flexDirection:"column"}}>
+          <div style={{marginBottom:8}}><button className="b" onClick={function(){setShowLab(false);}} style={{fontSize:13}}>← Retour</button></div>
+          <h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:4}}>Labyrinthe Mécanique</h2>
+          <div style={{fontSize:12,color:"var(--td)",marginBottom:10}}>Étage {(g.labProgress||0)}/100 · 🔩 {(g.labMeca||0).toLocaleString()} pièces</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:3,marginBottom:12}}>
+            {Array.from({length:100},function(_,i){
+              var lv=i+1;var done=(g.labProgress||0)>=lv;var current=(g.labProgress||0)+1===lv;var isBoss=lv%10===0;
+              var stepInCycle=(lv-1)%20;var isEvent=stepInCycle===6||stepInCycle===16;
+              return <div key={lv} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:done?"#4ade8015":current?"var(--acc)20":"var(--card)",border:current?"1px solid var(--acc)":isBoss?"1px solid #fbbf2440":"1px solid var(--brd)",color:done?"#4ade80":current?"var(--acc)":isBoss?"#fbbf24":"var(--td)"}}>
+                {isBoss?"🤖":isEvent?"✨":lv}
+              </div>;
+            })}
+          </div>
+          {(g.labProgress||0)<100&&<div>
+            <div style={{background:"var(--card)",borderRadius:10,padding:12,border:"1px solid var(--brd)",marginBottom:10}}>
+              {(function(){
+                var lv=(g.labProgress||0)+1;var stepInCycle=(lv-1)%20;var step=LABYRINTH_STRUCTURE[stepInCycle];
+                var scale=Math.pow(LABYRINTH_SCALING,lv-1);var rw=LABYRINTH_REWARDS[(g.labProgress||0)];
+                var desc="";
+                if(step.type==="boss"){var cycle=Math.floor((lv-1)/20)+1;var pos=stepInCycle>=10?1:0;var bossId=LABYRINTH_BOSSES[cycle+"_"+pos];var boss=BSS.find(function(b){return b.id===bossId;});desc="🤖 Boss : "+(boss?boss.name:"Mécanon");}
+                else if(step.type==="event")desc="✨ Événement aléatoire";
+                else desc="⚔️ Combat : "+step.enemies.length+" automate"+(step.enemies.length>1?"s":"");
+                return <div>
+                  <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Étape {lv}</div>
+                  <div style={{fontSize:12,color:step.type==="boss"?"#fbbf24":step.type==="event"?"var(--acc)":"var(--td)"}}>{desc} <span style={{color:"var(--td)"}}>(x{scale.toFixed(1)})</span></div>
+                  <div style={{fontSize:11,color:"var(--td)",marginTop:6}}>🔩 {rw.meca} · 📜 {rw.scrolls}{rw.gabarit?" · Gabarit R"+rw.gabarit.rank:""}{rw.cata?" · Catalyseur":""}{rw.tome?" · Tome":""}</div>
+                </div>;
+              })()}
+            </div>
+            <button className="b bg" onClick={function(){setTeamPick("lab");setShowLab(false);}} style={{width:"100%",padding:"14px 0",fontSize:15,fontWeight:700}}>Sélectionner l'équipe</button>
+          </div>}
+          {(g.labProgress||0)>=100&&<div style={{textAlign:"center",padding:20}}>
+            <div style={{fontSize:18,fontWeight:700,color:"#fbbf24",fontFamily:"Uncial Antiqua"}}>🏆 Labyrinthe terminé !</div>
+            <div style={{fontSize:13,color:"var(--td)",marginTop:4}}>Mécanon MK-X ULTIMA vaincu !</div>
+          </div>}
+        </div>
+      </div>}
+
       {teamPick!=null&&!dun&&<div onClick={function(){setTeamPick(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:15,marginBottom:10}}>Sélection d'équipe</h3>
@@ -1554,6 +1597,14 @@ export default function Game(){
           <button className="b" onClick={function(){setInfoPopup(null);}} style={{width:"100%",marginTop:12,padding:"10px 0",fontSize:13}}>Fermer</button>
         </div>
       </div>}
+    </div>}
+    {unlockMsg&&<div onClick={function(){setUnlockMsg(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:250,display:"flex",alignItems:"center",justifyContent:"center",padding:16,animation:"fi .3s ease"}}>
+      <div onClick={function(e){e.stopPropagation();}} style={{background:"var(--card)",borderRadius:16,padding:24,maxWidth:340,width:"100%",border:"1px solid var(--acc)",textAlign:"center"}}>
+        <div style={{fontSize:32,marginBottom:8}}>🎉</div>
+        <div style={{fontSize:16,fontWeight:700,fontFamily:"Uncial Antiqua",color:"var(--acc)",marginBottom:8}}>Nouveau contenu débloqué !</div>
+        <div style={{fontSize:15,color:"var(--t)",marginBottom:16}}>{unlockMsg}</div>
+        <button className="b bg" onClick={function(){setUnlockMsg(null);}} style={{width:"100%",padding:"10px 0",fontSize:14}}>Compris !</button>
+      </div>
     </div>}
     {!inD&&<div style={{position:"fixed",bottom:0,left:0,right:0,background:"var(--bg)",borderTop:"1px solid var(--brd)",display:"flex",zIndex:90,padding:"10px 0 env(safe-area-inset-bottom, 10px) 0"}}>
       {Object.keys(TM).map(function(k){return <button key={k} onClick={function(){setTab(k);}} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"6px 0",color:tab===k?"var(--acc)":"var(--td)",fontFamily:"inherit",fontSize:10,fontWeight:tab===k?700:400}}>

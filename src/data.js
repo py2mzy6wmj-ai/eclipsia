@@ -397,16 +397,16 @@ export var BSS = [
 // ═══════════════════════════════════════════════════════════════
 
 export var DG = [
-  { name:"Vallée Venteuse",m:1,rw:1,diff:0,ul:-1,bg:"./backgrounds/plains.png",structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"event"},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"boss"}],enemies:["e_loup","e_vautour"],bosses:["b_loup_garou"],loot:{ranks:[1,1],rarW:{1:1},dropRate:0.20,nbLoot:1},reward:{gold:100,xp:28},firstBonus:{gold:200,xp:100,scrolls:2,equip:1},desc:"Une vallée balayée par les vents." },
-  { name:"Sombre Forêt",m:1.5,rw:1,diff:0,ul:0,bg:"./backgrounds/forest.png",structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_sanglier","e_chasseur"],bosses:["b_ours_noir"],loot:{ranks:[1,1],rarW:{1:0.9,2:0.1},dropRate:0.20,nbLoot:1},reward:{gold:150,xp:42},firstBonus:{gold:300,xp:120,scrolls:2,equip:1},desc:"La forêt est dense et hostile." },
-  { name:"Mer Souterraine",m:2.1,rw:1,diff:0,ul:1,bg:"./backgrounds/sea.png",structure:[{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_slime_bleu","e_crabe"],bosses:["b_kraken"],loot:{ranks:[1,2],rarW:{1:0.8,2:0.2},dropRate:0.20,nbLoot:1},reward:{gold:210,xp:59},firstBonus:{gold:420,xp:180,scrolls:2,equip:2},desc:"Un lac souterrain grouillant de créatures." },
-  { name:"Désert Aride",m:3,rw:1,diff:0,ul:2,bg:"./backgrounds/desert.png",structure:[{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"event"},{type:"combat",count:[2,3]},{type:"combat",count:[3,3]},{type:"boss"}],enemies:["e_saurien","e_scorpion","e_cactuaire"],bosses:["b_ver_sables"],loot:{ranks:[1,2],rarW:{1:0.7,2:0.3},dropRate:0.20,nbLoot:1},reward:{gold:300,xp:84},firstBonus:{gold:600,xp:250,scrolls:3,equip:2},desc:"Le sable brûlant cache des prédateurs." },
-  { name:"Temple Abandonné",m:4,rw:1,diff:0,ul:3,bg:"./backgrounds/temple.png",structure:[{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"event"},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_slime_jaune","e_mage_noir","e_esprit"],bosses:["b_banshee"],loot:{ranks:[2,2],rarW:{1:0.6,2:0.35,3:0.05},dropRate:0.20,nbLoot:2},reward:{gold:400,xp:112},firstBonus:{gold:800,xp:360,scrolls:10,equip:3,tomes:{tome_1:10}},desc:"Un temple hanté par les esprits." },
-  { name:"Cité Maudite",m:5.5,rw:1,diff:0,ul:4,structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"event"},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"event"},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_coupe_jarret","e_soldat_corrompu","e_homme_serpent"],bosses:["b_pegre_mage","b_pegre_tank","b_pegre_assassin"],loot:{ranks:[2,2],rarW:{1:0.55,2:0.38,3:0.07},dropRate:0.20,nbLoot:2},reward:{gold:550,xp:154},firstBonus:{gold:1100,xp:450,scrolls:4,equip:3},desc:"La pègre règne sur ces rues." },
-  { name:"Palais du Roi Déchu",m:8,rw:1,diff:0,ul:5,structure:[{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"event"},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,3]},{type:"boss"}],enemies:["e_garde_royal","e_statue_animee","e_assassin"],bosses:["b_heritier"],loot:{ranks:[2,3],rarW:{1:0.53,2:0.39,3:0.08},dropRate:0.20,nbLoot:2},reward:{gold:800,xp:224},firstBonus:{gold:1600,xp:660,scrolls:4,equip:3},desc:"Le palais tombe en ruines." },
+  { name:"Vallée Venteuse",m:1,rw:1,diff:0,ul:-1,bg:"./backgrounds/plains.png",structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"boss"}],enemies:["e_loup","e_vautour"],bosses:["b_loup_garou"],loot:{ranks:[1,1],rarW:{1:1},dropRate:0.20,nbLoot:1},reward:{gold:100,xp:28},firstBonus:{gold:200,xp:100,scrolls:2,equip:1},desc:"Une vallée balayée par les vents." },
+  { name:"Sombre Forêt",m:1.5,rw:1,diff:0,ul:0,bg:"./backgrounds/forest.png",structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_sanglier","e_chasseur"],bosses:["b_ours_noir"],loot:{ranks:[1,1],rarW:{1:0.9,2:0.1},dropRate:0.20,nbLoot:1},reward:{gold:150,xp:42},firstBonus:{gold:300,xp:120,scrolls:2,equip:1},desc:"La forêt est dense et hostile." },
+  { name:"Mer Souterraine",m:2.1,rw:1,diff:0,ul:1,bg:"./backgrounds/sea.png",structure:[{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_slime_bleu","e_crabe"],bosses:["b_kraken"],loot:{ranks:[1,2],rarW:{1:0.8,2:0.2},dropRate:0.20,nbLoot:1},reward:{gold:210,xp:59},firstBonus:{gold:420,xp:180,scrolls:2,equip:2},desc:"Un lac souterrain grouillant de créatures." },
+  { name:"Désert Aride",m:3,rw:1,diff:0,ul:2,bg:"./backgrounds/desert.png",structure:[{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[1,2]},{type:"combat",count:[2,3]},{type:"combat",count:[3,3]},{type:"boss"}],enemies:["e_saurien","e_scorpion","e_cactuaire"],bosses:["b_ver_sables"],loot:{ranks:[1,2],rarW:{1:0.7,2:0.3},dropRate:0.20,nbLoot:1},reward:{gold:300,xp:84},firstBonus:{gold:600,xp:250,scrolls:3,equip:2},desc:"Le sable brûlant cache des prédateurs." },
+  { name:"Temple Abandonné",m:4,rw:1,diff:0,ul:3,bg:"./backgrounds/temple.png",structure:[{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_slime_jaune","e_mage_noir","e_esprit"],bosses:["b_banshee"],loot:{ranks:[2,2],rarW:{1:0.6,2:0.35,3:0.05},dropRate:0.20,nbLoot:2},reward:{gold:400,xp:112},firstBonus:{gold:800,xp:360,scrolls:10,equip:3,tomes:{tome_1:10}},desc:"Un temple hanté par les esprits." },
+  { name:"Cité Maudite",m:5.5,rw:1,diff:0,ul:4,structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"boss"}],enemies:["e_coupe_jarret","e_soldat_corrompu","e_homme_serpent"],bosses:["b_pegre_mage","b_pegre_tank","b_pegre_assassin"],loot:{ranks:[2,2],rarW:{1:0.55,2:0.38,3:0.07},dropRate:0.20,nbLoot:2},reward:{gold:550,xp:154},firstBonus:{gold:1100,xp:450,scrolls:4,equip:3},desc:"La pègre règne sur ces rues." },
+  { name:"Palais du Roi Déchu",m:8,rw:1,diff:0,ul:5,structure:[{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,3]},{type:"boss"}],enemies:["e_garde_royal","e_statue_animee","e_assassin"],bosses:["b_heritier"],loot:{ranks:[2,3],rarW:{1:0.53,2:0.39,3:0.08},dropRate:0.20,nbLoot:2},reward:{gold:800,xp:224},firstBonus:{gold:1600,xp:660,scrolls:4,equip:3},desc:"Le palais tombe en ruines." },
   { name:"Catacombes Royales",m:10,rw:1,diff:0,ul:6,structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"boss"}],enemies:["e_squelette","e_zombie","e_slime_noir"],bosses:["b_necromancien"],loot:{ranks:[2,3],rarW:{1:0.5,2:0.4,3:0.1},dropRate:0.20,nbLoot:3},reward:{gold:1000,xp:280},firstBonus:{gold:1000,xp:840,scrolls:4,equip:4},desc:"Les morts ne reposent pas en paix." },
-  { name:"Couloirs Infernaux",m:12,rw:1,diff:0,ul:7,structure:[{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,3]},{type:"event"},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"event"},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"boss"}],enemies:["e_slime_rouge","e_demon_inf","e_armure","e_diablotin"],bosses:["b_phobos","b_deimos"],loot:{ranks:[3,3],rarW:{1:0.47,2:0.42,3:0.11},dropRate:0.20,nbLoot:3},reward:{gold:1200,xp:336},firstBonus:{gold:2400,xp:1000,scrolls:5,equip:4},desc:"Les flammes de l'enfer illuminent ces couloirs." },
-  { name:"Forteresse du Seigneur des Enfers",m:15,rw:1,diff:0,ul:8,structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"event"},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"event"},{type:"combat",count:[1,1]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"event"},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"boss"}],enemies:["e_demon_sup","e_chien_infernal","e_ange_dechu","e_slime_chroma"],bosses:["b_myhrra"],loot:{ranks:[3,3],rarW:{1:0.45,2:0.40,3:0.15},dropRate:0.20,nbLoot:4},reward:{gold:1500,xp:420},firstBonus:{gold:3000,xp:1500,scrolls:10,equip:5,tomes:{tome_2:10}},desc:"Myhrra attend au sommet." },
+  { name:"Couloirs Infernaux",m:12,rw:1,diff:0,ul:7,structure:[{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,3]},{type:"combat",count:[1,2]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[1,2]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"combat",count:[3,3]},{type:"boss"}],enemies:["e_slime_rouge","e_demon_inf","e_armure","e_diablotin"],bosses:["b_phobos","b_deimos"],loot:{ranks:[3,3],rarW:{1:0.47,2:0.42,3:0.11},dropRate:0.20,nbLoot:3},reward:{gold:1200,xp:336},firstBonus:{gold:2400,xp:1000,scrolls:5,equip:4},desc:"Les flammes de l'enfer illuminent ces couloirs." },
+  { name:"Forteresse du Seigneur des Enfers",m:15,rw:1,diff:0,ul:8,structure:[{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,1]},{type:"combat",count:[1,1]},{type:"combat",count:[1,2]},{type:"combat",count:[1,1]},{type:"combat",count:[2,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[1,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,2]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"combat",count:[2,3]},{type:"boss"}],enemies:["e_demon_sup","e_chien_infernal","e_ange_dechu","e_slime_chroma"],bosses:["b_myhrra"],loot:{ranks:[3,3],rarW:{1:0.45,2:0.40,3:0.15},dropRate:0.20,nbLoot:4},reward:{gold:1500,xp:420},firstBonus:{gold:3000,xp:1500,scrolls:10,equip:5,tomes:{tome_2:10}},desc:"Myhrra attend au sommet." },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -475,3 +475,102 @@ export var BUP = [
   { id: "b_mecanon_9", name: "Mécanon MK-IX", icon: "🤖", hp: 120, dmg: 18, at: "physical", str: 1.0, mag: 1.0, crit: 0.08, phv: 0.60, dodge: 0.07, mav: 0.65, rgHp: 0.04, xp: 0, gold: 0, er: { Feu: 0.30, Terre: 0.30, Foudre: 1.0, Eau: 0.30, Sacré: 0.30, Ténèbres: 0.30 } },
   { id: "b_mecanon_10", name: "Mécanon MK-X ULTIMA", icon: "🤖", hp: 120, dmg: 18, at: "physical", str: 1.0, mag: 1.0, crit: 0.10, phv: 0.55, dodge: 0.08, mav: 0.60, rgHp: 0.05, xp: 0, gold: 0, er: { Feu: 0.20, Terre: 0.20, Foudre: 1.0, Eau: 0.20, Sacré: 0.20, Ténèbres: 0.20 } },
 ];
+
+
+// === LABYRINTHE MÉCANIQUE ===
+export var LABYRINTH_EVENTS = [
+  { id: "ev_recharge", name: "Station de recharge", desc: "Les compétences de l'équipe sont rechargées.", icon: "⚡", effect: "recharge" },
+  { id: "ev_soin", name: "Fontaine de nanites", desc: "L'équipe récupère 25% de ses PV max.", icon: "💚", effect: "heal25" },
+  { id: "ev_piege", name: "Piège mécanique", desc: "Un piège inflige 25% des PV max en dégâts.", icon: "💀", effect: "trap25" },
+  { id: "ev_force", name: "Autel de puissance", desc: "La Force de l'équipe augmente de 10%.", icon: "💪", effect: "buff_str" },
+  { id: "ev_magie", name: "Autel arcanique", desc: "La Magie de l'équipe augmente de 10%.", icon: "🔮", effect: "buff_mag" },
+  { id: "ev_rez", name: "Chambre de résurrection", desc: "Un héros tombé est ressuscité avec 50% de ses PV.", icon: "✨", effect: "resurrect" },
+];
+
+export var LABYRINTH_STRUCTURE = [
+  // Étape 1-10 (premier demi-cycle)
+  { type: "combat", enemies: ["e_auto_sentinelle", "e_auto_sentinelle"] },
+  { type: "combat", enemies: ["e_auto_sentinelle", "e_auto_sentinelle", "e_auto_blinde"] },
+  { type: "combat", enemies: ["e_auto_assassin", "e_auto_blinde", "e_auto_sentinelle"] },
+  { type: "combat", enemies: ["e_auto_assassin", "e_auto_antimagie"] },
+  { type: "combat", enemies: ["e_auto_blinde", "e_auto_sorcier", "e_auto_sorcier"] },
+  { type: "combat", enemies: ["e_auto_blinde", "e_auto_antimagie"] },
+  { type: "event" },
+  { type: "combat", enemies: ["e_auto_ignifuge", "e_auto_hydrophobe"] },
+  { type: "combat", enemies: ["e_auto_paratonnerre", "e_auto_aerien"] },
+  { type: "boss" },
+  // Étape 11-20 (second demi-cycle)
+  { type: "combat", enemies: ["e_auto_assassin", "e_auto_assassin", "e_auto_assassin"] },
+  { type: "combat", enemies: ["e_auto_blinde", "e_auto_antimagie", "e_auto_sorcier"] },
+  { type: "combat", enemies: ["e_auto_sentinelle", "e_auto_sentinelle", "e_auto_sentinelle"] },
+  { type: "combat", enemies: ["e_auto_blinde", "e_auto_blinde", "e_auto_reparateur"] },
+  { type: "combat", enemies: ["e_auto_reparateur", "e_auto_reparateur", "e_auto_assassin"] },
+  { type: "combat", enemies: ["e_auto_assassin", "e_auto_assassin", "e_auto_blinde"] },
+  { type: "event" },
+  { type: "combat", enemies: ["e_auto_reparateur", "e_auto_chromatique"] },
+  { type: "combat", enemies: ["e_auto_chromatique", "e_auto_miroir", "e_auto_reparateur"] },
+  { type: "boss" },
+];
+
+// Boss mapping: cycle 1-5, position 0 (étape 10) or 1 (étape 20)
+export var LABYRINTH_BOSSES = {
+  "1_0": "b_mecanon_1",  // Cycle 1, étape 10 → MK-I
+  "1_1": "b_mecanon_2",  // Cycle 1, étape 20 → MK-II
+  "2_0": "b_mecanon_3",  // Cycle 2, étape 30 → MK-III
+  "2_1": "b_mecanon_4",  // Cycle 2, étape 40 → MK-IV
+  "3_0": "b_mecanon_5",  // Cycle 3, étape 50 → MK-V
+  "3_1": "b_mecanon_6",  // Cycle 3, étape 60 → MK-VI
+  "4_0": "b_mecanon_7",  // Cycle 4, étape 70 → MK-VII
+  "4_1": "b_mecanon_8",  // Cycle 4, étape 80 → MK-VIII
+  "5_0": "b_mecanon_9",  // Cycle 5, étape 90 → MK-IX
+  "5_1": "b_mecanon_10", // Cycle 5, étape 100 → MK-X ULTIMA
+};
+
+// Scaling: 8% per level (1.08^(level-1))
+export var LABYRINTH_SCALING = 1.08;
+
+// Rewards per level
+export var LABYRINTH_REWARDS = (function(){
+  var r = [];
+  var totalMecaTarget = 30000;
+  var lv100Meca = 10000;
+  // Linear scaling with boss x3 multiplier
+  var totalWeight = 0;
+  for(var i=1; i<=99; i++){ totalWeight += ((i%10===0)?3:1) * i; }
+  var unit = (totalMecaTarget - lv100Meca) / totalWeight;
+
+  var bossData = {
+    10:  {cata:{id:"catalyseur_2",q:1}, tome:{id:"tome_2",q:1}, gab:{rank:2,q:1}},
+    20:  {cata:{id:"catalyseur_2",q:2}, tome:{id:"tome_2",q:3}, gab:{rank:3,q:1}},
+    30:  {cata:{id:"catalyseur_2",q:3}, tome:{id:"tome_2",q:6}, gab:{rank:4,q:1}},
+    40:  {cata:{id:"catalyseur_3",q:1}, tome:{id:"tome_3",q:1}, gab:{rank:5,q:1}},
+    50:  {cata:{id:"catalyseur_3",q:2}, tome:{id:"tome_3",q:3}, gab:{rank:6,q:1}},
+    60:  {cata:{id:"catalyseur_3",q:3}, tome:{id:"tome_3",q:6}, gab:{rank:7,q:1}},
+    70:  {cata:{id:"catalyseur_4",q:1}, tome:{id:"tome_4",q:1}, gab:{rank:8,q:1}},
+    80:  {cata:{id:"catalyseur_4",q:2}, tome:{id:"tome_4",q:3}, gab:{rank:9,q:1}},
+    90:  {cata:{id:"catalyseur_4",q:3}, tome:{id:"tome_4",q:6}, gab:{rank:10,q:1}},
+    100: {cata:{id:"catalyseur_5",q:1}, tome:{id:"tome_5",q:1}, gab:{rank:10,q:1}},
+  };
+
+  for(var i=1; i<=100; i++){
+    var isBoss = i%10===0;
+    var meca = (i===100) ? 10000 : Math.round(unit * i * (isBoss?3:1));
+    var scrolls;
+    if(i===100) scrolls=50;
+    else if(isBoss) scrolls=Math.round(5+(i/10-1)*25/8);
+    else if(i%5===0) scrolls=2;
+    else scrolls=1;
+
+    var entry = { meca: meca, scrolls: scrolls };
+    if(i%5===0 && !isBoss){
+      entry.gabarit = { rank: Math.min(15, Math.ceil(i/10)), q: 1 };
+    }
+    if(bossData[i]){
+      entry.cata = bossData[i].cata;
+      entry.tome = bossData[i].tome;
+      entry.gabarit = bossData[i].gab;
+    }
+    r.push(entry);
+  }
+  return r;
+})();
