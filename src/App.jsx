@@ -593,7 +593,8 @@ export default function Game(){
     }
     if(won&&dun.ph!=="done"){
       var rE=[].concat(dun.rE||[]);
-      var dgDef=DG[dun.ti];
+      var dgDef=dun.ti!=="lab"?DG[dun.ti]:null;
+      if(!dgDef)return; // lab mode handled above
       // Generate GUARANTEED loot drops based on nbLoot
       var nbL=dgDef.loot&&dgDef.loot.nbLoot?dgDef.loot.nbLoot:1;
       for(var li=0;li<nbL;li++){
@@ -1472,7 +1473,7 @@ export default function Game(){
       {teamPick!=null&&!dun&&<div onClick={function(){setTeamPick(null);}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,overflowY:"auto",padding:16}}>
         <div onClick={function(e){e.stopPropagation();}} style={{maxWidth:440,margin:"0 auto",background:"var(--card)",borderRadius:14,padding:16,border:"1px solid var(--brd)",animation:"fi .2s ease"}}>
           <h3 style={{fontFamily:"Uncial Antiqua",color:"var(--acc)",fontSize:15,marginBottom:10}}>Sélection d'équipe</h3>
-          <div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe : {team.length}/4 — {DG[teamPick]?DG[teamPick].name:""}</div>
+          <div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Équipe : {team.length}/4 — {teamPick==="lab"?"Labyrinthe Mécanique":DG[teamPick]?DG[teamPick].name:""}</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:10}}>
             {[0,1,2,3].map(function(i){
               var h=g.team[i]?g.roster.find(function(r){return r.uid===g.team[i];}):null;
@@ -1518,7 +1519,7 @@ export default function Game(){
             })}
           </div>
           <div style={{position:"sticky",bottom:0,background:"var(--card)",padding:"8px 0",display:"flex",gap:8,zIndex:10,borderTop:"1px solid var(--brd)"}}>
-            <button className="b bg" disabled={!team.length} onClick={function(){startDun(teamPick);setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"12px 0"}}>Lancer !</button>
+            <button className="b bg" disabled={!team.length} onClick={function(){startDun(teamPick);setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"12px 0"}}>{teamPick==="lab"?"Entrer":"Lancer !"}</button>
             <button className="b" onClick={function(){setTeamPick(null);}} style={{flex:1,fontSize:14,padding:"12px 0"}}>Annuler</button>
           </div>
         </div>
@@ -1531,7 +1532,7 @@ export default function Game(){
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
           </div>
         </div>
-        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:340,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>{dun&&DG[dun.ti]&&DG[dun.ti].bg&&<div style={{position:"absolute",inset:0,backgroundImage:"url("+DG[dun.ti].bg+")",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15,pointerEvents:"none"}}/>}
+        <div style={{background:"var(--bg2)",borderRadius:12,padding:14,marginBottom:6,border:"1px solid var(--brd)",minHeight:340,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>{dun&&dun.ti!=="lab"&&DG[dun.ti]&&DG[dun.ti].bg&&<div style={{position:"absolute",inset:0,backgroundImage:"url("+DG[dun.ti].bg+")",backgroundSize:"cover",backgroundPosition:"center",opacity:0.15,pointerEvents:"none"}}/>}
           {dun.ph==="combat"&&<div style={{width:"100%",position:"relative",zIndex:1}}>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginBottom:8}}>{dun.en.map(function(e){return <Unit key={e.uid} u={e} isE act={dun.tO[dun.tI%dun.tO.length]===e.uid} sel={tgt===e.uid} onClick={e.hp>0?function(){setTgt(e.uid);}:undefined}/>;})}</div>
             <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
