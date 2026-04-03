@@ -140,6 +140,30 @@ function spawn(fl,ti,isBoss,cnt){
   return out;
 }
 
+function spawnLab(level, stepInCycle){
+  var step = LABYRINTH_STRUCTURE[stepInCycle];
+  var scale = Math.pow(LABYRINTH_SCALING, level - 1);
+  if(step.type === "boss"){
+    var cycle = Math.floor((level - 1) / 20) + 1;
+    var pos = stepInCycle >= 10 ? 1 : 0;
+    var bossId = LABYRINTH_BOSSES[cycle + "_" + pos];
+    var b = BSS.find(function(x){ return x.id === bossId; });
+    if(!b) b = BSS[BSS.length - 1];
+    var hpM = Math.floor(b.hp * scale);
+    return [{name: b.name, icon: b.icon, uid: uid(), hpMax: hpM, hp: hpM, dmg: Math.floor(b.dmg * scale), at: b.at, xp: 0, gold: 0, boss: true, stats: {str: b.str, mag: b.mag, crit: b.crit, phv: b.phv, dodge: b.dodge, mav: b.mav}, er: Object.assign({}, b.er), rgHp: b.rgHp || 0}];
+  }
+  var enemies = step.enemies || [];
+  var out = [];
+  for(var i = 0; i < enemies.length; i++){
+    var e = ENM.find(function(x){ return x.id === enemies[i]; });
+    if(!e) continue;
+    var hpM2 = Math.floor(e.hp * scale);
+    out.push({name: e.name, icon: e.icon, uid: uid(), hpMax: hpM2, hp: hpM2, dmg: Math.floor(e.dmg * scale), at: e.at, xp: 0, gold: 0, boss: false, stats: {str: e.str, mag: e.mag, crit: e.crit, phv: e.phv, dodge: e.dodge, mav: e.mav}, er: Object.assign({}, e.er), rgHp: e.rgHp || 0});
+  }
+  return out;
+}
+
+
 // Color: for +/- stats. Positive STR/MAG = green, negative = yellow. Positive PHV/MAV (more vulnerable) = yellow, negative (tougher) = green.
 function scPM(v,inv){var p=Math.round((v-1)*100);if(inv)return p<0?"#4ade80":p>0?"#facc15":"#ddddf4";return p>0?"#4ade80":p<0?"#facc15":"#ddddf4";}
 function scPct(v){return v>.001?"#4ade80":"#ddddf4";}
@@ -398,11 +422,50 @@ export default function Game(){
   function startDun(ti){
     if(!team.length)return;
     var t=team.map(function(h){var s=cs(h,g.bl);return Object.assign({},h,{hp:s.hp,stats:{str:s.str,mag:s.mag,crit:s.crit,phv:s.phv,dodge:s.dodge,mav:s.mav},hpMax:s.hp,isHero:true,er:s.er,rgHp:s.rgHp,rel:s.rel,cd:s.rel});});
+    if(ti==="lab"){
+      var labLv=(g.labProgress||0)+1;
+      // Use persisted HP/CD if continuing
+      t=t.map(function(h){
+        var roster_h=g.roster.find(function(r){return r.uid===h.uid;});
+        if(roster_h&&roster_h.labHp!=null){return Object.assign({},h,{hp:roster_h.labHp,hpMax:roster_h.labHpMax||h.hpMax,cd:roster_h.labCd||0,stats:roster_h.labStats||h.stats,er:roster_h.labEr||h.er});}
+        return h;
+      });
+      setDun({ti:"lab",labLv:labLv,fl:-1,ph:"explore",team:t,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[],labTeam:t.map(function(h){return h.uid;})});
+      setLogs([{t:"--- Labyrinthe Mécanique - Étage "+labLv+" ---",tp:"info"}]);setTab("donjon");setAu(false);setTgt(null);
+      return;
+    }
     setDun({ti:ti,fl:-1,ph:"explore",team:t,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[]});
     setLogs([{t:"--- "+DG[ti].name+" ---",tp:"info"}]);setTab("donjon");setAu(false);setTgt(null);
   }
   function nxtFl(){
     if(!dun)return;var nf=dun.fl+1;
+    // LAB MODE
+    if(dun.ti==="lab"){
+      var labLv=dun.labLv;var stepInCycle=(labLv-1)%20;
+      // Lab has only 1 step per level (fl goes 0 only)
+      if(nf>0){endDun(true);return;}
+      var t=dun.team.map(function(h){if(h.hp<=0)return h;return Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*(h.rgHp||0)))});});
+      var step=LABYRINTH_STRUCTURE[stepInCycle];
+      if(step.type==="event"){
+        var evts=LABYRINTH_EVENTS;var ev=pick(evts);var detail="";var ex={};
+        if(ev.effect==="recharge"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{cd:0});});detail=ev.desc;}
+        if(ev.effect==="heal25"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*.25))});});detail=ev.desc;}
+        if(ev.effect==="trap25"){t=t.map(function(h){return h.hp<=0?h:Object.assign({},h,{hp:Math.max(1,h.hp-Math.floor(h.hpMax*.25))});});detail=ev.desc;}
+        if(ev.effect==="buff_str"){t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{str:(h.stats.str||1)+.10})});});detail=ev.desc;}
+        if(ev.effect==="buff_mag"){t=t.map(function(h){return Object.assign({},h,{stats:Object.assign({},h.stats,{mag:(h.stats.mag||1)+.10})});});detail=ev.desc;}
+        if(ev.effect==="resurrect"){var dead=t.filter(function(h){return h.hp<=0;});if(dead.length>0){var rez=pick(dead);t=t.map(function(h){return h.uid===rez.uid?Object.assign({},h,{hp:Math.floor(h.hpMax*.5)}):h;});detail=rez.name+" ressuscité avec 50% de PV !";}else{detail="Aucun héros tombé.";}}
+        setDun(function(d){return Object.assign({},d,ex,{fl:nf,ph:"event",team:t,evtText:ev.icon+" "+ev.name,evtDetail:detail});});
+        setLogs(function(l){return l.concat([{t:"───────────────"},{t:ev.icon+" "+ev.name,tp:"event"},{t:detail,tp:"info"}]);});
+        return;
+      }
+      // Combat or boss
+      var en=spawnLab(labLv, stepInCycle);
+      var ord=[].concat(t.filter(function(h){return h.hp>0;}).map(function(h){return h.uid;}),en.map(function(e){return e.uid;})).sort(function(){return Math.random()-.5;});
+      setDun(function(d){return Object.assign({},d,{fl:nf,ph:"combat",team:t,en:en,tO:ord,tI:0});});setTgt(null);
+      var bossName=en.length===1&&en[0].boss?en[0].name:"";
+      setLogs(function(l){return l.concat([{t:"───────────────"},{t:"Étage "+labLv+(bossName?" — BOSS: "+bossName:"")+" (x"+Math.pow(LABYRINTH_SCALING,labLv-1).toFixed(1)+")",tp:bossName?"kill":"info"}]);});
+      return;
+    }
     var dgDef=DG[dun.ti];
     if(nf>=dgDef.structure.length){endDun(true);return;}
     var t=dun.team.map(function(h){if(h.hp<=0)return h;return Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*(h.rgHp||0)))});});
@@ -481,6 +544,53 @@ export default function Game(){
   }
   function endDun(won){
     if(!dun)return;
+    // LAB MODE END
+    if(dun.ti==="lab"){
+      if(won){
+        var labLv=dun.labLv;
+        var rw=LABYRINTH_REWARDS[labLv-1];
+        setG(function(p){
+          var labP=Math.max(p.labProgress||0, labLv);
+          var labM=(p.labMeca||0)+(rw.meca||0);
+          var nsc=(p.scrolls||0)+(rw.scrolls||0);
+          var nm=Object.assign({},p.mat||{});
+          var nc=Object.assign({},p.conso||{});
+          if(rw.gabarit){var gk="gabarit_"+rw.gabarit.rank;nm[gk]=(nm[gk]||0)+(rw.gabarit.q||1);}
+          if(rw.cata){nc[rw.cata.id]=(nc[rw.cata.id]||0)+(rw.cata.q||1);}
+          if(rw.tome){nc[rw.tome.id]=(nc[rw.tome.id]||0)+(rw.tome.q||1);}
+          // Persist hero HP/CD for next level
+          var newRoster=p.roster.map(function(r){
+            var labH=dun.team.find(function(h){return h.uid===r.uid;});
+            if(labH)return Object.assign({},r,{labHp:labH.hp,labHpMax:labH.hpMax,labCd:labH.cd,labStats:labH.stats,labEr:labH.er});
+            return r;
+          });
+          return Object.assign({},p,{labProgress:labP,labMeca:labM,scrolls:nsc,mat:nm,conso:nc,roster:newRoster});
+        });
+        setLogs(function(l){return l.concat([{t:"───────────────"},{t:"Étage "+labLv+" terminé !",tp:"kill"},{t:"🔩 "+rw.meca+" · 📜 "+rw.scrolls,tp:"info"}]);});
+        // If labLv < 100, auto-advance to next level
+        if(labLv<100){
+          var nextLv=labLv+1;
+          // Re-init team with persisted HP
+          var t2=dun.team.map(function(h){return Object.assign({},h);});
+          setDun({ti:"lab",labLv:nextLv,fl:-1,ph:"explore",team:t2,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[]});
+          setLogs(function(l){return l.concat([{t:"--- Étage "+nextLv+" ---",tp:"info"}]);});
+          return;
+        } else {
+          // Lab complete!
+          setDun(null);setAu(false);
+          setLogs(function(l){return l.concat([{t:"🏆 LABYRINTHE TERMINÉ !",tp:"kill"}]);});
+          return;
+        }
+      } else {
+        // Lab defeat: save progress, exit
+        setG(function(p){
+          var newRoster=p.roster.map(function(r){return Object.assign({},r,{labHp:undefined,labHpMax:undefined,labCd:undefined,labStats:undefined,labEr:undefined});});
+          return Object.assign({},p,{roster:newRoster});
+        });
+        setDun(null);setAu(false);
+        return;
+      }
+    }
     if(won&&dun.ph!=="done"){
       var rE=[].concat(dun.rE||[]);
       var dgDef=DG[dun.ti];
@@ -1355,6 +1465,7 @@ export default function Game(){
             <div style={{fontSize:18,fontWeight:700,color:"#fbbf24",fontFamily:"Uncial Antiqua"}}>🏆 Labyrinthe terminé !</div>
             <div style={{fontSize:13,color:"var(--td)",marginTop:4}}>Mécanon MK-X ULTIMA vaincu !</div>
           </div>}
+          <button className="b" onClick={function(){setG(function(p){var nr=p.roster.map(function(r){return Object.assign({},r,{labHp:undefined,labHpMax:undefined,labCd:undefined,labStats:undefined,labEr:undefined});});return Object.assign({},p,{labProgress:0,roster:nr});});}} style={{marginTop:12,width:"100%",fontSize:13,padding:"10px 0"}}>Recommencer le Labyrinthe</button>
         </div>
       </div>}
 
