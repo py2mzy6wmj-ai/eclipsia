@@ -434,7 +434,7 @@ export var FRAGMENTS = [
   { id: "frag_keros", name: "Fragment d'âme (Kéros)", heroId: "keros", rarity: 3, icon: "🧩" },
   { id: "frag_orion", name: "Fragment d'âme (Orion)", heroId: "orion", rarity: 4, icon: "🧩" },
 
-  { id: "frag_riane", name: "Éclat d'âme de Riane", heroId: "riane", rarity: 5, icon: "🧩" },];
+  { id: "frag_riane", name: "Fragment d'âme (Riane)", heroId: "riane", rarity: 5, icon: "🧩" },];
 
 // ═══════════════════════════════════════════════════════════════
 //  ÉVÉNEMENTS
