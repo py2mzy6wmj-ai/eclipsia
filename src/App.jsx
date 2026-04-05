@@ -1446,7 +1446,7 @@ export default function Game(){
               var lv=i+1;var done=(g.labProgress||0)>=lv;var current=(g.labProgress||0)+1===lv;var isBoss=lv%10===0;
               var stepInCycle=(lv-1)%20;var isEvent=stepInCycle===6||stepInCycle===16;
               var sel=labSel===lv;
-              return <div key={lv} onClick={function(){setLabSel(lv);}} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:sel?"var(--acc)30":done?"#4ade8015":current?"var(--card)":"var(--card)",position:"relative",overflow:"hidden",border:"1px solid var(--brd)",outline:sel?"2px solid var(--acc)":"none",outlineOffset:"-2px":current?"1px solid var(--acc)":isBoss?"1px solid #fbbf2440":"1px solid var(--brd)",color:done?"#4ade80":current?"var(--acc)":isBoss?"#fbbf24":"var(--td)",cursor:"pointer"}}>
+              return <div key={lv} onClick={function(){setLabSel(lv);}} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:sel?"var(--acc)30":done?"#4ade8015":current?"var(--card)":"var(--card)",position:"relative",overflow:"hidden",border:"1px solid var(--brd)",outline:sel?"2px solid var(--acc)":"none",outlineOffset:"-2px",color:done?"#4ade80":current?"var(--acc)":isBoss?"#fbbf24":"var(--td)",cursor:"pointer"}}>
                 <>{current&&<div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,#9b7ec880,#9b7ec820,#9b7ec860)",backgroundSize:"300% 300%",animation:"veilShift 3s ease infinite",borderRadius:4}}/>}<span style={{position:"relative",zIndex:1}}>{isBoss?"🤖":isEvent?"✨":lv}</span></>
               </div>;
             })}
