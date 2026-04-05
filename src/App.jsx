@@ -550,15 +550,16 @@ export default function Game(){
       if(won){
         var labLv=dun.labLv;
         var rw=LABYRINTH_REWARDS[labLv-1];
+        var rwGiven=labLv>(g.labProgress||0);
         setG(function(p){
           var labP=Math.max(p.labProgress||0, labLv);
-          var labM=(p.labMeca||0)+(rw.meca||0);
-          var nsc=(p.scrolls||0)+(rw.scrolls||0);
+          var labM=(p.labMeca||0)+(rwGiven?(rw.meca||0):0);
+          var nsc=(p.scrolls||0)+(rwGiven?(rw.scrolls||0):0);
           var nm=Object.assign({},p.mat||{});
           var nc=Object.assign({},p.conso||{});
-          if(rw.gabarit){var gk="gabarit_"+rw.gabarit.rank;nm[gk]=(nm[gk]||0)+(rw.gabarit.q||1);}
-          if(rw.cata){nc[rw.cata.id]=(nc[rw.cata.id]||0)+(rw.cata.q||1);}
-          if(rw.tome){nc[rw.tome.id]=(nc[rw.tome.id]||0)+(rw.tome.q||1);}
+          if(rwGiven&&rw.gabarit){var gk="gabarit_"+rw.gabarit.rank;nm[gk]=(nm[gk]||0)+(rw.gabarit.q||1);}
+          if(rwGiven&&rw.cata){nc[rw.cata.id]=(nc[rw.cata.id]||0)+(rw.cata.q||1);}
+          if(rwGiven&&rw.tome){nc[rw.tome.id]=(nc[rw.tome.id]||0)+(rw.tome.q||1);}
           // Persist hero HP/CD for next level
           var newRoster=p.roster.map(function(r){
             var labH=dun.team.find(function(h){return h.uid===r.uid;});
@@ -573,7 +574,7 @@ export default function Game(){
           var nextLv=labLv+1;
           // Re-init team with persisted HP
           var t2=dun.team.map(function(h){return Object.assign({},h);});
-          setDun({ti:"lab",labLv:nextLv,fl:-1,ph:"explore",team:t2,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[],labReward:rw,labDone:labLv});
+          setDun({ti:"lab",labLv:nextLv,fl:-1,ph:"explore",team:t2,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[],labReward:rwGiven?rw:null,labDone:labLv});
           setLogs(function(l){return l.concat([{t:"--- Étage "+nextLv+" ---",tp:"info"}]);});
           return;
         } else {
@@ -1459,7 +1460,7 @@ export default function Game(){
             var desc="",enemies=[];
             if(step.type==="boss"){var cycle=Math.floor((selLv-1)/20)+1;var pos=stepInCycle>=10?1:0;var bossId=LABYRINTH_BOSSES[cycle+"_"+pos];var boss=BSS.find(function(b){return b.id===bossId;});desc="🤖 Boss : "+(boss?boss.name:"Mécanon");if(boss)enemies=[boss];}
             else if(step.type==="event"){desc="✨ Événement aléatoire";}
-            else{desc="⚔️ Combat : "+(step.enemies||[]).length+" automate"+((step.enemies||[]).length>1?"s":"");enemies=(step.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);}
+            else if(step.type==="combat"){desc="⚔️ Combat : "+(step.enemies||[]).length+" automate"+((step.enemies||[]).length>1?"s":"");enemies=(step.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);}
             return <div>
               <div style={{background:"var(--card)",borderRadius:10,padding:12,border:"1px solid var(--brd)",marginBottom:10}}>
                 <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Étage {selLv}{alreadyDone?" ✅":""}</div>
@@ -1468,10 +1469,10 @@ export default function Game(){
                 <div style={{height:1,background:"var(--brd)",margin:"6px 0"}}/>
                 <div style={{fontSize:12,fontWeight:600,marginBottom:4}}>{alreadyDone?"Récompenses déjà obtenues":"Récompenses"}</div>
                 <div style={{fontSize:11,opacity:alreadyDone?0.5:1}}>
-                  <div>🔩 {rw.meca} pièces mécaniques</div>
-                  <div>📜 {rw.scrolls} parchemin{rw.scrolls>1?"s":""}</div>
-                  {rw.gabarit&&(function(){var gr2=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[gr2]||{}).c||"var(--t)"}}>📐 {GABARIT_NAMES&&GABARIT_NAMES[rw.gabarit.rank]?"Gabarit "+GABARIT_NAMES[rw.gabarit.rank]+" (Rang "+rw.gabarit.rank+")":"Gabarit Rang "+rw.gabarit.rank} x{rw.gabarit.q||1}</div>;})()}
-                  {rw.cata&&(function(){var cr2=parseInt((rw.cata.id||"").slice(-1))||1;return <div style={{color:(RA[cr2]||{}).c||"var(--t)"}}>💎 {CATA_NAMES&&CATA_NAMES[cr2]?CATA_NAMES[cr2]:"Catalyseur"} x{rw.cata.q}</div>;})()}
+                  <div>🔩 Pièces mécaniques x{rw.meca}</div>
+                  <div>📜 Parchemin d'invocation x{rw.scrolls}</div>
+                  {rw.gabarit&&(function(){var gr2=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[gr2]||{}).c||"var(--t)"}}>📐 {"Gabarit Rang "+rw.gabarit.rank} x{rw.gabarit.q||1}</div>;})()}
+                  {rw.cata&&(function(){var cr2=parseInt((rw.cata.id||"").slice(-1))||1;return <div style={{color:(RA[cr2]||{}).c||"var(--t)"}}>💎 {{1:"Catalyseur commun",2:"Catalyseur inhabituel",3:"Catalyseur rare",4:"Catalyseur \u00e9pique",5:"Catalyseur l\u00e9gendaire"}[cr2]||"Catalyseur"} x{rw.cata.q}</div>;})()}
                   {rw.tome&&(function(){var tr2=parseInt((rw.tome.id||"").slice(-1))||1;var tNames={1:"Tome mineur",2:"Tome normal",3:"Tome majeur",4:"Tome considérable",5:"Tome extraordinaire"};return <div style={{color:(RA[tr2]||{}).c||"var(--t)"}}>📖 {tNames[tr2]||"Tome"} x{rw.tome.q}</div>;})()}
                 </div>
               </div>
@@ -1554,19 +1555,26 @@ export default function Game(){
             <div style={{textAlign:"center",fontSize:14,color:"#555",margin:"2px 0"}}>— VS —</div>
             <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap",marginTop:8}}>{dun.team.map(function(h){return <Unit key={h.uid} u={h} act={dun.tO[dun.tI%dun.tO.length]===h.uid}/>;})}</div>
           </div>}
-          {dun.ph==="result"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:18,fontWeight:700,color:"var(--red)",marginBottom:8}}>💀 Défaite</div><div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {(dun.rE||[]).length} objets récupérés</div><button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:4}}>Retour</button></div>}
+          {dun.ph==="result"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}>
+            <div style={{fontSize:18,fontWeight:700,color:"var(--red)",marginBottom:8}}>💀 Défaite</div>
+            {dun.ti==="lab"?<div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>Progression sauvegardée : niveau {Math.floor(((dun.labLv||1)-1)/10)*10}</div>
+            :<div style={{fontSize:13,color:"var(--td)",marginBottom:8}}>💰 {dun.rG} or · ⭐ {dun.rX} XP · 🎁 {(dun.rE||[]).length} objets récupérés</div>}
+            <button className="b bg" onClick={function(){endDun(false);setAu(false);}} style={{marginTop:4}}>Retour</button>
+          </div>}
           {dun.ph==="event"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}>
             <div style={{fontSize:16,fontWeight:700,color:"#9b7ec8"}}>✨ Victoire !</div>
             {dun.ti==="lab"&&(function(){var rw=dun.labReward||LABYRINTH_REWARDS[Math.max(0,(dun.labDone||dun.labLv||1)-1)];var alreadyDone=!rw;
               if(!rw)return <div style={{fontSize:12,color:"var(--td)",marginTop:6}}>Aucune récompense (étage déjà terminé)</div>;
+              var _cN={1:"Catalyseur commun",2:"Catalyseur inhabituel",3:"Catalyseur rare",4:"Catalyseur \u00e9pique",5:"Catalyseur l\u00e9gendaire"};
+              var _tN={1:"Tome mineur",2:"Tome normal",3:"Tome majeur",4:"Tome consid\u00e9rable",5:"Tome extraordinaire"};
               return <div style={{marginTop:8,textAlign:"left",fontSize:12}}>
-                <div style={{fontWeight:600,marginBottom:4,textAlign:"center",color:"var(--t)"}}>Récompenses</div>
-                <div>🔩 {rw.meca} pièces mécaniques</div>
-                <div>📜 {rw.scrolls} parchemin{rw.scrolls>1?"s":""}</div>
-                {rw.gabarit&&<div style={{color:(RA[Math.min(5,Math.ceil(rw.gabarit.rank/3))]||{}).c||"var(--t)"}}>📐 Gabarit Rang {rw.gabarit.rank}</div>}
-                {rw.cata&&<div style={{color:(RA[rw.cata.id?parseInt(rw.cata.id.slice(-1)):1]||{}).c||"var(--t)"}}>💎 Catalyseur x{rw.cata.q}</div>}
-                {rw.tome&&<div style={{color:(RA[rw.tome.id?parseInt(rw.tome.id.slice(-1)):1]||{}).c||"var(--t)"}}>📖 Tome x{rw.tome.q}</div>}
+                <div style={{fontWeight:600,marginBottom:4,textAlign:"center",color:"var(--t)"}}>R\u00e9compenses</div>
+                <div>\U0001f529 Pi\u00e8ces m\u00e9caniques x{rw.meca}</div>
+                <div>\U0001f4dc Parchemin d'invocation x{rw.scrolls}</div>
+                {rw.gabarit&&(function(){var _gr=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[_gr]||{}).c}}>\U0001f4d0 Gabarit Rang {rw.gabarit.rank} x{rw.gabarit.q||1}</div>;})()}
+                {rw.cata&&(function(){var _cr=parseInt((rw.cata.id||"").slice(-1))||1;return <div style={{color:(RA[_cr]||{}).c}}>\U0001f48e {_cN[_cr]||"Catalyseur"} x{rw.cata.q}</div>;})()}
+                {rw.tome&&(function(){var _tr=parseInt((rw.tome.id||"").slice(-1))||1;return <div style={{color:(RA[_tr]||{}).c}}>\U0001f4d6 {_tN[_tr]||"Tome"} x{rw.tome.q}</div>;})()}
               </div>;})()}
           </div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}
