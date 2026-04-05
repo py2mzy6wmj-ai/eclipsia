@@ -148,7 +148,7 @@ function spawnLab(level, stepInCycle){
     var pos = stepInCycle >= 10 ? 1 : 0;
     var bossId = LABYRINTH_BOSSES[cycle + "_" + pos];
     var b = BSS.find(function(x){ return x.id === bossId; });
-    if(!b) b = BSS[BSS.length - 1];
+    if(!b){console.error("BOSS NOT FOUND:",bossId,"cycle:",cycle,"pos:",pos,"level:",level,"stepInCycle:",stepInCycle);b={name:"Mécanon ???",icon:"🤖",hp:120,dmg:18,at:"physical",str:1.0,mag:1.0,crit:0.05,phv:0.80,dodge:0.05,mav:0.85,er:{},rgHp:0};}
     var hpM = Math.floor(b.hp * scale);
     return [{name: b.name, icon: b.icon, uid: uid(), hpMax: hpM, hp: hpM, dmg: Math.floor(b.dmg * scale), at: b.at, xp: 0, gold: 0, boss: true, stats: {str: b.str, mag: b.mag, crit: b.crit, phv: b.phv, dodge: b.dodge, mav: b.mav}, er: Object.assign({}, b.er), rgHp: b.rgHp || 0}];
   }
@@ -1446,8 +1446,8 @@ export default function Game(){
               var lv=i+1;var done=(g.labProgress||0)>=lv;var current=(g.labProgress||0)+1===lv;var isBoss=lv%10===0;
               var stepInCycle=(lv-1)%20;var isEvent=stepInCycle===6||stepInCycle===16;
               var sel=labSel===lv;
-              return <div key={lv} onClick={function(){setLabSel(lv);}} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:sel?"var(--acc)30":done?"#4ade8015":current?"var(--acc)20":"var(--card)",border:sel?"2px solid var(--acc)":current?"1px solid var(--acc)":isBoss?"1px solid #fbbf2440":"1px solid var(--brd)",color:done?"#4ade80":current?"var(--acc)":isBoss?"#fbbf24":"var(--td)",cursor:"pointer"}}>
-                {isBoss?"🤖":isEvent?"✨":lv}
+              return <div key={lv} onClick={function(){setLabSel(lv);}} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:sel?"var(--acc)30":done?"#4ade8015":current?"var(--card)":"var(--card)",position:"relative",overflow:"hidden",border:"1px solid var(--brd)",outline:sel?"2px solid var(--acc)":"none",outlineOffset:"-2px":current?"1px solid var(--acc)":isBoss?"1px solid #fbbf2440":"1px solid var(--brd)",color:done?"#4ade80":current?"var(--acc)":isBoss?"#fbbf24":"var(--td)",cursor:"pointer"}}>
+                <>{current&&<div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,#9b7ec880,#9b7ec820,#9b7ec860)",backgroundSize:"300% 300%",animation:"veilShift 3s ease infinite",borderRadius:4}}/>}<span style={{position:"relative",zIndex:1}}>{isBoss?"🤖":isEvent?"✨":lv}</span></>
               </div>;
             })}
           </div>
@@ -1470,9 +1470,9 @@ export default function Game(){
                 <div style={{fontSize:11,opacity:alreadyDone?0.5:1}}>
                   <div>🔩 {rw.meca} pièces mécaniques</div>
                   <div>📜 {rw.scrolls} parchemin{rw.scrolls>1?"s":""}</div>
-                  {rw.gabarit&&<div style={{color:(RA[Math.min(5,Math.ceil(rw.gabarit.rank/3))]||{}).c||"var(--t)"}}>Gabarit Rang {rw.gabarit.rank} x{rw.gabarit.q||1}</div>}
-                  {rw.cata&&<div style={{color:(RA[parseInt((rw.cata.id||"").slice(-1))||1]||{}).c||"var(--t)"}}>Catalyseur x{rw.cata.q}</div>}
-                  {rw.tome&&<div style={{color:(RA[parseInt((rw.tome.id||"").slice(-1))||1]||{}).c||"var(--t)"}}>Tome x{rw.tome.q}</div>}
+                  {rw.gabarit&&(function(){var gr2=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[gr2]||{}).c||"var(--t)"}}>📐 {GABARIT_NAMES&&GABARIT_NAMES[rw.gabarit.rank]?"Gabarit "+GABARIT_NAMES[rw.gabarit.rank]+" (Rang "+rw.gabarit.rank+")":"Gabarit Rang "+rw.gabarit.rank} x{rw.gabarit.q||1}</div>;})()}
+                  {rw.cata&&(function(){var cr2=parseInt((rw.cata.id||"").slice(-1))||1;return <div style={{color:(RA[cr2]||{}).c||"var(--t)"}}>💎 {CATA_NAMES&&CATA_NAMES[cr2]?CATA_NAMES[cr2]:"Catalyseur"} x{rw.cata.q}</div>;})()}
+                  {rw.tome&&(function(){var tr2=parseInt((rw.tome.id||"").slice(-1))||1;var tNames={1:"Tome mineur",2:"Tome normal",3:"Tome majeur",4:"Tome considérable",5:"Tome extraordinaire"};return <div style={{color:(RA[tr2]||{}).c||"var(--t)"}}>📖 {tNames[tr2]||"Tome"} x{rw.tome.q}</div>;})()}
                 </div>
               </div>
               {(g.labProgress||0)<100&&<button className="b bg" onClick={function(){setTeamPick("lab");setShowLab(false);}} style={{width:"100%",padding:"14px 0",fontSize:15,fontWeight:700}}>Lancer (étage {(g.labProgress||0)+1})</button>}
@@ -1542,7 +1542,7 @@ export default function Game(){
       </div>}
             {dun&&<div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div><h2 style={{fontFamily:"Uncial Antiqua",fontSize:16,color:"var(--acc)"}}>{dun.ti==="lab"?"Labyrinthe Mécanique":DG[dun.ti]?DG[dun.ti].name:""}</h2><div style={{fontSize:12,color:"var(--td)"}}>{dun.ti==="lab"?"Étage "+(dun.labLv||1):"Étape "+(dun.fl+1)+"/"+(DG[dun.ti]?DG[dun.ti].structure.length:"?")} · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
+          <div><h2 style={{fontFamily:"Uncial Antiqua",fontSize:16,color:"var(--acc)"}}>{dun.ti==="lab"?"Labyrinthe Mécanique":DG[dun.ti]?DG[dun.ti].name:""}</h2><div style={{fontSize:12,color:"var(--td)"}}>{dun.ti==="lab"?"Étage "+(dun.labLv||1):"Étape "+(dun.fl+1)+"/"+(DG[dun.ti]?DG[dun.ti].structure.length:"?")}{dun.ti!=="lab"&&<span> · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</span>}</div></div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             {au&&<div style={{padding:"6px 12px",borderRadius:10,background:"#9b7ec8",color:"#fff",fontSize:12,fontWeight:800,opacity:1,animation:"blink 2s ease-in-out infinite"}}>AUTO</div>}
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
@@ -1558,8 +1558,8 @@ export default function Game(){
           {dun.ph==="event"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}>
             <div style={{fontSize:16,fontWeight:700,color:"#9b7ec8"}}>✨ Victoire !</div>
-            {dun.ti==="lab"&&dun.labReward&&(function(){var rw=LABYRINTH_REWARDS[(dun.labLv||1)-2];var alreadyDone=(dun.labLv-1)<=(g.labProgress||0);
-              if(!rw||alreadyDone)return <div style={{fontSize:12,color:"var(--td)",marginTop:6}}>Aucune récompense (étage déjà terminé)</div>;
+            {dun.ti==="lab"&&(function(){var rw=dun.labReward||LABYRINTH_REWARDS[Math.max(0,(dun.labDone||dun.labLv||1)-1)];var alreadyDone=!rw;
+              if(!rw)return <div style={{fontSize:12,color:"var(--td)",marginTop:6}}>Aucune récompense (étage déjà terminé)</div>;
               return <div style={{marginTop:8,textAlign:"left",fontSize:12}}>
                 <div style={{fontWeight:600,marginBottom:4,textAlign:"center",color:"var(--t)"}}>Récompenses</div>
                 <div>🔩 {rw.meca} pièces mécaniques</div>
