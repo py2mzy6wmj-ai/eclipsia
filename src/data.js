@@ -488,7 +488,6 @@ export var LABYRINTH_EVENTS = [
 ];
 
 export var LABYRINTH_STRUCTURE = [
-  // Étape 1-10 (premier demi-cycle)
   { type: "combat", enemies: ["e_auto_sentinelle", "e_auto_sentinelle"] },
   { type: "combat", enemies: ["e_auto_sentinelle", "e_auto_sentinelle", "e_auto_blinde"] },
   { type: "combat", enemies: ["e_auto_assassin", "e_auto_blinde", "e_auto_sentinelle"] },
@@ -499,7 +498,6 @@ export var LABYRINTH_STRUCTURE = [
   { type: "combat", enemies: ["e_auto_ignifuge", "e_auto_hydrophobe"] },
   { type: "combat", enemies: ["e_auto_paratonnerre", "e_auto_aerien"] },
   { type: "boss" },
-  // Étape 11-20 (second demi-cycle)
   { type: "combat", enemies: ["e_auto_assassin", "e_auto_assassin", "e_auto_assassin"] },
   { type: "combat", enemies: ["e_auto_blinde", "e_auto_antimagie", "e_auto_sorcier"] },
   { type: "combat", enemies: ["e_auto_sentinelle", "e_auto_sentinelle", "e_auto_sentinelle"] },
