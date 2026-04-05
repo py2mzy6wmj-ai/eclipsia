@@ -467,7 +467,7 @@ export default function Game(){
       return;
     }
     var dgDef=DG[dun.ti];
-    if(nf>=dgDef.structure.length){endDun(true);return;}
+    if(!dgDef||nf>=dgDef.structure.length){endDun(true);return;}
     var t=dun.team.map(function(h){if(h.hp<=0)return h;return Object.assign({},h,{hp:Math.min(h.hpMax,h.hp+Math.floor(h.hpMax*(h.rgHp||0)))});});
     var step=dgDef.structure[nf];
     var stepType=step.type||step;
@@ -536,8 +536,8 @@ export default function Game(){
       }
       if(t.every(function(h){return h.hp<=0;})){setLogs(function(l){return l.concat([{t:"Défaite...",tp:"heroDeath"}]);});return Object.assign({},d,{team:t,en:en,rG:rG,rX:rX,ph:"result",tI:tI});}
       if(en.every(function(e){return e.hp<=0;})){
-        var bon=Math.floor(15*DG[d.ti].rw);setLogs(function(l){return l.concat([{t:"Victoire! +"+bon+"g",tp:"kill"}]);});
-        var eq=[].concat(rE);var dr=rollLoot(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  Loot: "+dr.name+" (Rang "+dr.rank+" "+(RA[dr.rarity]||{}).s+") !",tp:"info"}]);});}
+        var bon=d.ti==="lab"?0:Math.floor(15*(DG[d.ti]?DG[d.ti].rw:1));setLogs(function(l){return l.concat([{t:"Victoire!"+(bon>0?" +"+bon+"g":""),tp:"kill"}]);});
+        var eq=[].concat(rE);if(d.ti!=="lab"){var dr=rollLoot(d.ti);if(dr){dr.uid=uid();eq.push(dr);setLogs(function(l){return l.concat([{t:"  Loot: "+dr.name+" (Rang "+dr.rank+" "+(RA[dr.rarity]||{}).s+") !",tp:"info"}]);});}}
         return Object.assign({},d,{team:t,en:en,rG:rG+bon,rX:rX,rE:eq,ph:"victory",tI:tI});}
       return Object.assign({},d,{team:t,en:en,tI:tI,rG:rG,rX:rX,rE:rE});
     });
@@ -1526,7 +1526,7 @@ export default function Game(){
       </div>}
             {dun&&<div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div><h2 style={{fontFamily:"Uncial Antiqua",fontSize:16,color:"var(--acc)"}}>{DG[dun.ti].name}</h2><div style={{fontSize:12,color:"var(--td)"}}>Étape {dun.fl+1}/{DG[dun.ti].structure.length} · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
+          <div><h2 style={{fontFamily:"Uncial Antiqua",fontSize:16,color:"var(--acc)"}}>{dun.ti==="lab"?"Labyrinthe Étage "+dun.labLv:DG[dun.ti]?DG[dun.ti].name:""}</h2><div style={{fontSize:12,color:"var(--td)"}}>{dun.ti==="lab"?"x"+Math.pow(1.08,(dun.labLv||1)-1).toFixed(1):"Étape "+(dun.fl+1)+"/"+(DG[dun.ti]?DG[dun.ti].structure.length:"?")} · 💰{dun.rG} · ⭐{dun.rX} · 🎁{(dun.rE||[]).length}{dun.buffs>0?" · 🔮×"+dun.buffs:""}</div></div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             {au&&<div style={{padding:"6px 12px",borderRadius:10,background:"#9b7ec8",color:"#fff",fontSize:12,fontWeight:800,opacity:1,animation:"blink 2s ease-in-out infinite"}}>AUTO</div>}
             <button className="b br" onClick={function(){endDun(false);setAu(false);}} style={{fontSize:12}}>🏳️ Fuir</button>
