@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 var supabase = createClient("https://xidrfbtcgvnbnrtyjquc.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpZHJmYnRjZ3ZuYm5ydHlqcXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTA1NjEsImV4cCI6MjA5MDAyNjU2MX0.-7dAj-wesiY8SgEQbDrT4MbKmoTB8EXSgBYrN491gFI");
-import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS, TOMES, FRAGMENTS, LABYRINTH_STRUCTURE, LABYRINTH_EVENTS, LABYRINTH_BOSSES, LABYRINTH_SCALING, LABYRINTH_REWARDS } from './data';
+import { HEROES, ENM, BSS, DG, EVT, BUP, EL, EM, RA, defER, PORTRAIT_BASE, STARTING_GOLD, rollLoot, rollWeaponDrop, generateWeapon, generateArmor, generateAccessory, generateTalisman, SKILLS, TOMES, FRAGMENTS, LABYRINTH_STRUCTURE, LABYRINTH_EVENTS, LABYRINTH_BOSSES, LABYRINTH_SCALING, LABYRINTH_REWARDS, GABARIT_NAMES, CATA_NAMES } from './data';
 
 var uid=function(){return Math.random().toString(36).slice(2,10);};
 var roll=function(p){return Math.random()<p;};
@@ -424,7 +424,7 @@ export default function Game(){
     if(!team.length)return;
     var t=team.map(function(h){var s=cs(h,g.bl);return Object.assign({},h,{hp:s.hp,stats:{str:s.str,mag:s.mag,crit:s.crit,phv:s.phv,dodge:s.dodge,mav:s.mav},hpMax:s.hp,isHero:true,er:s.er,rgHp:s.rgHp,rel:s.rel,cd:s.rel});});
     if(ti==="lab"){
-      var labLv=(g.labProgress||0)+1;
+      var labLv=(g.labCheckpoint!=null?g.labCheckpoint:(g.labProgress||0))+1;
       // Use persisted HP/CD if continuing
       t=t.map(function(h){
         var roster_h=g.roster.find(function(r){return r.uid===h.uid;});
@@ -550,9 +550,9 @@ export default function Game(){
       if(won){
         var labLv=dun.labLv;
         var rw=LABYRINTH_REWARDS[labLv-1];
-        var rwGiven=labLv>(g.labProgress||0);
         setG(function(p){
-          var labP=Math.max(p.labProgress||0, labLv);
+          var rwGiven=labLv>(p.labProgress||0);
+          var labP=Math.max(p.labProgress||0, labLv);var labC=labLv;
           var labM=(p.labMeca||0)+(rwGiven?(rw.meca||0):0);
           var nsc=(p.scrolls||0)+(rwGiven?(rw.scrolls||0):0);
           var nm=Object.assign({},p.mat||{});
@@ -566,7 +566,7 @@ export default function Game(){
             if(labH)return Object.assign({},r,{labHp:labH.hp,labHpMax:labH.hpMax,labCd:labH.cd,labStats:labH.stats,labEr:labH.er});
             return r;
           });
-          return Object.assign({},p,{labProgress:labP,labMeca:labM,scrolls:nsc,mat:nm,conso:nc,roster:newRoster});
+          return Object.assign({},p,{labProgress:labP,labCheckpoint:labC,labMeca:labM,scrolls:nsc,mat:nm,conso:nc,roster:newRoster});
         });
         setLogs(function(l){return l.concat([{t:"───────────────"},{t:"Étage "+labLv+" terminé !",tp:"kill"},{t:"🔩 "+rw.meca+" · 📜 "+rw.scrolls,tp:"info"}]);});
         // If labLv < 100, auto-advance to next level
@@ -574,14 +574,14 @@ export default function Game(){
           var nextLv=labLv+1;
           // Re-init team with persisted HP
           var t2=dun.team.map(function(h){return Object.assign({},h);});
-          setDun({ti:"lab",labLv:nextLv,fl:-1,ph:"explore",team:t2,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[],labReward:rwGiven?rw:null,labDone:labLv});
+          setDun({ti:"lab",labLv:nextLv,fl:-1,ph:"explore",team:t2,en:[],rG:0,rX:0,bX:0,rE:[],tI:0,tO:[],labReward:labLv>(g.labProgress||0)?rw:null,labDone:labLv});
           setLogs(function(l){return l.concat([{t:"--- Étage "+nextLv+" ---",tp:"info"}]);});
           return;
         } else {
           // Lab complete!
           setG(function(p){
             var newRoster=p.roster.map(function(r){return Object.assign({},r,{labHp:undefined,labHpMax:undefined,labCd:undefined,labStats:undefined,labEr:undefined});});
-            return Object.assign({},p,{labProgress:100,roster:newRoster});
+            return Object.assign({},p,{labProgress:100,labCheckpoint:100,roster:newRoster});
           });
           setDun(null);setAu(false);
           setLogs(function(l){return l.concat([{t:"🏆 LABYRINTHE TERMINÉ !",tp:"kill"}]);});
@@ -592,7 +592,7 @@ export default function Game(){
         var lastBoss=Math.floor(((dun.labLv||1)-1)/10)*10;
         setG(function(p){
           var newRoster=p.roster.map(function(r){return Object.assign({},r,{labHp:undefined,labHpMax:undefined,labCd:undefined,labStats:undefined,labEr:undefined});});
-          return Object.assign({},p,{labProgress:lastBoss,roster:newRoster});
+          return Object.assign({},p,{labCheckpoint:lastBoss,roster:newRoster});
         });
         setDun(null);setAu(false);
         return;
@@ -1085,8 +1085,6 @@ export default function Game(){
         var hasInerte=(m[inerteKey]||0)>0;var hasGab=(m[gabKey]||0)>0;var hasCata=(m[cataKey]||0)>0;
         var canForge=hasInerte&&hasGab&&hasCata;
         var fChance=forgeChance(fs.rank,fs.rar,flv);
-        var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
-        var CATA_NAMES=["","Catalyseur commun","Catalyseur inhabituel","Catalyseur rare","Catalyseur épique","Catalyseur légendaire"];
         var SLOT_NAMES={weapon:"Arme",armor:"Armure",accessory:"Accessoire",talisman:"Talisman"};
         var SLOT_KEYS=["weapon","armor","accessory","talisman"];
         function doForge(){
@@ -1342,8 +1340,6 @@ export default function Game(){
     {tab==="inventaire"&&<div style={{animation:"fi .3s ease"}}><h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:10}}>📦 Inventaire</h2>
       {(function(){
         var m=g.mat||{};var co=g.conso||{};
-        var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
-        var CATA_NAMES=["","Catalyseur commun","Catalyseur inhabituel","Catalyseur rare","Catalyseur épique","Catalyseur légendaire"];
         function matRow(key,name,qty,rar,icon){var rc=rar===1?"var(--t)":(RA[rar]||{}).c||"var(--t)";return <div key={key} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #ffffff08"}}><span style={{color:rc,fontSize:14}}>{icon?icon+" ":""}{name}</span><span style={{fontFamily:"monospace",fontWeight:600,fontSize:14,color:"var(--t)"}}>{qty}</span></div>;}
         // Monnaies
         var monnaies=[{n:"Pièces d'or",v:g.gold,r:1,ic:"💰"}];
@@ -1441,13 +1437,13 @@ export default function Game(){
         <div style={{flex:1,maxWidth:540,margin:"0 auto",width:"100%",padding:"10px 12px 16px",display:"flex",flexDirection:"column"}}>
           <div style={{marginBottom:8}}><button className="b" onClick={function(){setShowLab(false);}} style={{fontSize:13}}>← Retour</button></div>
           <h2 style={{fontFamily:"Uncial Antiqua",fontSize:18,color:"var(--acc)",marginBottom:4}}>Labyrinthe Mécanique</h2>
-          <div style={{fontSize:12,color:"var(--td)",marginBottom:10}}>Niveau le plus haut atteint : {(g.labProgress||0)}</div>
+          <div style={{fontSize:12,color:"var(--td)",marginBottom:10}}>Niveau le plus haut atteint : {g.labProgress||0}</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:3,marginBottom:12}}>
             {Array.from({length:100},function(_,i){
-              var lv=i+1;var done=(g.labProgress||0)>=lv;var current=(g.labProgress||0)+1===lv;var isBoss=lv%10===0;
+              var lv=i+1;var done=(g.labProgress||0)>=lv;var current=(g.labCheckpoint!=null?g.labCheckpoint:(g.labProgress||0))+1===lv;var isBoss=lv%10===0;
               var stepInCycle=(lv-1)%20;var isEvent=stepInCycle===6||stepInCycle===16;
               var sel=labSel===lv;
-              return <div key={lv} onClick={function(){setLabSel(lv);}} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:sel?"var(--acc)30":done?"#4ade8015":current?"var(--card)":"var(--card)",position:"relative",overflow:"hidden",border:"1px solid var(--brd)",outline:sel?"2px solid var(--acc)":"none",outlineOffset:"-2px",color:done?"#4ade80":current?"var(--acc)":isBoss?"#fbbf24":"var(--td)",cursor:"pointer"}}>
+              return <div key={lv} onClick={function(){setLabSel(lv);}} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:sel?"var(--acc)35":done?"#22c55e20":current?"#9b7ec825":"var(--card)",position:"relative",overflow:"hidden",border:done?"1px solid #22c55e60":current?"1px solid #9b7ec8":"1px solid var(--brd)",outline:sel?"2px solid var(--acc)":"none",outlineOffset:"-2px",color:done?"#22c55e":current?"#c4a8e8":isBoss?"#fbbf24":"var(--td)",cursor:"pointer"}}>
                 <>{current&&<div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(135deg,#9b7ec880,#9b7ec820,#9b7ec860)",backgroundSize:"300% 300%",animation:"veilShift 3s ease infinite",borderRadius:4}}/>}<span style={{position:"relative",zIndex:1}}>{isBoss?"🤖":isEvent?"✨":lv}</span></>
               </div>;
             })}
@@ -1471,12 +1467,12 @@ export default function Game(){
                 <div style={{fontSize:11,opacity:alreadyDone?0.5:1}}>
                   <div>🔩 Pièces mécaniques x{rw.meca}</div>
                   <div>📜 Parchemin d'invocation x{rw.scrolls}</div>
-                  {rw.gabarit&&(function(){var gr2=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[gr2]||{}).c||"var(--t)"}}>📐 {"Gabarit Rang "+rw.gabarit.rank} x{rw.gabarit.q||1}</div>;})()}
+                  {rw.gabarit&&(function(){var gr2=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[gr2]||{}).c||"var(--t)"}}>📐 {GABARIT_NAMES[rw.gabarit.rank]||"Gabarit"} (Rang {rw.gabarit.rank}) x{rw.gabarit.q||1}</div>;})()}
                   {rw.cata&&(function(){var cr2=parseInt((rw.cata.id||"").slice(-1))||1;return <div style={{color:(RA[cr2]||{}).c||"var(--t)"}}>💎 {{1:"Catalyseur commun",2:"Catalyseur inhabituel",3:"Catalyseur rare",4:"Catalyseur \u00e9pique",5:"Catalyseur l\u00e9gendaire"}[cr2]||"Catalyseur"} x{rw.cata.q}</div>;})()}
                   {rw.tome&&(function(){var tr2=parseInt((rw.tome.id||"").slice(-1))||1;var tNames={1:"Tome mineur",2:"Tome normal",3:"Tome majeur",4:"Tome considérable",5:"Tome extraordinaire"};return <div style={{color:(RA[tr2]||{}).c||"var(--t)"}}>📖 {tNames[tr2]||"Tome"} x{rw.tome.q}</div>;})()}
                 </div>
               </div>
-              {(g.labProgress||0)<100&&<button className="b bg" onClick={function(){setTeamPick("lab");setShowLab(false);}} style={{width:"100%",padding:"14px 0",fontSize:15,fontWeight:700}}>Lancer (étage {(g.labProgress||0)+1})</button>}
+              {(g.labProgress||0)<100&&<button className="b bg" onClick={function(){setTeamPick("lab");setShowLab(false);}} style={{width:"100%",padding:"14px 0",fontSize:15,fontWeight:700}}>Lancer (étage {(g.labCheckpoint!=null?g.labCheckpoint:(g.labProgress||0))+1})</button>}
             </div>;
           })()}
           {(g.labProgress||0)>=100&&<div style={{textAlign:"center",padding:20}}>
@@ -1566,15 +1562,15 @@ export default function Game(){
             <div style={{fontSize:16,fontWeight:700,color:"#9b7ec8"}}>✨ Victoire !</div>
             {dun.ti==="lab"&&(function(){var rw=dun.labReward||LABYRINTH_REWARDS[Math.max(0,(dun.labDone||dun.labLv||1)-1)];var alreadyDone=!rw;
               if(!rw)return <div style={{fontSize:12,color:"var(--td)",marginTop:6}}>Aucune récompense (étage déjà terminé)</div>;
-              var _cN={1:"Catalyseur commun",2:"Catalyseur inhabituel",3:"Catalyseur rare",4:"Catalyseur \u00e9pique",5:"Catalyseur l\u00e9gendaire"};
-              var _tN={1:"Tome mineur",2:"Tome normal",3:"Tome majeur",4:"Tome consid\u00e9rable",5:"Tome extraordinaire"};
+              
+              
               return <div style={{marginTop:8,textAlign:"left",fontSize:12}}>
-                <div style={{fontWeight:600,marginBottom:4,textAlign:"center",color:"var(--t)"}}>R\u00e9compenses</div>
-                <div>\U0001f529 Pi\u00e8ces m\u00e9caniques x{rw.meca}</div>
-                <div>\U0001f4dc Parchemin d'invocation x{rw.scrolls}</div>
-                {rw.gabarit&&(function(){var _gr=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[_gr]||{}).c}}>\U0001f4d0 Gabarit Rang {rw.gabarit.rank} x{rw.gabarit.q||1}</div>;})()}
-                {rw.cata&&(function(){var _cr=parseInt((rw.cata.id||"").slice(-1))||1;return <div style={{color:(RA[_cr]||{}).c}}>\U0001f48e {_cN[_cr]||"Catalyseur"} x{rw.cata.q}</div>;})()}
-                {rw.tome&&(function(){var _tr=parseInt((rw.tome.id||"").slice(-1))||1;return <div style={{color:(RA[_tr]||{}).c}}>\U0001f4d6 {_tN[_tr]||"Tome"} x{rw.tome.q}</div>;})()}
+                <div style={{fontWeight:600,marginBottom:4,textAlign:"center",color:"var(--t)"}}>Récompenses</div>
+                <div>🔩 Pièces m\u00e9caniques x{rw.meca}</div>
+                <div>📜 Parchemin d'invocation x{rw.scrolls}</div>
+                {rw.gabarit&&(function(){var _gr=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[_gr]||{}).c}}>📐 {GABARIT_NAMES&&GABARIT_NAMES[rw.gabarit.rank]?GABARIT_NAMES[rw.gabarit.rank]:"Gabarit"} (Rang {rw.gabarit.rank}) x{rw.gabarit.q||1}</div>;})()}
+                {rw.cata&&(function(){var _cr=parseInt((rw.cata.id||"").slice(-1))||1;return <div style={{color:(RA[_cr]||{}).c}}>💎 {CATA_NAMES&&CATA_NAMES[_cr]?CATA_NAMES[_cr]:"Catalyseur"} x{rw.cata.q}</div>;})()}
+                {rw.tome&&(function(){var _tr=parseInt((rw.tome.id||"").slice(-1))||1;return <div style={{color:(RA[_tr]||{}).c}}>📖 {({1:"Tome mineur",2:"Tome normal",3:"Tome majeur",4:"Tome considérable",5:"Tome extraordinaire"})[_tr]||"Tome"} x{rw.tome.q}</div>;})()}
               </div>;})()}
           </div>}
           {dun.ph==="explore"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:15,color:"var(--td)"}}>Prêt à explorer...</div></div>}

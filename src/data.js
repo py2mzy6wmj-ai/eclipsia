@@ -361,7 +361,10 @@ export var ENM = [
   { id: "e_ange_dechu", name: "Ange déchu", icon: "🪽", hp: 32, dmg: 16, at: "magical", str: 1.0, mag: 1.0, crit: 0.05, phv: 0.9, dodge: 0.08, mav: 0.85, xp: 6, gold: 6, er: { Feu: 1, Terre: 0.5, Foudre: 1.2, Eau: 1.0, Sacré: 0.5, Ténèbres: 0.7 } },
   { id: "e_slime_chroma", name: "Slime chromatique", icon: "🌈", hp: 35, dmg: 15, at: "magical", str: 1.0, mag: 1.0, crit: 0.03, phv: 0.45, dodge: 0.02, mav: 1.2, xp: 8, gold: 6, er: { Feu: 0.5, Terre: 0.5, Foudre: 0.5, Eau: 0.5, Sacré: 0.5, Ténèbres: 0.5 } },
 
-  // === LABYRINTHE MÉCANIQUE ===
+  
+export var GABARIT_NAMES=["","Gabarit sommaire","Gabarit imprécis","Gabarit approximatif","Gabarit brouillon","Gabarit rudimentaire","Gabarit basique","Gabarit correct","Gabarit soigné","Gabarit précis","Gabarit rigoureux","Gabarit abouti","Gabarit maîtrisé","Gabarit élaboré","Gabarit expert","Gabarit exceptionnel"];
+export var CATA_NAMES=["","Catalyseur commun","Catalyseur inhabituel","Catalyseur rare","Catalyseur épique","Catalyseur légendaire"];
+// === LABYRINTHE MÉCANIQUE ===
   { id: "e_auto_sentinelle", name: "Automate sentinelle", icon: "🤖", hp: 40, dmg: 10, at: "physical", str: 1.0, mag: 1.0, crit: 0.04, phv: 0.97, dodge: 0.05, mav: 1.02, xp: 0, gold: 0, er: { Feu: 1.0, Terre: 1.0, Foudre: 1.0, Eau: 1.0, Sacré: 1.0, Ténèbres: 1.0 } },
   { id: "e_auto_blinde", name: "Automate blindé", icon: "🤖", hp: 80, dmg: 7, at: "physical", str: 1.0, mag: 1.0, crit: 0.02, phv: 0.60, dodge: 0.01, mav: 0.85, xp: 0, gold: 0, er: { Feu: 0.90, Terre: 0.80, Foudre: 1.10, Eau: 1.0, Sacré: 1.0, Ténèbres: 1.0 } },
   { id: "e_auto_assassin", name: "Automate assassin", icon: "🤖", hp: 30, dmg: 17, at: "physical", str: 1.0, mag: 1.0, crit: 0.08, phv: 1.10, dodge: 0.12, mav: 1.10, xp: 0, gold: 0, er: { Feu: 1.0, Terre: 1.0, Foudre: 1.10, Eau: 1.0, Sacré: 1.0, Ténèbres: 0.90 } },
