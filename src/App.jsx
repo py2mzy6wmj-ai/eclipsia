@@ -1440,7 +1440,7 @@ export default function Game(){
           <div style={{fontSize:12,color:"var(--td)",marginBottom:10}}>Niveau le plus haut atteint : {g.labProgress||0}</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:3,marginBottom:12}}>
             {Array.from({length:100},function(_,i){
-              var lv=i+1;var done=(g.labProgress||0)>=lv;var current=(g.labCheckpoint!=null?g.labCheckpoint:(g.labProgress||0))+1===lv;var isBoss=lv%10===0;
+              var lv=i+1;var done=lv<=(g.labCheckpoint!=null?g.labCheckpoint:(g.labProgress||0));var current=(g.labCheckpoint!=null?g.labCheckpoint:(g.labProgress||0))+1===lv;var isBoss=lv%10===0;
               var stepInCycle=(lv-1)%20;var isEvent=stepInCycle===6||stepInCycle===16;
               var sel=labSel===lv;
               return <div key={lv} onClick={function(){setLabSel(lv);}} style={{padding:3,borderRadius:4,textAlign:"center",fontSize:8,fontWeight:isBoss?700:400,background:sel?"var(--acc)35":done?"#22c55e20":current?"#9b7ec825":"var(--card)",position:"relative",overflow:"hidden",border:done?"1px solid #22c55e60":current?"1px solid #9b7ec8":"1px solid var(--brd)",outline:sel?"2px solid var(--acc)":"none",outlineOffset:"-2px",color:done?"#22c55e":current?"#c4a8e8":isBoss?"#fbbf24":"var(--td)",cursor:"pointer"}}>
@@ -1452,19 +1452,19 @@ export default function Game(){
             var selLv=labSel||(g.labProgress||0)+1;if(selLv>100)selLv=100;
             var stepInCycle=(selLv-1)%20;var step=LABYRINTH_STRUCTURE[stepInCycle];
             var rw=LABYRINTH_REWARDS[selLv-1];
-            var alreadyDone=selLv<=(g.labProgress||0);
+            var alreadyLooted=selLv<=(g.labProgress||0);
             var desc="",enemies=[];
             if(step.type==="boss"){var cycle=Math.floor((selLv-1)/20)+1;var pos=stepInCycle>=10?1:0;var bossId=LABYRINTH_BOSSES[cycle+"_"+pos];var boss=BSS.find(function(b){return b.id===bossId;});desc="🤖 Boss : "+(boss?boss.name:"Mécanon");if(boss)enemies=[boss];}
             else if(step.type==="event"){desc="✨ Événement aléatoire";}
             else if(step.type==="combat"){desc="⚔️ Combat : "+(step.enemies||[]).length+" automate"+((step.enemies||[]).length>1?"s":"");enemies=(step.enemies||[]).map(function(eid){return ENM.find(function(e){return e.id===eid;});}).filter(Boolean);}
             return <div>
               <div style={{background:"var(--card)",borderRadius:10,padding:12,border:"1px solid var(--brd)",marginBottom:10}}>
-                <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Étage {selLv}{alreadyDone?" ✅":""}</div>
+                <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Étage {selLv}{alreadyLooted?" ✅":""}</div>
                 <div style={{fontSize:12,color:step.type==="boss"?"#fbbf24":step.type==="event"?"var(--acc)":"var(--td)",marginBottom:6}}>{desc}</div>
                 {enemies.length>0&&<div style={{fontSize:11,color:"var(--td)",marginBottom:6}}>{enemies.map(function(e){return e.icon+" "+e.name;}).join(", ")}</div>}
                 <div style={{height:1,background:"var(--brd)",margin:"6px 0"}}/>
-                <div style={{fontSize:12,fontWeight:600,marginBottom:4}}>{alreadyDone?"Récompenses déjà obtenues":"Récompenses"}</div>
-                <div style={{fontSize:11,opacity:alreadyDone?0.5:1}}>
+                <div style={{fontSize:12,fontWeight:600,marginBottom:4}}>{alreadyLooted?"Récompenses déjà récupérées":"Récompenses"}</div>
+                <div style={{fontSize:11,opacity:alreadyLooted?0.5:1}}>
                   <div>🔩 Pièces mécaniques x{rw.meca}</div>
                   <div>📜 Parchemin d'invocation x{rw.scrolls}</div>
                   {rw.gabarit&&(function(){var gr2=rw.gabarit.rank<=3?1:rw.gabarit.rank<=6?2:rw.gabarit.rank<=9?3:rw.gabarit.rank<=12?4:5;return <div style={{color:(RA[gr2]||{}).c||"var(--t)"}}>📐 {GABARIT_NAMES[rw.gabarit.rank]||"Gabarit"} (Rang {rw.gabarit.rank}) x{rw.gabarit.q||1}</div>;})()}
@@ -1560,8 +1560,8 @@ export default function Game(){
           {dun.ph==="event"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}><div style={{fontSize:22,marginBottom:8}}>{dun.evtText||"Événement !"}</div><div style={{fontSize:14,color:"var(--td)"}}>{dun.evtDetail||""}</div></div>}
           {dun.ph==="victory"&&<div style={{textAlign:"center",position:"relative",zIndex:1,background:"var(--bg2)",borderRadius:10,padding:16}}>
             <div style={{fontSize:16,fontWeight:700,color:"#9b7ec8"}}>✨ Victoire !</div>
-            {dun.ti==="lab"&&(function(){var rw=dun.labReward||LABYRINTH_REWARDS[Math.max(0,(dun.labDone||dun.labLv||1)-1)];var alreadyDone=!rw;
-              if(!rw)return <div style={{fontSize:12,color:"var(--td)",marginTop:6}}>Aucune récompense (étage déjà terminé)</div>;
+            {dun.ti==="lab"&&(function(){var rw=dun.labReward;
+              if(!rw)return <div style={{fontSize:12,color:"var(--td)",marginTop:8}}>Récompenses déjà récupérées</div>;
               
               
               return <div style={{marginTop:8,textAlign:"left",fontSize:12}}>
